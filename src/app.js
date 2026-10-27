@@ -238,7 +238,7 @@ function renderGraphLab(topic,section){
           '<input type="range" data-graph="h" min="-3" max="3" step="1" value="'+g.h+'"></label>'+
         '<label class="graph-control"><span class="graph-control__label"><span>Vertical shift k</span><output id="out-k">'+g.k+'</output></span>'+
           '<input type="range" data-graph="k" min="-5" max="4" step="1" value="'+g.k+'"></label>'+
-        '<button class="quiet-button" type="button" data-action="graph-reflect">'+icon('refresh')+' Reflect in the x-axis</button>'+
+        '<button class="quiet-button" type="button" data-action="graph-reflect">'+icon('refresh')+' Flip opening direction</button>'+
         '<div class="vertex-note" style="margin-top:17px">Turning point <strong id="vertex-display">('+g.h+', '+g.k+')</strong></div>'+
       '</div></div>'+
       '<div class="callout"><span class="callout__label">NOTICE & EXPLAIN</span><p>'+(isModel?'Which assumptions would you need before using this curve to represent a real arch?':'What happens to the turning point when only the value of a changes?')+'</p></div>';
@@ -382,6 +382,7 @@ app.addEventListener('click',ev=>{
     safeStorage.put('bookmarks',JSON.stringify([...state.bookmarks]));
     announce(state.bookmarks.has(state.route.canonical)?'Page bookmarked':'Bookmark removed');
     rerender();
+    document.querySelector('button[data-action="bookmark"]')?.focus({preventScroll:true});
   }else if(action==='flash-flip'){
     state.flash.flipped=!state.flash.flipped;updateFlashFlip();
     announce(state.flash.flipped?'Answer revealed. Rate your recall.':'Question shown.');
@@ -389,14 +390,17 @@ app.addEventListener('click',ev=>{
     const increment=action==='flash-next'?1:-1;
     state.flash.index=(state.flash.index+increment+topic.cards.length)%topic.cards.length;
     state.flash.flipped=false;rerender();
+    document.querySelector('button[data-action="'+action+'"]')?.focus({preventScroll:true});
   }else if(action==='flash-restart'){
     state.flash={index:0,flipped:false,ratings:{}};rerender();announce('Deck restarted');
+    document.querySelector('button[data-action="flash-restart"]')?.focus({preventScroll:true});
   }else if(action==='flash-rate'){
     if(!state.flash.flipped)return;
     const card=cardForIndex(topic,state.flash.index);
     state.flash.ratings[card.id]=button.dataset.rating;
     state.flash.index=(state.flash.index+1)%topic.cards.length;
     state.flash.flipped=false;rerender();announce('Rated '+card.term+' '+button.dataset.rating+'. Next card.');
+    document.querySelector('#flashcard')?.focus({preventScroll:true});
   }else if(action==='match-choice'){
     const side=button.dataset.side,id=button.dataset.id,m=state.match;
     if(m.matched.includes(id))return;
@@ -407,14 +411,17 @@ app.addEventListener('click',ev=>{
       m.term=null;m.definition=null;
     }else m.message=side==='term'?'Term selected. Now choose its definition.':'Definition selected. Now choose its term.';
     rerender();
+    const matching=document.querySelector('.match-choice[data-side="'+side+'"][data-id="'+id+'"]');
+    (matching&&!matching.disabled?matching:document.querySelector('.match-choice:not(:disabled)'))?.focus({preventScroll:true});
   }else if(action==='match-reset'){
     state.match={term:null,definition:null,matched:[],message:''};rerender();announce('Matching game restarted');
+    document.querySelector('button[data-action="match-reset"]')?.focus({preventScroll:true});
   }else if(action==='cloze-hint'){
     const input=document.querySelector('#cloze-answer');state.cloze.value=input?.value||state.cloze.value;
     state.cloze.hint=!state.cloze.hint;rerender();
     document.querySelector('#cloze-answer')?.focus({preventScroll:true});
   }else if(action==='graph-reflect'){
-    state.graph.sign*=-1;updateGraph();announce('Curve reflected: '+mathCurveLabel());
+    state.graph.sign*=-1;updateGraph();announce('Parabola opening reversed: '+mathCurveLabel());
   }else if(action==='reveal'){
     const key=button.dataset.key;
     state.revealed[key]=!state.revealed[key];
@@ -448,6 +455,10 @@ app.addEventListener('submit',ev=>{
   state.cloze.correct=normaliseAnswer(state.cloze.value)===normaliseAnswer(TOPICS[state.route.topicId].cloze.answer);
   rerender();announce(state.cloze.correct?'Correct missing words':'Not yet; try again');
   document.querySelector('#cloze-answer')?.focus({preventScroll:true});
+});
+
+document.querySelector('#skip-page').addEventListener('click',()=>{
+  document.querySelector('#page-title')?.focus({preventScroll:false});
 });
 
 topicSwitch.addEventListener('change',()=>{
