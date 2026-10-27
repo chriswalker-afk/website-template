@@ -3,6 +3,21 @@
 ## Goal
 Build an adaptable website **engine**, not a blank visual clone or an A Level-only application. A topic should be configurable and independently deployable. The navigation must not expose empty modes.
 
+## Visual identity: an Interactive Maths Notebook
+
+**Core design decision:** the reusable website shell should look and feel like a **modern tabbed Maths notebook / reference book**, based on the user-supplied photographs of physical book index tabs.
+
+- A **Contents** opening page acts as the home/journey view, with progress, bookmarks and resume links.
+- **Primary sections have chapter tabs across the top** of the book. The active tab visually connects to the open page.
+- **Subsections have smaller index tabs down the right side** on desktop, e.g. Flashcards / Match Up / Missing Words / Speed Recall inside Memorise.
+- Slight paper shadows, a modest book edge/spine, faint ruled or squared paper, paper flashcards and small sticky-note hints establish the notebook feel.
+- **Page-turn and tab animations** may enhance chapter changes, but must be brief, interruptible, reduced-motion aware and never block interaction; **do not** flip a whole page for every practice question.
+- Desktop defaults to a **single spacious working page**; mathematical inputs, graphs, wide diagrams and worked solutions take priority over cosmetic book geometry.
+- On small screens, use accessible chapter/subsection pickers rather than squeezing/scrolling decorative tabs; preserve the stationery feel without stealing space.
+- Chapter and subsection lists are always generated from the configured, non-empty learning modes.
+
+The full design contract, components, motion guidelines, breakpoints and Pass 1 acceptance checklist are in **[BOOK_DESIGN_SYSTEM.md](BOOK_DESIGN_SYSTEM.md)**. This is a fundamental requirement for Pass 1, not an optional theme that gets added after the learning activities.
+
 ## Student-facing structure
 
 | Area | Purpose | Shared component types |
@@ -33,6 +48,8 @@ Games are not the same as Memorise's short language games. Games focus on multi-
 ## Adaptive navigation rules
 - `Home`, `Understand`, `Memorise`, `Fluency`, `Reasoning`, `Problem Solving`, `Modelling`, `Games`, and `Exam Practice` are stable IDs.
 - Topics **opt in** to relevant modules; automatically hide sections with no meaningful content.
+- Desktop exposes the active modules as **top chapter tabs** and the selected module's activities as **right-side index tabs**. The Contents page always provides an accessible alternative.
+- On mobile, top/side tabs reflow to **Chapter** and **Section** controls; never require horizontally scrolling main navigation or tiny rotated labels.
 - Within Memorise, flashcards and games have independently configurable entries.
 - Students can learn in any order. Recommended pathways do not block navigation.
 - Use age-neutral language and theme presets instead of hard-coded grade or exam-board labels.
@@ -48,6 +65,18 @@ Games are not the same as Memorise's short language games. Games focus on multi-
     "subtitle": "A configurable maths learning space",
     "ageRange": "optional",
     "qualification": null
+  },
+  "appearance": {
+    "theme": "modern-notebook",
+    "accent": "teal",
+    "defaultPage": "ruled",
+    "pageByMode": {
+      "memorise": "plain",
+      "fluency": "squared",
+      "problemSolving": "squared",
+      "examPractice": "plain"
+    },
+    "motion": "system"
   },
   "learningModes": {
     "understand": true,
@@ -85,6 +114,10 @@ This is a **targeted architecture audit**; it does not claim comprehensive imple
 
 ## Non-functional requirements
 - Static GitHub Pages hosting, relative asset paths, no sign-in needed for standard single-player use.
+- Book/navigation design tokens and page variants independent of learning logic; faint lines and grids are decorative and must not impair Maths clarity.
+- Accessible primary and secondary navigation at 320/390/768/1024/1440 px, without viewport-wide overflow; support keyboard, touch, screen-reader updates, zoom and browser history.
+- Motion respects user/system preference and never delays input, consumes focus, or stacks transitions; no page turn between individual practice questions.
+- Light theme, high-contrast/print and reduced-motion fallbacks; strong text and control contrast even on ruled/squared paper.
 - No production dependencies on the previous repositories.
 - Strict content validation: missing/duplicate IDs, missing answers or worked solutions, bad links, unsatisfiable game configurations, unsupported maths-answer types.
 - Unit tests for learning logic; integration tests for mode routing, persistence and game selection; browser tests for responsive layouts, keyboard-only, reduced motion, and colour contrast.
@@ -94,7 +127,9 @@ This is a **targeted architecture audit**; it does not claim comprehensive imple
 
 ## First implementation passes: acceptance criteria
 
-**Pass 1 — Shell:** works on GitHub Pages from a subdirectory, loads a dummy topic with configurable modes, hides absent modes, provides coherent mobile/desktop navigation, accessible keyboard focus, local progress, and smoke tests.
+**Pass 1A — Notebook prototype:** visual proof of the Contents page, top chapter tabs, right-side subsection tabs, lined/squared/plain paper and two contrasting dummy topic workspaces. Exercise tab and page motion, keyboard accessibility, reduced motion and 320/390/768/1440 px layouts **before** building multiple learning engines. See the [book design acceptance checklist](BOOK_DESIGN_SYSTEM.md#8-acceptance--qa-checklist-for-pass-1).
+
+**Pass 1B — Production shell:** works on GitHub Pages from a subdirectory, loads a topic with configurable modes/theme/page types, hides absent chapters/subsections, supports deep links and browser history, has coherent mobile/desktop navigation, accessible focus and landmarks, local progress/bookmarks, and smoke tests.
 
 **Pass 2 — Memorise:** enjoyable flip animation and reduced-motion fallback; all cards view; self-rating and weak-card review; at least Match Up, Missing Words and typed Speed Recall; synonyms, hints and feedback; state restored safely; tests for valid/invalid banks and mastery credit.
 
@@ -107,4 +142,4 @@ This is a **targeted architecture audit**; it does not claim comprehensive imple
 **Pass 6 — Trial:** populate two distinct test topics (one vocabulary-heavy and one algebra/graphs-heavy) to establish true reuse before scaling.
 
 ## Major decisions deliberately postponed
-Exact visual theme, JS framework, backend/multiplayer architecture, game artwork, student profile system and question engine syntax. Choose after the shell prototype and test cases, not by coupling the template to any one existing website.
+The **book/notebook identity, primary top tabs, secondary side tabs, Contents page and paper/page-turn language are decided**. Exact palette, typography, shadow treatment, final animation implementation, JS framework, backend/multiplayer architecture, game artwork, student profile system and question engine syntax remain open. Make those choices against the [book design criteria](BOOK_DESIGN_SYSTEM.md) and prototype tests, not by coupling the template to any one existing website.
