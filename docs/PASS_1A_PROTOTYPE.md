@@ -27,6 +27,10 @@ Changing topics demonstrates that unavailable chapters disappear cleanly, rather
 - **Games:** a separately styled shelf of clearly **labelled previews**, not misleading clickable games.
 - **Study pages:** topic-specific explanations, method comparisons, reflection questions and authored answer reveals.
 
+## Added functional Worksheet Generator prototype
+
+An optional **Contents → Resources → Worksheet Generator** entry now creates editable LaTeX source from original, deterministic question families in Sampling Methods and Quadratic Functions. Teachers can choose printable skills, difficulty, 6–16 questions, independent/scaffolded/mixed mode, solution detail and a numerical seed. Generated worksheets and matching answer files share question instances and can be downloaded or copied. Sample files are exported during GitHub CI for separate LaTeX compilation checks. The page is a demonstrator, not an examination-quality worksheet bank. See [Worksheet Generator](WORKSHEET_GENERATOR.md).
+
 ## Explicitly deferred to future passes
 The examples are a carefully limited *prototype bank*, not complete or exam-audited course content. Persistent progress/mastery, automatic activity registration, full learning modules, advanced answer equivalence, multiplayer, awards, game engines, exam practice, authoring tools and configurable themes are **not** implemented. Current bookmarks and last-page links use a small, namespaced local-storage preview only.
 

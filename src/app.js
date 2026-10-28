@@ -1,4 +1,5 @@
 import {CHAPTER_LIBRARY,TOPICS} from './topics.js';
+import {generateWorksheet,supportsWorksheets,worksheetSkills} from './worksheet-generator.js';
 import {chaptersFor,sectionsFor,chapterFor,routeHref,resolveRoute,topicSwitchHref,escapeHTML as e,normaliseAnswer,cardForIndex,sampleMatchCards,validateTopics} from './logic.js';
 
 const app=document.querySelector('#app');
@@ -23,7 +24,8 @@ const state={
   match:{term:null,definition:null,matched:[],message:''},
   cloze:{value:'',hint:false,checked:false,correct:false},
   graph:{magnitude:1,h:0,k:-2,sign:1},
-  revealed:{}
+  revealed:{},
+  worksheets:{}
 };
 let lastTopic=null;
 
@@ -31,7 +33,7 @@ function announce(message){status.textContent='';status.textContent=message;}
 function selected(value,expected){return value===expected?' selected':'';}
 function chapterHref(topic,chapter){const section=sectionsFor(topic,chapter)[0];return routeHref(topic.id,chapter,section?.id);}
 function pagePaper(route){
-  if(route.chapterId==='home')return 'plain';
+  if(route.chapterId==='home'||route.chapterId==='resources')return 'plain';
   if(['fluency','modelling','problemSolving'].includes(route.chapterId))return 'squared';
   if(['memorise','games'].includes(route.chapterId))return 'plain';
   return 'ruled';
@@ -68,6 +70,11 @@ function renderContents(topic){
   const last=state.lastPage?resolveRoute(state.lastPage):null;
   const continuation=last?.topicId===topic.id&&last.chapterId!=='home'
     ?'<a class="action-button" href="'+last.canonical+'">Continue '+icon('arrow')+'</a>':'';
+  const worksheetResource=supportsWorksheets(topic.id)
+    ?'<a class="worksheet-resource" href="'+routeHref(topic.id,'resources','worksheet-generator')+'">'+
+      '<span class="worksheet-resource__icon">'+icon('pen')+'</span>'+
+      '<span><strong>Worksheet Generator</strong><small>Create printable LaTeX worksheets and solutions</small></span>'+
+      icon('arrow')+'</a>':'';
   return '<div class="contents-layout">'+
     '<section class="contents-cover" aria-label="Book cover for '+e(topic.title)+'">'+
       '<span class="cover-mark">'+e(topic.subject.toUpperCase())+'</span>'+
@@ -78,12 +85,84 @@ function renderContents(topic){
       '<div class="contents-heading"><h1 id="page-title" tabindex="-1">Contents</h1>'+
         '<p>Choose a chapter to begin, or return to a bookmarked page.</p></div>'+
       '<ol class="contents-list">'+chapterEntries+'</ol>'+
-      '<div class="contents-extras">'+
+      '<div class="contents-extras">'+worksheetResource+
         '<div class="saved-markers"><strong>'+icon('bookmark')+' Bookmarks</strong>'+
           (saved||'<span>No saved pages yet.</span>')+'</div>'+
       '</div>'+(continuation?'<div style="margin-top:19px">'+continuation+'</div>':'')+
     '</section></div>';
 }
+
+function worksheetState(topic){
+  if(!state.worksheets[topic.id]){
+    state.worksheets[topic.id]={
+      options:{
+        topicId:topic.id,title:topic.title+' Worksheet',count:8,
+        seed:20261028,style:'independent',difficulty:'secure',solutions:'worked',
+        skills:worksheetSkills(topic.id).map(skill=>skill.id)
+      },
+      result:null,error:''
+    };
+  }
+  return state.worksheets[topic.id];
+}
+function renderWorksheetGenerator(topic){
+  const worksheet=worksheetState(topic),opts=worksheet.options;
+  const skills=worksheetSkills(topic.id);
+  const selectOptions=(options,selected)=>options.map(([value,label])=>
+    '<option value="'+e(value)+'"'+(selected===value?' selected':'')+'>'+e(label)+'</option>').join('');
+  const results=worksheet.result;
+  const preview=results?'<section class="worksheet-result" id="worksheet-preview" tabindex="-1" aria-label="Generated worksheet">'+
+      '<div class="worksheet-result-head"><strong>'+results.questions.length+' questions generated</strong>'+
+      '<span>Seed '+results.options.seed+'</span></div>'+
+      '<ol class="worksheet-questions">'+results.questions.map((q,index)=>
+        '<li><span>'+e(q.prompt)+'</span><small>'+q.marks+' marks</small></li>').join('')+'</ol>'+
+      '<div class="worksheet-export">'+
+        '<button class="action-button" type="button" data-action="worksheet-download" data-kind="student">'+
+          icon('pen')+' Download worksheet.tex</button>'+
+        '<button class="quiet-button" type="button" data-action="worksheet-download" data-kind="solutions">'+
+          icon('check')+' Download '+e(results.solutionsFilename)+'</button>'+
+        '<button class="quiet-button" type="button" data-action="worksheet-copy">Copy worksheet LaTeX</button>'+
+      '</div>'+
+      '<details class="worksheet-source"><summary>View LaTeX source</summary>'+
+        '<pre tabindex="0">'+e(results.studentTex)+'</pre></details>'+
+      '</section>':
+    '<div class="worksheet-empty">Choose your settings and generate a worksheet to preview the questions.</div>';
+  return heading('Worksheet Generator',
+    'Choose skills, difficulty and length to create a LaTeX worksheet with matching answers or worked solutions.')+
+    '<div class="worksheet-layout"><form id="worksheet-form" class="worksheet-form">'+
+      '<label class="worksheet-field" for="worksheet-title">Worksheet title'+
+        '<input id="worksheet-title" name="title" type="text" maxlength="80" required value="'+e(opts.title)+'"></label>'+
+      '<fieldset class="worksheet-skills"><legend>Include skills</legend>'+
+        '<div class="worksheet-skill-grid">'+skills.map(skill=>
+          '<label><input type="checkbox" name="skill" value="'+e(skill.id)+'"'+
+          (opts.skills.includes(skill.id)?' checked':'')+'><span>'+e(skill.label)+'</span></label>').join('')+'</div></fieldset>'+
+      '<div class="worksheet-form-grid">'+
+        '<label class="worksheet-field" for="worksheet-style">Style'+
+          '<select name="style" id="worksheet-style">'+selectOptions([
+            ['independent','Independent practice'],['scaffolded','Scaffolded practice'],['mixed','Mixed review']
+          ],opts.style)+'</select></label>'+
+        '<label class="worksheet-field" for="worksheet-difficulty">Difficulty'+
+          '<select name="difficulty" id="worksheet-difficulty">'+selectOptions([
+            ['developing','Developing'],['secure','Secure'],['stretch','Stretch']
+          ],opts.difficulty)+'</select></label>'+
+        '<label class="worksheet-field" for="worksheet-count">Questions'+
+          '<select name="count" id="worksheet-count">'+selectOptions([
+            ['6','6 questions'],['8','8 questions'],['10','10 questions'],
+            ['12','12 questions'],['16','16 questions']
+          ],String(opts.count))+'</select></label>'+
+        '<label class="worksheet-field" for="worksheet-solutions">Solution file'+
+          '<select name="solutions" id="worksheet-solutions">'+selectOptions([
+            ['worked','Fully worked solutions'],['answers','Answers only']
+          ],opts.solutions)+'</select></label>'+
+        '<label class="worksheet-field worksheet-field--seed" for="worksheet-seed">Variation seed'+
+          '<input id="worksheet-seed" name="seed" type="number" min="1" max="999999999" step="1" required value="'+opts.seed+'"></label>'+
+      '</div>'+
+      '<div class="worksheet-actions"><button class="action-button" type="submit">Generate worksheet</button>'+
+        '<button type="button" class="quiet-button" data-action="worksheet-regenerate">New variation</button></div>'+
+      (worksheet.error?'<p class="worksheet-error" id="worksheet-error" role="alert" tabindex="-1">'+e(worksheet.error)+'</p>':'')+
+    '</form><div class="worksheet-preview">'+preview+'</div></div>';
+}
+
 function renderDots(){
   const dots=Array.from({length:40},(_,i)=>'<span class="dot'+([2,6,11,15,19,26,30,36].includes(i)?' dot--chosen':'')+'"></span>').join('');
   return '<div class="dot-field" aria-hidden="true">'+dots+'</div><p class="figure-caption">Illustration: 8 selected from a population of 40</p>';
@@ -262,6 +341,7 @@ function renderGames(topic){
 function renderPageContent(route,topic){
   const {chapterId,sectionId}=route;
   if(chapterId==='home')return renderContents(topic);
+  if(chapterId==='resources'&&sectionId==='worksheet-generator')return renderWorksheetGenerator(topic);
   if(chapterId==='understand'&&sectionId==='big-idea')return renderIntro(topic);
   if(chapterId==='memorise'&&sectionId==='flashcards')return renderFlashcards(topic);
   if(chapterId==='memorise'&&sectionId==='match-up')return renderMatch(topic);
@@ -277,7 +357,7 @@ function renderTabNav(topic,route){
   ).join('')+'</nav>';
 }
 function renderSideTabs(topic,route){
-  if(route.chapterId==='home')return '';
+  if(route.chapterId==='home'||route.chapterId==='resources')return '';
   const chapter=chapterFor(route.chapterId),sections=sectionsFor(topic,route.chapterId);
   return '<nav class="side-tabs" aria-label="'+e(chapter.label)+' subsections">'+
     sections.map((section,index)=>'<a class="side-tab" href="'+routeHref(topic.id,route.chapterId,section.id)+'" '+
@@ -286,18 +366,20 @@ function renderSideTabs(topic,route){
     '</nav>';
 }
 function renderMobileNavigation(topic,route){
-  const currentSection=sectionsFor(topic,route.chapterId);
-  return '<div class="mobile-navigation">'+
+  const currentSection=sectionsFor(topic,route.chapterId),resource=route.chapterId==='resources';
+  return '<div class="mobile-navigation'+(resource?' mobile-navigation--single':'')+'">'+
     '<div class="mobile-pick"><label for="mobile-chapter">Chapter</label><select id="mobile-chapter" data-role="chapter-select">'+
     '<option value="home"'+selected(route.chapterId,'home')+'>Contents</option>'+
     chaptersFor(topic).map(chapter=>'<option value="'+chapter.id+'"'+selected(route.chapterId,chapter.id)+'>'+e(chapter.label)+'</option>').join('')+
+    (supportsWorksheets(topic.id)?'<option value="resources"'+selected(route.chapterId,'resources')+'>Resources</option>':'')+
     '</select></div>'+
-    '<div class="mobile-pick'+(route.chapterId==='home'?' mobile-pick--disabled':'')+'"><label for="mobile-section">Page index</label>'+
-    '<select id="mobile-section" data-role="section-select"'+(route.chapterId==='home'?' disabled':'')+'>'+
-      (route.chapterId==='home'?'<option>Choose a chapter</option>':currentSection.map(section=>
-        '<option value="'+section.id+'"'+selected(route.sectionId,section.id)+'>'+e(section.label)+'</option>').join(''))+
-    '</select></div></div>';
+    (resource?'':'<div class="mobile-pick'+(route.chapterId==='home'?' mobile-pick--disabled':'')+'"><label for="mobile-section">Page index</label>'+
+      '<select id="mobile-section" data-role="section-select"'+(route.chapterId==='home'?' disabled':'')+'>'+
+        (route.chapterId==='home'?'<option>Choose a chapter</option>':currentSection.map(section=>
+          '<option value="'+section.id+'"'+selected(route.sectionId,section.id)+'>'+e(section.label)+'</option>').join(''))+
+      '</select></div>')+'</div>';
 }
+
 function renderBook(route,{animate=true}={}){
   const topic=TOPICS[route.topicId],chap=chapterFor(route.chapterId);
   const section=sectionsFor(topic,route.chapterId).find(item=>item.id===route.sectionId);
@@ -315,7 +397,7 @@ function renderBook(route,{animate=true}={}){
         (bookmarkCurrent?'Remove bookmark':'Bookmark this page')+'">'+icon('bookmark')+
         '<span>'+(bookmarkCurrent?'Saved':'Bookmark')+'</span></button></div></div>'
   );
-  const pageIndex=route.chapterId==='home'?'':(
+  const pageIndex=route.chapterId==='home'||route.chapterId==='resources'?'':(
     '<footer class="page-foot" aria-label="Page number"><span class="page-number">'+
       (sectionsFor(topic,route.chapterId).findIndex(item=>item.id===route.sectionId)+1)+
       ' / '+sectionsFor(topic,route.chapterId).length+'</span></footer>'
@@ -431,6 +513,38 @@ app.addEventListener('click',ev=>{
     document.querySelector('#cloze-answer')?.focus({preventScroll:true});
   }else if(action==='graph-reflect'){
     state.graph.sign*=-1;updateGraph();announce('Parabola opening reversed: '+mathCurveLabel());
+  }else if(action==='worksheet-regenerate'){
+    const input=document.querySelector('#worksheet-seed');
+    const previous=Number(input?.value)||20261028;
+    input.value=String((previous*1664525+1013904223)%999999998+1);
+    document.querySelector('#worksheet-form')?.requestSubmit();
+  }else if(action==='worksheet-download'){
+    const output=worksheetState(topic).result;
+    if(!output)return;
+    const student=button.dataset.kind==='student';
+    const content=student?output.studentTex:output.solutionsTex;
+    const filename=student?'worksheet.tex':output.solutionsFilename;
+    const blob=new Blob([content],{type:'application/x-tex;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const link=document.createElement('a');
+    link.href=url;
+    link.download=filename;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    window.setTimeout(()=>URL.revokeObjectURL(url),2000);
+    announce(filename+' downloaded');
+  }else if(action==='worksheet-copy'){
+    const output=worksheetState(topic).result;
+    if(!output)return;
+    if(!navigator.clipboard?.writeText){
+      announce('Clipboard unavailable. Open View LaTeX source to copy it manually.');
+    }else{
+      navigator.clipboard.writeText(output.studentTex).then(
+        ()=>announce('Worksheet LaTeX copied'),
+        ()=>announce('Copy failed. Open View LaTeX source to copy it manually.')
+      );
+    }
   }else if(action==='reveal'){
     const key=button.dataset.key;
     state.revealed[key]=!state.revealed[key];
@@ -457,6 +571,34 @@ app.addEventListener('input',ev=>{
   }
 });
 app.addEventListener('submit',ev=>{
+  if(ev.target.id==='worksheet-form'){
+    ev.preventDefault();
+    const data=new FormData(ev.target);
+    const topic=TOPICS[state.route.topicId];
+    const ws=worksheetState(topic);
+    ws.options={
+      topicId:topic.id,
+      title:String(data.get('title')||'').trim(),
+      style:String(data.get('style')),
+      difficulty:String(data.get('difficulty')),
+      count:Number(data.get('count')),
+      seed:Number(data.get('seed')),
+      solutions:String(data.get('solutions')),
+      skills:data.getAll('skill').map(String)
+    };
+    try{
+      ws.result=generateWorksheet(ws.options);
+      ws.error='';
+      announce(ws.result.questions.length+' questions generated with seed '+ws.options.seed);
+    }catch(error){
+      ws.result=null;
+      ws.error=error instanceof Error?error.message:'Unable to generate this worksheet.';
+      announce(ws.error);
+    }
+    rerender();
+    document.querySelector(ws.error?'#worksheet-error':'#worksheet-preview')?.focus({preventScroll:false});
+    return;
+  }
   if(ev.target.id!=='cloze-form')return;
   ev.preventDefault();
   state.cloze.value=document.querySelector('#cloze-answer').value;

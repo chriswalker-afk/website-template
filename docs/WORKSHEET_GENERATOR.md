@@ -1,6 +1,8 @@
 # Worksheet Generator — LaTeX export specification
 
-**Status:** Planned optional module; **not yet implemented**. Design the shared question and solution data contract in Pass 1B; build the worksheet generator after that foundation is ready.
+**Status:** A **functional prototype** is implemented for the Sampling Methods and Quadratic Functions sample books. The extended production authoring engine, mathematical question family catalogue, PDF compilation service and full advanced controls remain future work.
+
+**Prototype location:** In either sample topic, choose **Contents → Worksheet Generator**. The browser creates and previews a seeded set of 4–16 questions from original, reviewed template families; exports `worksheet.tex` and matching `worked-solutions.tex` or `answers.tex`. Three modes are supported: Independent, Scaffolded (one model and early hints), and Mixed. The default question count is 8, difficulty is configurable, and teachers can choose skills. Works entirely on the static site without a server. Not all future worksheet options in this specification are implemented.
 
 ## Goal
 Provide a reusable **Worksheet Generator** in individual Maths topic websites. Students or teachers can configure a worksheet and download editable, professionally formatted **LaTeX source** for student questions and worked solutions, using the current topic's vetted question bank and generator families.

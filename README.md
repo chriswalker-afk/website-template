@@ -2,13 +2,15 @@
 
 A reusable, topic-configurable foundation for high-quality Maths learning websites across age groups, curricula and qualifications.
 
-**Current status:** Pass 1A — working interactive book-shell visual prototype. Production topic authoring, progress systems and complete learning activities are planned for later passes.
+**Current status:** Pass 1A interactive book prototype plus a **working sample LaTeX Worksheet Generator** in Contents → Resources. This is a limited, validated demo, not yet the complete authoring engine described for later passes.
 
 ## Try the book prototype
 
 The static application starts at **index.html** and includes two contrasting sample books:
 - **Sampling Methods:** vocabulary-heavy study pages, flashcards, Match Up, Missing Words, Reasoning and a preview Games shelf.
 - **Quadratic Functions:** algebra and graph-focused study pages, the same Memorise interactions, a live quadratic graph explorer, Problem Solving, Modelling and a preview Games shelf.
+
+Open **Contents → Worksheet Generator** in either sample topic. Choose skills, difficulty, number of questions, style and solution depth. It creates an on-screen question preview and downloads editable `worksheet.tex` and a matching `worked-solutions.tex` (or `answers.tex`). The optional scaffolded style includes an early worked model and hints. Questions are reproducible from a numerical seed. Compile the source in Overleaf or a local TeX installation; **the website does not compile PDFs directly**.
 
 The book uses top chapter tabs and right-edge subsection tabs on desktop; on smaller screens these become labelled chapter and section selectors. The page-turn and flashcard motion follow reduced-motion preferences, with an additional manual motion control.
 
@@ -38,7 +40,7 @@ A modern, tabbed reference-book aesthetic built into the reusable shell: **chapt
 - **Qualification-neutral:** use learning modes such as Understand, Memorise, Fluency, Reasoning, Problem Solving and Modelling rather than AO1/AO2/AO3.
 - **Memorise is a rich learning space:** flipping flashcards, browse/review all cards, self-rating and retry, Match Up, Missing Words, Speed Recall and other vocabulary/retrieval games.
 - **Games has its own home:** playful, reusable whole-topic challenges such as Sprint and Quests, plus optional topic-specific games. Games can draw on the same validated question banks without duplicating progress.
-- **Printable resources:** an optional, topic-aware Worksheet Generator will export editable LaTeX student worksheets and fully worked solutions, using vetted question families.
+- **Printable resources:** the optional, topic-aware Worksheet Generator prototype exports editable LaTeX student worksheets and matching worked solutions from vetted, reproducible example question families.
 - **Modular:** no empty or disabled sections for a topic that does not need them.
 - **Mathematically careful:** distinguish recall from exposure, support symbols and graphs, require reviewed answers and worked solutions.
 - **Accessible:** responsive, keyboard-friendly, reduced-motion support and no compulsory timers.
