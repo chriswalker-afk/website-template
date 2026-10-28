@@ -121,8 +121,6 @@ export function renderFluencyPage(page,topic,route,session,progress){
   if(!session?.set)return '<p>Fluency practice is not available for this page.</p>';
   const count=session.configCount||6;
   return '<div class="fluency-workspace">'+
-    '<div class="fluency-intro"><p>'+e(page.focus)+'</p>'+
-      '<span class="fluency-intro__level">Level '+e(route.sectionId.replace('level-',''))+'</span></div>'+
     completedStats(progress,route.sectionId)+
     '<div class="fluency-settings"><label for="fluency-count">Questions per set</label>'+
       '<select id="fluency-count"><option value="6"'+(count===6?' selected':'')+'>6 questions</option>'+
