@@ -39,8 +39,10 @@ function pagePaper(route){
 function displayNumber(n){return Number.isInteger(n)?String(n):String(Number(n.toFixed(2)));}
 function mathCurveLabel(){
   const {magnitude,h,k,sign}=state.graph;
-  const a=magnitude*sign, hTerm=h===0?'x':('x '+(h>0?'− '+h:'+ '+Math.abs(h)));
-  return 'y = '+(a===1?'':a===-1?'−':displayNumber(a))+'('+hTerm+')²'+(k===0?'':(' '+(k>0?'+':'−')+' '+Math.abs(k)));
+  const a=magnitude*sign;
+  const squared=h===0?'x²':'(x '+(h>0?'− '+h:'+ '+Math.abs(h))+')²';
+  return 'y = '+(a===1?'':a===-1?'−':displayNumber(a))+squared+
+    (k===0?'':(' '+(k>0?'+':'−')+' '+Math.abs(k)));
 }
 function renderCoverArt(){
   return '<svg class="cover-illustration" viewBox="0 0 320 220" fill="none" aria-hidden="true">'+
