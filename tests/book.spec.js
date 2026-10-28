@@ -95,7 +95,7 @@ test('the quadratic graph teaches shape separately from translations',async({pag
   expect(updated).not.toBe(original);
   await page.getByRole('button',{name:'Flip opening direction'}).click();
   await expect(page.locator('#equation-display')).toContainText('−2x²');
-  await expect(page.locator('#graph-observation')).toContainText('opens downwards');
+  await expect(page.locator('#graph-observation')).toContainText('Opens downwards');
   await page.getByRole('button',{name:'Reset graph'}).click();
   await expect(page.locator('#equation-display')).toHaveText('y = x²');
   await page.getByRole('link',{name:'Next page'}).click();
