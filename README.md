@@ -2,13 +2,13 @@
 
 A reusable, topic-configurable foundation for high-quality Maths learning websites across age groups, curricula and qualifications.
 
-**Current status:** Interactive notebook prototype with quality-upgraded **Understand, Memorise and Fluency** modes, three-level navigation and a reusable LaTeX Worksheet Generator. The two sample topics demonstrate the content architecture rather than complete curriculum coverage.
+**Current status:** Interactive notebook prototype with quality-upgraded **Understand, Memorise, Fluency and Reasoning** modes, three-level navigation and a reusable LaTeX Worksheet Generator. The two sample topics demonstrate the content architecture rather than complete curriculum coverage.
 
 ## Try the book prototype
 
 The static application starts at **index.html** and includes two contrasting sample books:
-- **Sampling Methods:** Understand includes conceptual checks, step-reveal methods, interactive sampling experiments and gradual-release worked examples. Memorise now includes twelve cards, twelve contextual language prompts, multi-round matching, adaptive recall and local progress. Fluency, Reasoning and Games previews remain.
-- **Quadratic Functions:** Understand includes concept diagnostics, completing-square walkthroughs, interactive graph explorations and Show me → Help me → My turn worked examples. Memorise has the same twelve-card adaptive retrieval system; the other practice modes and Games previews remain available.
+- **Sampling Methods:** Understand includes conceptual checks, step-reveal methods, interactive sampling experiments and gradual-release worked examples. Memorise now includes twelve cards, twelve contextual language prompts, multi-round matching, adaptive recall and local progress. Fluency generates checked calculations, and Reasoning offers 16 guided written-argument tasks; Games previews remain.
+- **Quadratic Functions:** Understand includes concept diagnostics, completing-square walkthroughs, interactive graph explorations and Show me → Help me → My turn worked examples. Memorise has the same twelve-card adaptive retrieval system; Fluency has generated question practice, and Reasoning includes 16 mathematical explanations, justifications, critiques and generalisations. Other modes and Games previews remain available.
 
 Open **Contents → Worksheet Generator** in either sample topic. Choose skills, difficulty, number of questions, style and solution depth. It creates an on-screen question preview and downloads editable `worksheet.tex` and a matching `worked-solutions.tex` (or `answers.tex`). The optional scaffolded style includes an early worked model and hints. Questions are reproducible from a numerical seed. Compile the source in Overleaf or a local TeX installation; **the website does not compile PDFs directly**.
 
@@ -38,6 +38,7 @@ A modern, tabbed reference-book aesthetic built into the reusable shell: **chapt
 - [Understand mode quality guide](docs/UNDERSTAND_MODE_GUIDE.md) — reusable components, mathematics/diagram checks and Show me → Help me → My turn educational sequence.
 - [Memorise mode quality guide](docs/MEMORISE_MODE_GUIDE.md) — reusable retrieval activities, saved per-card progress, review intervals, conservative terminology checks and privacy limitations.
 - [Fluency mode quality guide](docs/FLUENCY_MODE_GUIDE.md) — four levels, generated questions, numerical feedback, worked solutions and exact LaTeX export.
+- [Reasoning mode quality guide](docs/REASONING_MODE_GUIDE.md) — distinctive written prompts, model arguments, criteria-based self-review, targeted practice and local privacy.
 
 ## Design principles
 
@@ -48,6 +49,7 @@ A modern, tabbed reference-book aesthetic built into the reusable shell: **chapt
 - **Modular:** no empty or disabled sections for a topic that does not need them; no right-hand tab for each page. Each subsection can contain one or several pages.
 - **Mathematically careful:** distinguish recall from exposure, support symbols and graphs, require reviewed answers and worked solutions. Understand uses real mathematical/selection models rather than illustrations that merely resemble mathematical diagrams.
 - **Generated Fluency:** question families provide six/ten distinct questions per round, strict numerical checking, hints, fully worked methods, review of weak attempts, local aggregate progress and exact printable LaTeX sets.
+- **Written Reasoning:** Explain, Justify, Critique and Generalise have dedicated authored question banks, optional hints, three-step model arguments, specific self-check criteria and no misleading automatic free-text scores.
 - **Accessible:** responsive, keyboard-friendly, reduced-motion support and no compulsory timers.
 - **Tactile but functional:** a recognizable notebook/book identity with chapter tabs, side indexes, readable paper surfaces and fast, optional page motion.
 - **Independent by default:** work offline where practical, store progress locally, and make multiplayer an optional future extension.
@@ -58,7 +60,7 @@ A modern, tabbed reference-book aesthetic built into the reusable shell: **chapt
 2. **Pass 1A — Notebook visual prototype (implemented):** Contents, chapter and subsection tabs, page variants, transitions, two sample topics, interactive flashcards and graph workspace.
 3. **Pass 1B — Reusable production shell (navigation prototype in place; remaining authoring work next):** mode/subsection/page routing, validated example content, deep links, responsive navigation and bookmarks now work. A generalised content-authoring workflow, persistent learning progress and cross-topic publishing pipeline remain future work.
 4. **Pass 2 — Memorise experience (quality upgrade implemented):** reusable flashcards, multi-round matching, contextual Missing Words, typed recall, locally saved adaptive review and card review dashboard. Broader curriculum banks and optional future sync remain separate tasks.
-5. **Pass 3 — Other learning modes:** Understand, Memorise and generated Fluency prototypes completed. Next develop dedicated Reasoning, Problem Solving and Modelling systems, without reintroducing concept explorers into practice modes.
+5. **Pass 3 — Other learning modes:** Understand, Memorise, Fluency and written Reasoning prototypes completed. Next develop dedicated Problem Solving and Modelling systems, without reintroducing concept explorers into practice modes.
 6. **Pass 4 — Games arcade:** reusable challenges with optional special topic modules.
 7. **Pass 5 — Assessment, authoring and deployment:** examination practice, validation, tests, GitHub Pages guides; plan a separate **Pass 5A Worksheet Generator** and **Pass 5B worksheet expansion** once the question engine exists.
 8. **Pass 6 — Prove the template:** two very different topics; refine the authoring process.
