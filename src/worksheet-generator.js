@@ -216,7 +216,7 @@ const QUADRATIC_FAMILIES=[
     return {signature:'disc:'+a+':'+b+':'+c,marks:4,spaceMm:32,
       prompt:'For '+pol.replaceAll('^{2}','²')+' = 0, calculate the discriminant and state how many distinct real roots exist.',
       questionTex:'For '+math(pol+'=0')+', calculate the discriminant and state how many distinct real roots exist.',
-      answerTex:math('\\Delta='+D')+'; '+number+' distinct real '+(number===1?'root':'roots')+'.',
+      answerTex:math('\\Delta='+D)+'; '+number+' distinct real '+(number===1?'root':'roots')+'.',
       solutionTex:'Here '+math('a='+a)+', '+math('b='+b)+', '+math('c='+c)+'. Hence '+
         '\\[\\Delta=b^2-4ac=('+b+')^2-4('+a+')('+c+')='+D+'.\\]'+
         'Since '+math('\\Delta')+(D>0?' is positive, there are '+classification+'.':
