@@ -36,7 +36,7 @@ test('Flashcards navigate without saving exposures and Restart never erases save
   await page.goto('/#/quadratics/memorise/flashcards');
   await page.getByRole('button',{name:'Next',exact:true}).click();
   await expect(page.locator('.flashcard-counter')).toContainText('Card 2 of 12');
-  await page.getByRole('button',{name:'Previous',exact:true}).click();
+  await page.getByRole('button',{name:'Previous card'}).click();
   await expect(page.locator('.flashcard-counter')).toContainText('Card 1 of 12');
   await page.getByRole('button',{name:'Restart round'}).click();
   await expect(page.locator('.memorise-pulse')).toContainText('12 new');
@@ -137,9 +137,9 @@ test('Speed Recall accepts reviewed aliases and minor typos but rejects wrong co
 test('Review All filters, searches and flags per card without affecting other topics',async({page})=>{
   await page.goto('/#/sampling/memorise/review-all');
   await expect(page.locator('.review-deck--quality li')).toHaveCount(12);
-  await page.locator('#review-search').fill('stratified');
+  await page.locator('#review-search').fill('quota sampling');
   await expect(page.locator('.review-deck--quality li')).toHaveCount(1);
-  await expect(page.locator('.review-deck--quality')).toContainText('Stratified sampling');
+  await expect(page.locator('.review-deck--quality')).toContainText('Quota sampling');
   await page.locator('#review-search').fill('');
   await page.locator('.review-deck--quality [data-action="memory-flag"]').first().click();
   await page.locator('#review-filter').selectOption('flagged');
