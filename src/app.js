@@ -1051,6 +1051,19 @@ app.addEventListener('click',ev=>{
   }
 });
 app.addEventListener('change',ev=>{
+  if(ev.target.matches('input[data-reasoning-criterion]')&&state.route?.chapterId==='reasoning'){
+    const session=reasoningSession(),current=reasoningEntry(session);
+    if(!current||!current.response.model||current.response.rating)return;
+    const index=Number(ev.target.dataset.reasoningCriterion);
+    if(!Number.isInteger(index)||index<0||index>=current.task.criteria.length)return;
+    const checks=[...current.response.checks];
+    checks[index]=ev.target.checked;
+    session.entries[current.task.id]={...current.response,checks};
+    rerender();
+    document.querySelector('input[data-reasoning-criterion="'+index+'"]')?.focus({preventScroll:true});
+    announce((checks[index]?'Criterion selected: ':'Criterion cleared: ')+current.task.criteria[index].label);
+    return;
+  }
   if(ev.target.id==='fluency-count'){
     const count=Number(ev.target.value),session=fluencySession();
     if(!session||!PRACTICE_LENGTHS.includes(count))return;
@@ -1085,6 +1098,12 @@ app.addEventListener('change',ev=>{
 });
 app.addEventListener('input',ev=>{
   const target=ev.target;
+  if(target.id==='reasoning-answer'&&state.route?.chapterId==='reasoning'){
+    const session=reasoningSession(),current=reasoningEntry(session);
+    if(current&&!current.response.rating&&!session.complete)
+      session.entries[current.task.id]={...current.response,draft:target.value};
+    return;
+  }
   if((target.id==='fluency-answer'||target.id==='fluency-working')&&state.route?.chapterId==='fluency'){
     const session=fluencySession(),current=fluencyAnswer(session);
     if(current&&!session.complete){
