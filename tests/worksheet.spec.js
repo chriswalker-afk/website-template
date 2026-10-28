@@ -65,7 +65,6 @@ test('scaffolding and answer-only exports are genuine variations',async({page})=
 });
 test('invalid skill selection reports an actionable error, then recovers',async({page})=>{
   await page.goto('/#/sampling/resources/worksheet-generator');
-  await page.locator('[name="skill"]').uncheck({force:true}).catch(()=>{}); // first checkbox only
   for(const item of await page.locator('[name="skill"]').all())await item.uncheck();
   await page.getByRole('button',{name:'Generate worksheet',exact:true}).click();
   await expect(page.locator('#worksheet-error')).toContainText('Select at least one');
