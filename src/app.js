@@ -178,18 +178,30 @@ function renderDots(){
   return '<div class="dot-field" aria-hidden="true">'+dots+'</div>';
 }
 function renderSmallGraph(){
-  return '<svg class="mini-curve" viewBox="0 0 280 195" role="img" aria-label="An upward-opening parabola, with turning point (1, minus 3)">'+
-    '<path d="M15 150H268M137 13V182" stroke="#7b998a" stroke-width="1.6"/>'+
-    '<path d="M15 73H268M15 111H268M15 188H268M92 13V183M182 13V183" stroke="#cfdbd1" stroke-width="1"/>'+
-    '<path d="M48 8Q138 310 236 8" stroke="#367664" stroke-width="3.5" fill="none" stroke-linecap="round"/>'+
-    '<circle cx="142" cy="160" r="5" fill="#bb8a53"/>'+
-    '<text x="151" y="178" font-family="Georgia" font-size="13" fill="#355c4c">(1, −3)</text></svg>';
+  const X=x=>42+(x+3)*31,Y=y=>105-y*16;
+  const path=Array.from({length:101},(_,i)=>{
+    const x=-3+i*.075, y=(x-1)**2-3;
+    return (i===0?'M':'L')+X(x).toFixed(1)+','+Y(y).toFixed(1);
+  }).join(' ');
+  return '<svg class="mini-curve" viewBox="0 0 300 220" role="img" '+
+    'aria-label="Graph y equals open bracket x minus 1 close bracket squared minus 3; upward parabola with turning point 1, minus 3.">'+
+    '<defs><clipPath id="small-quad-clip"><rect x="19" y="14" width="262" height="186"/></clipPath></defs>'+
+    '<g stroke="#dce6df" stroke-width="1"><line x1="19" y1="'+Y(-3)+'" x2="281" y2="'+Y(-3)+'"/>'+
+    '<line x1="'+X(1)+'" y1="14" x2="'+X(1)+'" y2="200" stroke-dasharray="3 5"/></g>'+
+    '<line x1="19" y1="'+Y(0)+'" x2="281" y2="'+Y(0)+'" stroke="#7b998a" stroke-width="1.5"/>'+
+    '<line x1="'+X(0)+'" y1="14" x2="'+X(0)+'" y2="200" stroke="#7b998a" stroke-width="1.5"/>'+
+    '<g clip-path="url(#small-quad-clip)"><path d="'+path+'" stroke="#367664" stroke-width="3.5" fill="none"/></g>'+
+    '<circle cx="'+X(1)+'" cy="'+Y(-3)+'" r="5" fill="#c79756" stroke="white" stroke-width="2"/>'+
+    '<text x="'+(X(1)+11)+'" y="'+(Y(-3)+16)+'" font-size="13" font-family="Georgia" fill="#315b47">(1, −3)</text>'+
+    '<text x="283" y="'+(Y(0)-7)+'" font-size="13" fill="#355b48">x</text>'+
+    '<text x="'+(X(0)+9)+'" y="22" font-size="13" fill="#355b48">y</text>'+
+  '</svg>';
 }
 function heading(title,description){
   return '<h1 class="page-title" id="page-title" tabindex="-1">'+e(title)+'</h1>'+
     '<p class="page-subtitle">'+e(description)+'</p>';
 }
-function renderLessonPage(page,topic){
+function renderLessonPage(page,topic,route){
   return '<div class="lesson-page">'+page.blocks.map(block=>{
     if(block.kind==='text')return '<p class="lesson-text">'+e(block.text)+'</p>';
     if(block.kind==='note')return '<aside class="callout"><p>'+e(block.text)+'</p></aside>';
@@ -209,6 +221,14 @@ function renderLessonPage(page,topic){
         block.headers.map(h=>'<th scope="col">'+e(h)+'</th>').join('')+'</tr></thead><tbody>'+
         block.rows.map(row=>'<tr>'+row.map(value=>'<td>'+e(value)+'</td>').join('')+'</tr>').join('')+
         '</tbody></table></div>';
+    }
+    if(block.kind==='concept-check'){
+      const key=understandKey(route,block.id);
+      return renderConceptCheck(block,key,state.understand.checks[key]);
+    }
+    if(block.kind==='stepper'){
+      const key=understandKey(route,block.id);
+      return renderWalkthrough(block,key,state.understand.steppers[key]||0);
     }
     return '';
   }).join('')+'</div>';
