@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {TOPICS} from '../src/topics.js';
 
 test('Contents and chapter tabs offer real navigation',async({page})=>{
   await page.goto('/#/sampling/home');
@@ -7,7 +8,7 @@ test('Contents and chapter tabs offer real navigation',async({page})=>{
   await expect(page.locator('.chapter-tabs')).toBeVisible();
   await expect(page.locator('.side-tabs')).toHaveCount(0);
   await page.locator('.chapter-tabs').getByRole('link',{name:'Memorise'}).click();
-  await expect(page.getByRole('heading',{name:'Make it stick.'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Flashcards'})).toBeVisible();
   await expect(page.locator('.chapter-tab[aria-current="page"]')).toContainText('Memorise');
   await expect(page.locator('.side-tab')).toHaveCount(3);
   await expect(page.locator('.side-tab[aria-current="page"]')).toContainText('Flashcards');
@@ -23,7 +24,7 @@ test('topic selection reconfigures chapters without dead tabs',async({page})=>{
   await expect(page.locator('.chapter-tab')).toHaveCount(6);
   await expect(page.locator('.chapter-tabs').getByRole('link',{name:'Fluency'})).toBeVisible();
   await expect(page.locator('.chapter-tabs').getByRole('link',{name:'Reasoning'})).toHaveCount(0);
-  await expect(page.getByText('Every curve tells a story.')).toBeVisible();
+  await expect(page.locator('.cover-title').getByText('Quadratic Functions')).toBeVisible();
 });
 
 test('flashcards flip, rate and show the whole deck',async({page})=>{
@@ -41,11 +42,11 @@ test('flashcards flip, rate and show the whole deck',async({page})=>{
   await expect(page.locator('#ratings')).toBeVisible();
   await page.getByRole('button',{name:'Know'}).click();
   await expect(page.locator('#flashcard')).toHaveAttribute('aria-pressed','false');
-  await expect(page.getByText('Rated in this preview')).toBeVisible();
+  await expect(page.getByText('Cards rated')).toBeVisible();
   await page.locator('.deck-browser summary').click();
   await expect(page.locator('.deck-browser li')).toHaveCount(6);
   await page.getByRole('button',{name:'Restart'}).click();
-  await expect(page.locator('.flashcard-counter')).toContainText('01 / 06');
+  await expect(page.locator('.flashcard-counter')).toContainText('Card 1 of 6');
 });
 
 test('Match Up and Missing Words are keyboard-friendly',async({page})=>{
@@ -110,4 +111,45 @@ test('reduced motion and keyboard controls retain content access',async({page})=
   await page.locator('#flashcard').focus();
   await page.keyboard.press('Space');
   await expect(page.locator('#flashcard')).toHaveAttribute('aria-pressed','true');
+});
+
+
+test('each contents page has one heading and one description',async({page})=>{
+  for(const topic of Object.values(TOPICS)){
+    await page.goto('/#/'+topic.id+'/home');
+    await expect(page.locator('.book-page h1')).toHaveCount(1);
+    await expect(page.locator('.book-page h1')).toHaveText('Contents');
+    await expect(page.locator('.contents-heading > p')).toHaveCount(1);
+    await expect(page.locator('.cover-title')).toHaveText(topic.title);
+    await expect(page.locator('.contents-sticky, .page-eyebrow, .book-kicker')).toHaveCount(0);
+  }
+});
+
+test('every subsection uses its real title and one helpful description',async({page})=>{
+  for(const topic of Object.values(TOPICS)){
+    for(const [chapterId,sections] of Object.entries(topic.chapters)){
+      for(const section of sections){
+        await page.goto('/#/'+topic.id+'/'+chapterId+'/'+section.id);
+        await expect(page.locator('.book-page h1')).toHaveCount(1);
+        await expect(page.locator('#page-title')).toHaveText(section.label);
+        await expect(page.locator('.page-subtitle')).toHaveCount(1);
+        const text=await page.locator('.page-subtitle').innerText();
+        expect(text.trim().length,topic.id+'/'+chapterId+'/'+section.id).toBeGreaterThan(15);
+        await expect(page.locator('.page-eyebrow, .preview-label, .prototype-notice, .book-kicker, .side-tabs__note')).toHaveCount(0);
+        await expect(page.locator('.crumbs')).not.toContainText(section.label);
+      }
+    }
+  }
+});
+
+test('page instructions do not repeat within activity panels',async({page})=>{
+  await page.goto('/#/sampling/memorise/flashcards');
+  await expect(page.locator('.memory-sidebar h2, .memory-sidebar p, .flashcard__eyebrow, .flashcard__bottom')).toHaveCount(0);
+  await expect(page.locator('.self-ratings')).toBeHidden();
+  await page.goto('/#/quadratics/fluency/graph-lab');
+  await expect(page.locator('.graph-card h2, .graph-controls h2, .graph-controls > p, .graph-topline')).toHaveCount(0);
+  await expect(page.locator('#equation-display')).toBeVisible();
+  await page.goto('/#/sampling/memorise/match-up');
+  await expect(page.locator('.match-column h2, .prototype-notice')).toHaveCount(0);
+  await expect(page.locator('.match-column__label')).toHaveText(['Terms','Definitions']);
 });

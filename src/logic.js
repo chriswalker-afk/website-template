@@ -41,7 +41,7 @@ export function validateTopics(topics=TOPICS){
   const issues=[];
   for(const [key,topic] of Object.entries(topics)){
     if(!isSlug(key)||topic.id!==key)issues.push(key+': invalid topic ID');
-    if(!topic.title||!topic.coverTitle)issues.push(key+': missing titles');
+    if(!topic.title)issues.push(key+': missing title');
     if(!Array.isArray(topic.cards)||topic.cards.length<3)issues.push(key+': at least three flashcards required');
     const ids=new Set();
     for(const card of (topic.cards||[])){

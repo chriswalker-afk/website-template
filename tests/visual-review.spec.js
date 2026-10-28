@@ -8,7 +8,7 @@ test('render representative visual-review images',async({page})=>{
   await expect(page.getByRole('heading',{name:'Contents'})).toBeVisible();
   await page.screenshot({path:'visual-review/01-contents-desktop.png',fullPage:true,animations:'disabled'});
   await page.goto('/#/sampling/memorise/flashcards');
-  await expect(page.getByRole('heading',{name:'Make it stick.'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Flashcards'})).toBeVisible();
   await page.screenshot({path:'visual-review/02-flashcards-desktop.png',fullPage:true,animations:'disabled'});
   await page.goto('/#/quadratics/fluency/graph-lab');
   await expect(page.locator('#graph-svg')).toBeVisible();
