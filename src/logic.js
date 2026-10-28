@@ -7,6 +7,8 @@ import {validateReasoningContent} from './reasoning-engine.js';
 import {REASONING_CHAPTERS} from './reasoning-content.js';
 import {PROBLEM_SOLVING_CHAPTERS} from './problem-solving-content.js';
 import {validateProblemSolvingChapters} from './problem-solving-engine.js';
+import {MODELLING_CHAPTERS} from './modelling-content.js';
+import {validateModellingChapters} from './modelling-engine.js';
 
 export const CHAPTER_BY_ID=Object.fromEntries(CHAPTER_LIBRARY.map(c=>[c.id,c]));
 export const KNOWN_CHAPTER_IDS=CHAPTER_LIBRARY.map(c=>c.id);
@@ -35,7 +37,7 @@ const MODE_PAGE_TYPES={
   fluency:new Set(['fluency']),
   reasoning:new Set(['reasoning']),
   problemSolving:new Set(['problem-solving']),
-  modelling:new Set(['questions']),
+  modelling:new Set(['modelling']),
   games:new Set(['game']),
   examPractice:new Set(['questions'])
 };
@@ -131,6 +133,8 @@ export function validateTopics(topics=TOPICS){
             issues.push(key+': missing lesson blocks '+page.id);
           if(page.type==='questions'&&(!Array.isArray(page.problems)||!page.problems.length))
             issues.push(key+': missing problems '+page.id);
+          if(page.type==='modelling'&&(!Array.isArray(page.tasks)||page.tasks.length<2))
+            issues.push(key+': incomplete modelling activities '+page.id);
           if(page.type==='problem-solving'&&(!Array.isArray(page.tasks)||page.tasks.length<2))
             issues.push(key+': missing problem-solving tasks '+page.id);
           if(page.type==='reasoning'&&(!Array.isArray(page.tasks)||page.tasks.length<4))
@@ -159,9 +163,13 @@ export function validateTopics(topics=TOPICS){
     if(topic.chapters?.problemSolving?.length&&
       JSON.stringify(topic.chapters.problemSolving)!==JSON.stringify(PROBLEM_SOLVING_CHAPTERS[key]))
       issues.push(key+': invalid Problem Solving level/page/task definitions');
+    if(topic.chapters?.modelling?.length&&
+      JSON.stringify(topic.chapters.modelling)!==JSON.stringify(MODELLING_CHAPTERS[key]))
+      issues.push(key+': invalid Modelling level/page/task definitions');
   }
   issues.push(...validateFluencyChapters().map(message=>'Fluency: '+message));
   issues.push(...validateReasoningContent().map(message=>'Reasoning: '+message));
   issues.push(...validateProblemSolvingChapters().map(message=>'Problem Solving: '+message));
+  issues.push(...validateModellingChapters().map(message=>'Modelling: '+message));
   return issues;
 }
