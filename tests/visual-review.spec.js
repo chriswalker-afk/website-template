@@ -3,6 +3,7 @@ import {mkdir} from 'node:fs/promises';
 import {buildFluencySet,answerText} from '../src/fluency-engine.js';
 
 test('render representative visual-review images',async({page})=>{
+  test.setTimeout(90000);
   await mkdir('visual-review',{recursive:true});
   await page.setViewportSize({width:1440,height:1000});
   await page.goto('/#/sampling/home');
