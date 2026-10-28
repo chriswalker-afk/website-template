@@ -233,10 +233,15 @@ function fluencyTextTex(text){
     '²':'\\textsuperscript{2}','−':'\\( - \\)','×':'\\(\\times\\)',
     '÷':'\\(\\div\\)','±':'\\(\\pm\\)','≈':'\\(\\approx\\)'
   };
-  const source=String(text),parts=source.match(/√\d+|./gu)||[];
-  return parts.map(part=>part.startsWith('√')?
-    '\\(\\sqrt{'+part.slice(1)+'}\\)':
-    symbols[part]||escapeLatexText(part)).join('');
+  const parts=String(text).match(/√\([^()]*\)|√(?:\d+|[A-Za-z])|./gu)||[];
+  return parts.map(part=>{
+    if(part.startsWith('√')){
+      const token=part.slice(1).replace(/^\((.*)\)$/u,'$1')
+        .replaceAll('²','^{2}').replaceAll('−','-');
+      return '\\(\\sqrt{'+token+'}\\)';
+    }
+    return symbols[part]||escapeLatexText(part);
+  }).join('');
 }
 function toWorksheetFluencyQuestion(q){
   const list='\\begin{enumerate}[label=(\\alph*),leftmargin=*,itemsep=3pt]'+
