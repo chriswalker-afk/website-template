@@ -1,4 +1,9 @@
 import {CHAPTER_LIBRARY,TOPICS} from './topics.js';
+import {emptyMemory,hydrateMemory,gradeCard,toggleCardFlag,deckQueue,matchRoundCards,
+  assessTerm,recordFor} from './memorise-engine.js';
+import {renderFlashcards as memoryFlashcards,renderMatch as memoryMatch,
+  renderCloze as memoryCloze,renderSpeedRecall as memorySpeedRecall,
+  renderReviewAll as memoryReviewAll,renderReviewList} from './memorise-ui.js';
 import {generateWorksheet,supportsWorksheets,worksheetSkills} from './worksheet-generator.js';
 import {GRAPH_DEFAULTS,quadraticProperties,quadraticValue,quadraticEquation} from './understand-engine.js';
 import {understandKey,renderSteps,renderConceptCheck,renderWalkthrough,renderSamplingLab,renderWorkshop} from './understand-ui.js';
@@ -26,15 +31,47 @@ function getBookmarks(){
 const state={
   route:null, motionOff:safeStorage.get('motion-off')==='true', bookmarks:getBookmarks(),
   lastPage:safeStorage.get('last-page'),
-  flash:{index:0,flipped:false,ratings:{}},
-  match:{term:null,definition:null,matched:[],message:''},
-  cloze:{value:'',hint:false,checked:false,correct:false},
-  recall:{index:0,value:'',checked:false,correct:false},
+  memory:{},
+  flash:null,match:null,cloze:null,recall:null,review:null,
   understand:{steppers:{},checks:{},workshops:{},labs:{},graphs:{}},
   revealed:{},
   worksheets:{}
 };
 let lastTopic=null;
+
+function memoryFor(topic){
+  if(!state.memory[topic.id])
+    state.memory[topic.id]=hydrateMemory(safeStorage.get('memorise:'+topic.id),topic);
+  return state.memory[topic.id];
+}
+function saveMemory(topic,next){
+  state.memory[topic.id]=next;
+  safeStorage.put('memorise:'+topic.id,JSON.stringify(next));
+}
+function flashSession(topic,mode='all'){
+  return {mode,ids:deckQueue(topic,memoryFor(topic),mode),index:0,flipped:false,complete:false,rated:0};
+}
+function clozeSession(topic,mode='all'){
+  const priority=deckQueue(topic,memoryFor(topic),mode);
+  const ids=mode==='all'?topic.clozes.map(c=>c.id):
+    priority.flatMap(cardId=>topic.clozes.filter(c=>c.cardId===cardId).map(c=>c.id));
+  return {mode,ids,
+    index:0,value:'',hint:false,checked:false,correct:false,resultKind:null,complete:false,correctCount:0};
+}
+function recallSession(topic,mode='all'){
+  return {mode,ids:deckQueue(topic,memoryFor(topic),mode),index:0,value:'',
+    checked:false,correct:false,resultKind:null,complete:false,correctCount:0};
+}
+function resetMemoriseSessions(topic){
+  state.flash=flashSession(topic);
+  state.match={round:0,term:null,definition:null,matched:[],message:''};
+  state.cloze=clozeSession(topic);
+  state.recall=recallSession(topic);
+  state.review={query:'',filter:'all',showDefinitions:true,confirmReset:false};
+}
+function currentFlashCard(topic){
+  return topic.cards.find(c=>c.id===state.flash?.ids?.[state.flash.index]);
+}
 
 function announce(message){status.textContent='';status.textContent=message;}
 function selected(value,expected){return value===expected?' selected':'';}
@@ -259,86 +296,12 @@ function renderGamePage(page){
     '<p class="game-feature__notice"><strong>Planned game:</strong> '+e(page.mechanic)+'</p></div>'+
   '</section>';
 }
-function renderReviewAll(topic){
-  return '<ol class="review-deck">'+topic.cards.map(card=>
-    '<li><strong>'+e(card.term)+'</strong><p>'+e(card.definition)+'</p></li>').join('')+'</ol>';
-}
-function renderSpeedRecall(topic){
-  const recall=state.recall,card=cardForIndex(topic,recall.index);
-  return '<div class="recall-workspace">'+
-    '<div class="flashcard-counter">Definition '+(recall.index+1)+' of '+topic.cards.length+'</div>'+
-    '<p class="recall-definition">'+e(card.definition)+'</p>'+
-    '<form id="recall-form" class="recall-form">'+
-      '<label for="recall-answer">Mathematical term</label>'+
-      '<input id="recall-answer" type="text" autocomplete="off" spellcheck="false" required value="'+e(recall.value)+'">'+
-      '<button class="action-button" type="submit">Check answer</button></form>'+
-    (recall.checked?'<p class="game-feedback" role="status" data-state="'+(recall.correct?'correct':'incorrect')+'">'+
-      (recall.correct?'Correct.':('The term is '+e(card.term)+'.'))+'</p>':'')+
-    '<button class="quiet-button recall-next" type="button" data-action="recall-next">'+
-      'Next definition '+icon('arrow')+'</button></div>';
-}
-function renderFlashcards(topic){
-  const f=state.flash,card=cardForIndex(topic,f.index),rating=f.ratings[card.id];
-  return '<div class="memory-layout">'+
-      '<section><div class="flashcard-counter"><span>Card '+(f.index+1)+' of '+topic.cards.length+'</span>'+
-        (rating?'<span>Last rated: '+e(rating)+'</span>':'')+'</div>'+
-      '<div class="flashcard-stage"><button class="flashcard'+(f.flipped?' is-flipped':'')+
-        '" type="button" id="flashcard" data-action="flash-flip" '+
-        'aria-label="'+(f.flipped?'Show front of '+e(card.term):'Reveal answer for '+e(card.term))+
-        '" aria-pressed="'+f.flipped+'">'+
-        '<span class="flashcard__inner">'+
-          '<span class="flashcard__face flashcard__face--front" aria-hidden="'+f.flipped+'">'+
-            '<span class="flashcard__main">'+e(card.term)+'</span>'+
-          '</span>'+
-          '<span class="flashcard__face flashcard__face--back" aria-hidden="'+!f.flipped+'">'+
-            '<span class="flashcard__main">'+e(card.definition)+'</span>'+
-          '</span>'+
-        '</span></button></div>'+
-      '<div class="flashcard-controls">'+
-        '<button class="nav-button" type="button" data-action="flash-prev" aria-label="Previous card">'+icon('arrow-left')+' Previous</button>'+
-        '<button class="nav-button" type="button" data-action="flash-next">Next '+icon('arrow')+'</button>'+
-        '<button class="quiet-button" type="button" data-action="flash-restart">'+icon('refresh')+' Restart</button>'+
-      '</div>'+
-      '<div class="self-ratings" id="ratings" role="group" aria-label="Rate your recall"'+(f.flipped?'':' hidden')+'>'+
-        '<small>Rate your recall:</small>'+
-        ['Again','Nearly','Know'].map(value=>'<button type="button" class="rating" data-action="flash-rate" data-rating="'+value+'">'+value+'</button>').join('')+
-      '</div></section>'+
-    '<aside class="memory-sidebar" aria-label="Deck progress">'+
-      '<div class="stat"><span>Cards in deck</span><strong>'+topic.cards.length+'</strong></div>'+
-      '<div class="stat"><span>Cards rated</span><strong>'+Object.keys(f.ratings).length+'</strong></div>'+
-    '</aside></div>'+
-    '<details class="deck-browser"><summary>Browse all '+topic.cards.length+' cards</summary>'+
-      '<ol>'+topic.cards.map(c=>'<li><strong>'+e(c.term)+'</strong><span>'+e(c.definition)+'</span></li>').join('')+'</ol></details>';
-}
-function renderMatch(topic){
-  const game=state.match,items=sampleMatchCards(topic),defOrder=[...items].reverse();
-  const complete=game.matched.length===items.length;
-  const button=(card,side,label)=>'<button type="button" class="match-choice" data-action="match-choice" data-side="'+side+'" data-id="'+e(card.id)+'" '+
-    'aria-pressed="'+(game[side]===card.id)+'" '+(game.matched.includes(card.id)?'disabled':'')+'>'+e(label)+'</button>';
-  return '<div class="match-columns">'+
-      '<section class="match-column" aria-label="Terms"><p class="match-column__label">Terms</p>'+
-        items.map(card=>button(card,'term',card.term)).join('')+'</section>'+
-      '<section class="match-column" aria-label="Definitions"><p class="match-column__label">Definitions</p>'+
-        defOrder.map(card=>button(card,'definition',card.definition)).join('')+'</section>'+
-    '</div>'+
-    '<div class="game-feedback" id="match-feedback" role="status">'+
-       e(complete?'All '+items.length+' pairs matched.':game.message||(game.matched.length+' of '+items.length+' pairs matched.'))+
-    '</div><button type="button" class="quiet-button" data-action="match-reset">'+icon('refresh')+' Start again</button>';
-}
-function renderCloze(topic){
-  const game=state.cloze,c=topic.cloze;
-  return '<section class="cloze-area">'+
-      '<form id="cloze-form"><p class="cloze-line">'+e(c.before)+
-        '<label class="sr-only" for="cloze-answer">Missing mathematical word or phrase</label>'+
-        '<input class="cloze-input" id="cloze-answer" name="answer" autocomplete="off" spellcheck="false" value="'+e(game.value)+'" aria-describedby="cloze-feedback">'+
-        e(c.after)+'</p>'+
-      '<div class="form-actions"><button class="action-button" type="submit">Check answer '+icon('check')+'</button>'+
-      '<button class="quiet-button" type="button" data-action="cloze-hint" aria-expanded="'+game.hint+'">'+(game.hint?'Hide hint':'Give me a hint')+'</button></div></form>'+
-      (game.hint?'<p class="reveal-answer">Hint: '+e(c.hint)+'</p>':'')+
-      '<div id="cloze-feedback" class="game-feedback" role="status" data-state="'+(game.checked?(game.correct?'correct':'incorrect'):'')+'">'+
-        (game.checked?(game.correct?'Correct.':'Check the term and try again.'):'')+'</div>'+
-    '</section>';
-}
+function renderReviewAll(topic){return memoryReviewAll(topic,memoryFor(topic),state.review);}
+function renderSpeedRecall(topic){return memorySpeedRecall(topic,memoryFor(topic),state.recall);}
+function renderFlashcards(topic){return memoryFlashcards(topic,memoryFor(topic),state.flash);}
+function renderMatch(topic){return memoryMatch(topic,memoryFor(topic),state.match);}
+function renderCloze(topic){return memoryCloze(topic,memoryFor(topic),state.cloze);}
+
 function renderGraphSvg(model){
   const {h,k}=quadraticProperties(model);
   const X=x=>60+(x+5)*55,Y=y=>210-y*22;
@@ -508,10 +471,7 @@ function navigate(){
   const next=resolveRoute(location.hash);
   if(location.hash!==next.canonical){history.replaceState(null,'',next.canonical);}
   if(next.topicId!==lastTopic){
-    state.flash={index:0,flipped:false,ratings:{}};
-    state.match={term:null,definition:null,matched:[],message:''};
-    state.cloze={value:'',hint:false,checked:false,correct:false};
-    state.recall={index:0,value:'',checked:false,correct:false};
+    resetMemoriseSessions(TOPICS[next.topicId]);
     state.understand={steppers:{},checks:{},workshops:{},labs:{},graphs:{}};
     state.revealed={};
     lastTopic=next.topicId;
@@ -534,7 +494,8 @@ function rerender(){
 function updateFlashFlip(){
   const cardEl=document.querySelector('#flashcard');
   if(!cardEl)return;
-  const f=state.flash,card=cardForIndex(TOPICS[state.route.topicId],f.index);
+  const f=state.flash,card=currentFlashCard(TOPICS[state.route.topicId]);
+  if(!card)return;
   cardEl.classList.toggle('is-flipped',f.flipped);
   cardEl.setAttribute('aria-pressed',String(f.flipped));
   cardEl.setAttribute('aria-label',f.flipped?'Show front of '+card.term:'Reveal answer for '+card.term);
@@ -566,43 +527,142 @@ app.addEventListener('click',ev=>{
     announce(state.bookmarks.has(state.route.canonical)?'Page bookmarked':'Bookmark removed');
     rerender();
     document.querySelector('button[data-action="bookmark"]')?.focus({preventScroll:true});
+  }else if(action==='flash-mode'){
+    const mode=button.dataset.mode;
+    if(!['all','focus','due'].includes(mode))return;
+    state.flash=flashSession(topic,mode);
+    rerender();announce(mode==='focus'?'Priority practice selected.':'Flashcard mode changed.');
+    document.querySelector('button[data-action="flash-mode"][data-mode="'+mode+'"]')?.focus({preventScroll:true});
   }else if(action==='flash-flip'){
+    if(!currentFlashCard(topic)||state.flash.complete)return;
     state.flash.flipped=!state.flash.flipped;updateFlashFlip();
-    announce(state.flash.flipped?'Answer revealed. Rate your recall.':'Question shown.');
+    announce(state.flash.flipped?'Definition revealed. Rate your recall.':'Term shown.');
   }else if(action==='flash-next'||action==='flash-prev'){
     const increment=action==='flash-next'?1:-1;
-    state.flash.index=(state.flash.index+increment+topic.cards.length)%topic.cards.length;
-    state.flash.flipped=false;rerender();
-    document.querySelector('button[data-action="'+action+'"]')?.focus({preventScroll:true});
+    const f=state.flash;
+    f.index=Math.max(0,Math.min(f.ids.length-1,f.index+increment));
+    f.flipped=false;rerender();
+    document.querySelector('button[data-action="'+action+'"]:not(:disabled)')?.focus({preventScroll:true});
   }else if(action==='flash-restart'){
-    state.flash={index:0,flipped:false,ratings:{}};rerender();announce('Deck restarted');
-    document.querySelector('button[data-action="flash-restart"]')?.focus({preventScroll:true});
+    state.flash=flashSession(topic,state.flash.mode);
+    rerender();announce('New flashcard round. Saved reviews are retained.');
+    document.querySelector('#flashcard,button[data-action="flash-mode"]')?.focus({preventScroll:true});
   }else if(action==='flash-rate'){
-    if(!state.flash.flipped)return;
-    const card=cardForIndex(topic,state.flash.index);
-    state.flash.ratings[card.id]=button.dataset.rating;
-    state.flash.index=(state.flash.index+1)%topic.cards.length;
-    state.flash.flipped=false;rerender();announce('Rated '+card.term+' '+button.dataset.rating+'. Next card.');
-    document.querySelector('#flashcard')?.focus({preventScroll:true});
+    const f=state.flash,card=currentFlashCard(topic),rating=button.dataset.rating;
+    if(!f.flipped||!card||!['again','nearly','know'].includes(rating))return;
+    saveMemory(topic,gradeCard(memoryFor(topic),topic,card.id,rating,'flashcards'));
+    f.rated++;
+    if(f.index===f.ids.length-1)f.complete=true;
+    else f.index++;
+    f.flipped=false;rerender();
+    announce('Rated '+card.term+': '+rating+'. Progress saved locally.');
+    document.querySelector('#flashcard,button[data-action="flash-restart"]')?.focus({preventScroll:true});
+  }else if(action==='memory-flag'){
+    const id=button.dataset.id;
+    if(!topic.cards.some(c=>c.id===id))return;
+    saveMemory(topic,toggleCardFlag(memoryFor(topic),topic,id));
+    rerender();announce('Review flag updated for '+topic.cards.find(c=>c.id===id).term+'.');
+    document.querySelector('button[data-action="memory-flag"][data-id="'+id+'"],#review-filter')
+      ?.focus({preventScroll:true});
   }else if(action==='match-choice'){
     const side=button.dataset.side,id=button.dataset.id,m=state.match;
-    if(m.matched.includes(id))return;
+    const roundCards=matchRoundCards(topic,m.round,4);
+    if(!['term','definition'].includes(side)||!roundCards.some(c=>c.id===id)||m.matched.includes(id))return;
     m[side]=m[side]===id?null:id;
     if(m.term&&m.definition){
-      if(m.term===m.definition){m.matched.push(m.term);m.message='Correct pair connected.';announce(m.message);}
-      else {m.message='Not quite. Compare the defining details and try again.';announce(m.message);}
+      if(m.term===m.definition){
+        m.matched.push(m.term);
+        saveMemory(topic,gradeCard(memoryFor(topic),topic,m.term,'nearly','match-up',Date.now(),true));
+        m.message='Correct pair connected.';
+      }else{
+        saveMemory(topic,gradeCard(memoryFor(topic),topic,m.term,'again','match-up'));
+        m.message='Not quite. Compare the exact meaning of each term.';
+      }
+      announce(m.message);
       m.term=null;m.definition=null;
     }else m.message=side==='term'?'Term selected. Now choose its definition.':'Definition selected. Now choose its term.';
     rerender();
     const matching=document.querySelector('.match-choice[data-side="'+side+'"][data-id="'+id+'"]');
     (matching&&!matching.disabled?matching:document.querySelector('.match-choice:not(:disabled)'))?.focus({preventScroll:true});
+  }else if(action==='match-next'){
+    if(state.match.matched.length!==matchRoundCards(topic,state.match.round,4).length)return;
+    state.match={round:state.match.round+1,term:null,definition:null,matched:[],message:''};
+    rerender();announce('Next matching round opened.');
+    document.querySelector('.match-choice')?.focus({preventScroll:true});
   }else if(action==='match-reset'){
-    state.match={term:null,definition:null,matched:[],message:''};rerender();announce('Matching game restarted');
-    document.querySelector('button[data-action="match-reset"]')?.focus({preventScroll:true});
+    state.match={...state.match,term:null,definition:null,matched:[],message:''};
+    rerender();announce('This matching round restarted. Saved learning history was retained.');
+    document.querySelector('.match-choice')?.focus({preventScroll:true});
+  }else if(action==='cloze-mode'){
+    const mode=button.dataset.mode;
+    if(!['all','focus'].includes(mode))return;
+    state.cloze=clozeSession(topic,mode);rerender();
+    announce('Missing Words '+mode+' practice selected.');
+    document.querySelector('button[data-action="cloze-mode"][data-mode="'+mode+'"]')?.focus({preventScroll:true});
   }else if(action==='cloze-hint'){
-    const input=document.querySelector('#cloze-answer');state.cloze.value=input?.value||state.cloze.value;
+    if(state.cloze.checked)return;
     state.cloze.hint=!state.cloze.hint;rerender();
     document.querySelector('#cloze-answer')?.focus({preventScroll:true});
+  }else if(action==='cloze-reveal'){
+    if(state.cloze.checked)return;
+    const item=topic.clozes.find(c=>c.id===state.cloze.ids[state.cloze.index]);
+    if(!item)return;
+    saveMemory(topic,gradeCard(memoryFor(topic),topic,item.cardId,'again','missing-words'));
+    Object.assign(state.cloze,{checked:true,correct:false,resultKind:'revealed'});
+    rerender();announce('Answer revealed: '+item.answer+'. Marked for further review.');
+    document.querySelector('button[data-action="cloze-next"]')?.focus({preventScroll:true});
+  }else if(action==='cloze-next'){
+    if(!state.cloze.checked)return;
+    if(state.cloze.index===state.cloze.ids.length-1)state.cloze.complete=true;
+    else state.cloze.index++;
+    Object.assign(state.cloze,{value:'',hint:false,checked:false,correct:false,resultKind:null});
+    rerender();
+    document.querySelector('#cloze-answer,button[data-action="cloze-restart"]')?.focus({preventScroll:true});
+  }else if(action==='cloze-restart'){
+    state.cloze=clozeSession(topic,state.cloze.mode);
+    rerender();announce('Missing Words round restarted. Saved reviews retained.');
+    document.querySelector('#cloze-answer,button[data-action="cloze-mode"]')?.focus({preventScroll:true});
+  }else if(action==='recall-mode'){
+    const mode=button.dataset.mode;
+    if(!['all','focus','due'].includes(mode))return;
+    state.recall=recallSession(topic,mode);
+    rerender();announce('Speed Recall '+mode+' practice selected.');
+    document.querySelector('button[data-action="recall-mode"][data-mode="'+mode+'"]')?.focus({preventScroll:true});
+  }else if(action==='recall-reveal'){
+    if(state.recall.checked)return;
+    const card=topic.cards.find(c=>c.id===state.recall.ids[state.recall.index]);
+    if(!card)return;
+    saveMemory(topic,gradeCard(memoryFor(topic),topic,card.id,'again','speed-recall'));
+    Object.assign(state.recall,{checked:true,correct:false,resultKind:'revealed'});
+    rerender();announce('Term revealed: '+card.term+'. Added to priority practice.');
+    document.querySelector('button[data-action="recall-next"]')?.focus({preventScroll:true});
+  }else if(action==='recall-next'){
+    if(!state.recall.checked)return;
+    if(state.recall.index===state.recall.ids.length-1)state.recall.complete=true;
+    else state.recall.index++;
+    Object.assign(state.recall,{value:'',checked:false,correct:false,resultKind:null});
+    rerender();
+    document.querySelector('#recall-answer,button[data-action="recall-restart"]')?.focus({preventScroll:true});
+  }else if(action==='recall-restart'){
+    state.recall=recallSession(topic,state.recall.mode);
+    rerender();announce('Speed Recall restarted. Saved reviews retained.');
+    document.querySelector('#recall-answer,button[data-action="recall-mode"]')?.focus({preventScroll:true});
+  }else if(action==='review-definitions'){
+    state.review.showDefinitions=!state.review.showDefinitions;
+    rerender();
+    document.querySelector('button[data-action="review-definitions"]')?.focus({preventScroll:true});
+  }else if(action==='memory-ask-reset'){
+    state.review.confirmReset=true;rerender();
+    document.querySelector('button[data-action="memory-cancel-reset"]')?.focus({preventScroll:true});
+  }else if(action==='memory-cancel-reset'){
+    state.review.confirmReset=false;rerender();
+    document.querySelector('button[data-action="memory-ask-reset"]')?.focus({preventScroll:true});
+  }else if(action==='memory-confirm-reset'){
+    if(!state.review.confirmReset)return;
+    saveMemory(topic,emptyMemory());
+    resetMemoriseSessions(topic);
+    rerender();announce('Memorise progress reset for '+topic.title+' on this device.');
+    document.querySelector('#review-filter')?.focus({preventScroll:true});
   }else if(action==='understand-check'){
     const route=state.route,key=button.dataset.key,id=button.dataset.choice;
     const page=pagesFor(topic,route.chapterId,route.sectionId).find(p=>p.id===route.pageId);
@@ -721,13 +781,6 @@ app.addEventListener('click',ev=>{
     rerender();
     document.querySelector('button[data-action="reveal-problem"][data-key="'+key+'"][data-part="'+part+'"]')
       ?.focus({preventScroll:true});
-  }else if(action==='recall-next'){
-    state.recall={
-      index:(state.recall.index+1)%topic.cards.length,
-      value:'',checked:false,correct:false
-    };
-    rerender();
-    document.querySelector('#recall-answer')?.focus({preventScroll:true});
   }else if(action==='reveal'){
     const key=button.dataset.key;
     state.revealed[key]=!state.revealed[key];
@@ -736,6 +789,14 @@ app.addEventListener('click',ev=>{
   }
 });
 app.addEventListener('change',ev=>{
+  if(ev.target.id==='review-filter'){
+    const filter=ev.target.value;
+    if(!['all','new','focus','due','flagged'].includes(filter))return;
+    state.review.filter=filter;rerender();
+    document.querySelector('#review-filter')?.focus({preventScroll:true});
+    announce('Review filter changed to '+filter+'.');
+    return;
+  }
   const select=ev.target.closest('select[data-role]');
   if(!select)return;
   const route=state.route,topic=TOPICS[route.topicId];
@@ -749,6 +810,12 @@ app.addEventListener('input',ev=>{
   const target=ev.target;
   if(target.id==='cloze-answer'){state.cloze.value=target.value;state.cloze.checked=false;}
   if(target.id==='recall-answer'){state.recall.value=target.value;state.recall.checked=false;}
+  if(target.id==='review-search'){
+    state.review.query=target.value;
+    const results=document.getElementById('review-results');
+    if(results)results.innerHTML=renderReviewList(TOPICS[state.route.topicId],
+      memoryFor(TOPICS[state.route.topicId]),state.review);
+  }
   if(target.matches('textarea[data-understand-response]')){
     const key=target.dataset.understandResponse;
     if(key!==understandKey(state.route,'workshop'))return;
@@ -768,13 +835,21 @@ app.addEventListener('input',ev=>{
 app.addEventListener('submit',ev=>{
   if(ev.target.id==='recall-form'){
     ev.preventDefault();
-    const card=cardForIndex(TOPICS[state.route.topicId],state.recall.index);
-    state.recall.value=document.querySelector('#recall-answer').value;
-    state.recall.checked=true;
-    state.recall.correct=normaliseAnswer(state.recall.value)===normaliseAnswer(card.term);
+    if(state.recall.checked||state.recall.complete)return;
+    const topic=TOPICS[state.route.topicId];
+    const card=topic.cards.find(c=>c.id===state.recall.ids[state.recall.index]);
+    if(!card)return;
+    const input=document.querySelector('#recall-answer')?.value||'';
+    const others=topic.cards.filter(c=>c.id!==card.id)
+      .flatMap(c=>[c.term,...(c.aliases||[])]);
+    const verdict=assessTerm(input,card.term,card.aliases||[],others);
+    saveMemory(topic,gradeCard(memoryFor(topic),topic,card.id,verdict.grade,'speed-recall',
+      Date.now(),verdict.correct));
+    Object.assign(state.recall,{value:input,checked:true,correct:verdict.correct,
+      resultKind:verdict.kind,correctCount:state.recall.correctCount+(verdict.correct?1:0)});
     rerender();
-    announce(state.recall.correct?'Correct recall':'Answer revealed: '+card.term);
-    document.querySelector('#recall-answer')?.focus({preventScroll:true});
+    announce(verdict.correct?'Term recalled correctly.':'Review the term: '+card.term);
+    document.querySelector('button[data-action="recall-next"]')?.focus({preventScroll:true});
     return;
   }
   if(ev.target.id==='worksheet-form'){
@@ -807,11 +882,21 @@ app.addEventListener('submit',ev=>{
   }
   if(ev.target.id!=='cloze-form')return;
   ev.preventDefault();
-  state.cloze.value=document.querySelector('#cloze-answer').value;
-  state.cloze.checked=true;
-  state.cloze.correct=normaliseAnswer(state.cloze.value)===normaliseAnswer(TOPICS[state.route.topicId].cloze.answer);
-  rerender();announce(state.cloze.correct?'Correct missing words':'Not yet; try again');
-  document.querySelector('#cloze-answer')?.focus({preventScroll:true});
+  const topic=TOPICS[state.route.topicId];
+  if(state.cloze.checked||state.cloze.complete)return;
+  const item=topic.clozes.find(c=>c.id===state.cloze.ids[state.cloze.index]);
+  if(!item)return;
+  const input=document.querySelector('#cloze-answer')?.value||'';
+  const others=topic.clozes.filter(c=>c.id!==item.id).map(c=>c.answer);
+  const verdict=assessTerm(input,item.answer,item.aliases||[],others);
+  const grade=!verdict.correct?'again':state.cloze.hint?'nearly':verdict.grade;
+  saveMemory(topic,gradeCard(memoryFor(topic),topic,item.cardId,grade,'missing-words',
+    Date.now(),verdict.correct));
+  Object.assign(state.cloze,{value:input,checked:true,correct:verdict.correct,
+    resultKind:verdict.kind,correctCount:state.cloze.correctCount+(verdict.correct?1:0)});
+  rerender();
+  announce(verdict.correct?'Correct missing words.':'Review the missing term: '+item.answer);
+  document.querySelector('button[data-action="cloze-next"]')?.focus({preventScroll:true});
 });
 
 document.querySelector('#skip-page').addEventListener('click',()=>{

@@ -51,12 +51,12 @@ test('flashcards preserve internal card progression without extra book pages',as
   await expect(flash).toHaveAttribute('aria-pressed','true');
   await page.getByRole('button',{name:'Know'}).click();
   await expect(flash).toHaveAttribute('aria-pressed','false');
-  await expect(page.getByText('Cards rated')).toBeVisible();
+  await expect(page.getByText('Cards rated this round')).toBeVisible();
   await expect(page.locator('.page-navigation')).toHaveCount(0);
   await page.locator('.deck-browser summary').click();
-  await expect(page.locator('.deck-browser li')).toHaveCount(6);
+  await expect(page.locator('.deck-browser li')).toHaveCount(12);
   await page.getByRole('button',{name:'Restart'}).click();
-  await expect(page.locator('.flashcard-counter')).toContainText('Card 1 of 6');
+  await expect(page.locator('.flashcard-counter')).toContainText('Card 1 of 12');
 });
 
 test('Memorise subsections have independent retrieval activities',async({page})=>{
@@ -74,9 +74,9 @@ test('Memorise subsections have independent retrieval activities',async({page})=
   await page.locator('#recall-answer').press('Enter');
   await expect(page.locator('.recall-workspace .game-feedback')).toContainText('Correct');
   await page.getByRole('button',{name:'Next definition'}).click();
-  await expect(page.locator('.flashcard-counter')).toHaveText('Definition 2 of 6');
+  await expect(page.locator('.flashcard-counter')).toContainText('Definition 2 of 12');
   await page.goto('/#/sampling/memorise/review-all');
-  await expect(page.locator('.review-deck li')).toHaveCount(6);
+  await expect(page.locator('.review-deck li')).toHaveCount(12);
 });
 
 test('the quadratic graph teaches shape separately from translations',async({page})=>{
