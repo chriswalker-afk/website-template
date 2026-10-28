@@ -76,7 +76,7 @@ Pipeline: filter families → select with seed → instantiate mathematical valu
 
 **Pass 5A — Worksheet Generator MVP:** build compact settings, seeded selection, original question families from Sampling and Quadratic Functions, source preview, student worksheet.tex and worked-solutions.tex, and browser/unit/export/compile tests.
 
-**Pass 5B — Advanced worksheets:** backswards-faded worked examples, richer mathematical types, original TikZ/PGFPlots diagrams, more question styles, better print layouts and extra solution formats.
+**Pass 5B — Advanced worksheets:** backwards-faded worked examples, richer mathematical types, original TikZ/PGFPlots diagrams, more question styles, better print layouts and extra solution formats.
 
 **Optional later pass — Compile to PDF:** add direct PDF export only once a reliable, secure compilation approach meets performance and correctness requirements.
 
