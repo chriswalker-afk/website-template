@@ -715,7 +715,7 @@ app.addEventListener('click',ev=>{
     const current=currentProblem(session);
     if(current&&!current.response.rating&&
       (current.response.plan.trim()||current.response.working.trim()||
-       current.response.hintCount||current.response.solutionStep)){
+       current.response.strategy||current.response.hintCount||current.response.solutionStep)){
       session.confirmSwitch=true;session.pendingSelection=selection;
       rerender();
       document.querySelector('button[data-action="ps-cancel"]')?.focus({preventScroll:true});
