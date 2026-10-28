@@ -7,7 +7,7 @@ import {emptyMemory,hydrateMemory,gradeCard,toggleCardFlag,deckQueue,matchRoundC
 import {renderFlashcards as memoryFlashcards,renderMatch as memoryMatch,
   renderCloze as memoryCloze,renderSpeedRecall as memorySpeedRecall,
   renderReviewAll as memoryReviewAll,renderReviewList} from './memorise-ui.js';
-import {generateWorksheet,supportsWorksheets,worksheetSkills} from './worksheet-generator.js';
+import {generateWorksheet,generateWorksheetFromFluencySet,supportsWorksheets,worksheetSkills} from './worksheet-generator.js';
 import {GRAPH_DEFAULTS,quadraticProperties,quadraticValue,quadraticEquation} from './understand-engine.js';
 import {understandKey,renderSteps,renderConceptCheck,renderWalkthrough,renderSamplingLab,renderWorkshop} from './understand-ui.js';
 import {chaptersFor,sectionsFor,pagesFor,chapterFor,routeHref,resolveRoute,topicSwitchHref,escapeHTML as e,normaliseAnswer,cardForIndex,sampleMatchCards,validateTopics} from './logic.js';
@@ -599,6 +599,19 @@ app.addEventListener('click',ev=>{
         state.route.sectionId,summary));
       rerender();announce('Fluency round complete; practice totals saved locally.');
       document.querySelector('.fluency-complete__lead')?.focus?.({preventScroll:true});
+    }
+  }else if(action==='fluency-worksheet'){
+    const session=fluencySession();
+    if(!session?.complete)return;
+    try{
+      const worksheet=worksheetState(topic);
+      const output=generateWorksheetFromFluencySet(session.set);
+      worksheet.options=output.options;
+      worksheet.result=output;worksheet.error='';
+      announce('Matching LaTeX worksheet and worked solutions prepared.');
+      location.hash=routeHref(topic.id,'resources','worksheet-generator');
+    }catch(error){
+      announce(error instanceof Error?error.message:'Unable to export Fluency worksheet.');
     }
   }else if(action==='fluency-retry'){
     const session=fluencySession();
