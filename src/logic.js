@@ -2,6 +2,7 @@ import {CHAPTER_LIBRARY,TOPICS,DEFAULT_TOPIC} from './topics.js';
 import {supportsWorksheets} from './worksheet-generator.js';
 import {validateUnderstandContent} from './understand-engine.js';
 import {validateMemoriseContent} from './memorise-engine.js';
+import {validateFluencyChapters,FLUENCY_CHAPTERS} from './fluency-engine.js';
 
 export const CHAPTER_BY_ID=Object.fromEntries(CHAPTER_LIBRARY.map(c=>[c.id,c]));
 export const KNOWN_CHAPTER_IDS=CHAPTER_LIBRARY.map(c=>c.id);
@@ -27,7 +28,7 @@ const isSlug=value=>typeof value==='string'&&/^[a-z][a-z0-9-]*$/.test(value);
 const MODE_PAGE_TYPES={
   understand:new Set(['lesson','graph','sampling-lab','workshop']),
   memorise:new Set(['flashcards','match-up','missing-words','speed-recall','review-all']),
-  fluency:new Set(['questions']),
+  fluency:new Set(['fluency']),
   reasoning:new Set(['questions']),
   problemSolving:new Set(['questions']),
   modelling:new Set(['questions']),
@@ -141,6 +142,10 @@ export function validateTopics(topics=TOPICS){
       issues.push(...validateUnderstandContent(topic.chapters.understand).map(message=>key+': '+message));
     if(topic.chapters?.memorise?.length)
       issues.push(...validateMemoriseContent(topic).map(message=>key+': '+message));
+    if(topic.chapters?.fluency?.length&&
+      JSON.stringify(topic.chapters.fluency)!==JSON.stringify(FLUENCY_CHAPTERS[key]))
+      issues.push(key+': invalid Fluency level/page definitions');
   }
+  issues.push(...validateFluencyChapters().map(message=>'Fluency: '+message));
   return issues;
 }
