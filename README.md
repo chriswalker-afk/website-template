@@ -2,13 +2,13 @@
 
 A reusable, topic-configurable foundation for high-quality Maths learning websites across age groups, curricula and qualifications.
 
-**Current status:** Interactive notebook prototype with a **quality-upgraded Understand mode**, three-level navigation, sample question levels and a working LaTeX Worksheet Generator. These remain authored demonstration topics rather than complete curriculum websites.
+**Current status:** Interactive notebook prototype with quality-upgraded **Understand and Memorise** modes, three-level navigation, topic-specific sample question levels and a working LaTeX Worksheet Generator. These remain authored demonstration topics rather than complete curriculum websites.
 
 ## Try the book prototype
 
 The static application starts at **index.html** and includes two contrasting sample books:
-- **Sampling Methods:** Understand includes misconception checks, step-reveal methods, a working comparison of census/random/systematic/stratified/convenience selection and gradual-release worked examples. Memorise, Fluency, Reasoning and Games previews are also included.
-- **Quadratic Functions:** Understand now includes conceptual diagnostics, completing-square walkthroughs, separate interactive graph shape and translation experiments, and Show me → Help me → My turn worked examples. Other modes and Games previews remain available.
+- **Sampling Methods:** Understand includes conceptual checks, step-reveal methods, interactive sampling experiments and gradual-release worked examples. Memorise now includes twelve cards, twelve contextual language prompts, multi-round matching, adaptive recall and local progress. Fluency, Reasoning and Games previews remain.
+- **Quadratic Functions:** Understand includes concept diagnostics, completing-square walkthroughs, interactive graph explorations and Show me → Help me → My turn worked examples. Memorise has the same twelve-card adaptive retrieval system; the other practice modes and Games previews remain available.
 
 Open **Contents → Worksheet Generator** in either sample topic. Choose skills, difficulty, number of questions, style and solution depth. It creates an on-screen question preview and downloads editable `worksheet.tex` and a matching `worked-solutions.tex` (or `answers.tex`). The optional scaffolded style includes an early worked model and hints. Questions are reproducible from a numerical seed. Compile the source in Overleaf or a local TeX installation; **the website does not compile PDFs directly**.
 
@@ -36,11 +36,12 @@ A modern, tabbed reference-book aesthetic built into the reusable shell: **chapt
 - [Worksheet Generator specification](docs/WORKSHEET_GENERATOR.md) — optional Contents/Resources tool, worksheet settings, reproducible question families, LaTeX output and worked-solution safeguards.
 - [Modes, subsections and pages](docs/MODE_SUBSECTION_PAGE_SYSTEM.md) — navigation hierarchy, default tabs, rules separating learning modes and deep links.
 - [Understand mode quality guide](docs/UNDERSTAND_MODE_GUIDE.md) — reusable components, mathematics/diagram checks and Show me → Help me → My turn educational sequence.
+- [Memorise mode quality guide](docs/MEMORISE_MODE_GUIDE.md) — reusable retrieval activities, saved per-card progress, review intervals, conservative terminology checks and privacy limitations.
 
 ## Design principles
 
 - **Qualification-neutral:** use learning modes such as Understand, Memorise, Fluency, Reasoning, Problem Solving and Modelling rather than AO1/AO2/AO3.
-- **Memorise is a rich learning space:** flipping flashcards, browse/review all cards, self-rating and retry, Match Up, Missing Words, Speed Recall and other vocabulary/retrieval games.
+- **Memorise is a rich learning space:** flipping flashcards, searchable Review All, self-ratings, multi-round Match Up, contextual Missing Words and typed Speed Recall. Shared, locally saved progress prioritises new/due/flagged cards; no backend or student sign-in is needed.
 - **Games has its own home:** playful, reusable whole-topic challenges such as Sprint and Quests, plus optional topic-specific games. Games can draw on the same validated question banks without duplicating progress.
 - **Printable resources:** the optional, topic-aware Worksheet Generator prototype exports editable LaTeX student worksheets and matching worked solutions from vetted, reproducible example question families.
 - **Modular:** no empty or disabled sections for a topic that does not need them; no right-hand tab for each page. Each subsection can contain one or several pages.
@@ -54,7 +55,7 @@ A modern, tabbed reference-book aesthetic built into the reusable shell: **chapt
 1. **Pass 0 — Blueprint and reuse audit:** modules, content contract, activity catalogue, testing and rollout plan.
 2. **Pass 1A — Notebook visual prototype (implemented):** Contents, chapter and subsection tabs, page variants, transitions, two sample topics, interactive flashcards and graph workspace.
 3. **Pass 1B — Reusable production shell (navigation prototype in place; remaining authoring work next):** mode/subsection/page routing, validated example content, deep links, responsive navigation and bookmarks now work. A generalised content-authoring workflow, persistent learning progress and cross-topic publishing pipeline remain future work.
-4. **Pass 2 — Memorise experience:** premium flashcards and playable language/retrieval games.
+4. **Pass 2 — Memorise experience (quality upgrade implemented):** reusable flashcards, multi-round matching, contextual Missing Words, typed recall, locally saved adaptive review and card review dashboard. Broader curriculum banks and optional future sync remain separate tasks.
 5. **Pass 3 — Other learning modes:** Understand quality prototype completed; develop the production Fluency, Reasoning, Problem Solving and Modelling engines separately, without reintroducing concept explorers into practice modes.
 6. **Pass 4 — Games arcade:** reusable challenges with optional special topic modules.
 7. **Pass 5 — Assessment, authoring and deployment:** examination practice, validation, tests, GitHub Pages guides; plan a separate **Pass 5A Worksheet Generator** and **Pass 5B worksheet expansion** once the question engine exists.
