@@ -512,6 +512,38 @@ app.addEventListener('click',ev=>{
     document.querySelector('#cloze-answer')?.focus({preventScroll:true});
   }else if(action==='graph-reflect'){
     state.graph.sign*=-1;updateGraph();announce('Parabola opening reversed: '+mathCurveLabel());
+  }else if(action==='worksheet-regenerate'){
+    const input=document.querySelector('#worksheet-seed');
+    const previous=Number(input?.value)||20261028;
+    input.value=String((previous*1664525+1013904223)%999999998+1);
+    document.querySelector('#worksheet-form')?.requestSubmit();
+  }else if(action==='worksheet-download'){
+    const output=worksheetState(topic).result;
+    if(!output)return;
+    const student=button.dataset.kind==='student';
+    const content=student?output.studentTex:output.solutionsTex;
+    const filename=student?'worksheet.tex':output.solutionsFilename;
+    const blob=new Blob([content],{type:'application/x-tex;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const link=document.createElement('a');
+    link.href=url;
+    link.download=filename;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    window.setTimeout(()=>URL.revokeObjectURL(url),2000);
+    announce(filename+' downloaded');
+  }else if(action==='worksheet-copy'){
+    const output=worksheetState(topic).result;
+    if(!output)return;
+    if(!navigator.clipboard?.writeText){
+      announce('Clipboard unavailable. Open View LaTeX source to copy it manually.');
+    }else{
+      navigator.clipboard.writeText(output.studentTex).then(
+        ()=>announce('Worksheet LaTeX copied'),
+        ()=>announce('Copy failed. Open View LaTeX source to copy it manually.')
+      );
+    }
   }else if(action==='reveal'){
     const key=button.dataset.key;
     state.revealed[key]=!state.revealed[key];
@@ -538,6 +570,34 @@ app.addEventListener('input',ev=>{
   }
 });
 app.addEventListener('submit',ev=>{
+  if(ev.target.id==='worksheet-form'){
+    ev.preventDefault();
+    const data=new FormData(ev.target);
+    const topic=TOPICS[state.route.topicId];
+    const ws=worksheetState(topic);
+    ws.options={
+      topicId:topic.id,
+      title:String(data.get('title')||'').trim(),
+      style:String(data.get('style')),
+      difficulty:String(data.get('difficulty')),
+      count:Number(data.get('count')),
+      seed:Number(data.get('seed')),
+      solutions:String(data.get('solutions')),
+      skills:data.getAll('skill').map(String)
+    };
+    try{
+      ws.result=generateWorksheet(ws.options);
+      ws.error='';
+      announce(ws.result.questions.length+' questions generated with seed '+ws.options.seed);
+    }catch(error){
+      ws.result=null;
+      ws.error=error instanceof Error?error.message:'Unable to generate this worksheet.';
+      announce(ws.error);
+    }
+    rerender();
+    document.querySelector(ws.error?'#worksheet-error':'#worksheet-preview')?.focus({preventScroll:false});
+    return;
+  }
   if(ev.target.id!=='cloze-form')return;
   ev.preventDefault();
   state.cloze.value=document.querySelector('#cloze-answer').value;
