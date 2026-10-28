@@ -42,6 +42,9 @@ Do not show AO1/AO2/AO3 in global navigation or shared learning-mode names. Exam
 - Separate **recognition**, **self-reported familiarity**, and **independent recall**. Do not award retrieval mastery merely for flipping/reviewing a card.
 - Synonyms and equivalent answers should be author-approved, not generated ad hoc. Provide clear feedback when a near miss changes meaning.
 
+### Worksheet Generator is an optional resource, not a learning-mode chapter
+Allow supported topics to provide an accessible **Contents → Resources → Worksheet Generator** tool which generates reproducible, editable LaTeX student worksheets and matching fully worked solutions. Keep it outside the primary chapter tabs. Share the validated question and worked-solution engine with on-screen practice; do not create an unrelated question bank. See **[WORKSHEET_GENERATOR.md](WORKSHEET_GENERATOR.md)** for controls, source export, mathematical verification and PDF compilation boundaries.
+
 ### Games is a separate section
 Games are not the same as Memorise's short language games. Games focus on multi-round goals, exploration, speed or collaboration. They may reuse retrieval questions but have their own progression and feel. Suggested types: Sprint (customisable duration, untimed alternative), Puzzle Quest (multi-stage unlock), Mystery / Escape, Art Reveal, Challenge Ladder and mixed-topic tournament. Different topics may register specialised modules (e.g. graph shading, visual number-line art). Multiplayer is optional and should not be required for ordinary lessons.
 
@@ -97,7 +100,7 @@ Games are not the same as Memorise's short language games. Games focus on multi-
 }
 ```
 
-Content must be separate from runtime code. Future schemas should define `concepts`, `questions`, `workedSolutions`, `activityConfigurations`, `games` and `diagrams`. Use stable IDs and strict per-activity validation. The same concept can appear in several modes without copying its definition. Do not assume all answers are simple strings: support structured mathematical answer types and authored equivalence rules.
+Content must be separate from runtime code. Future schemas should define `concepts`, `questions`, `workedSolutions`, `activityConfigurations`, `games`, `diagrams` and optional **parameterised worksheet question families with LaTeX renderers**. Use stable IDs and strict per-activity validation. The same concept can appear in several modes without copying its definition. Do not assume all answers are simple strings: support structured mathematical answer types and authored equivalence rules.
 
 ## Reuse audit (source inspection, 28 Oct 2026)
 
@@ -129,7 +132,7 @@ This is a **targeted architecture audit**; it does not claim comprehensive imple
 
 **Pass 1A — Notebook prototype:** visual proof of the Contents page, top chapter tabs, right-side subsection tabs, lined/squared/plain paper and two contrasting dummy topic workspaces. Exercise tab and page motion, keyboard accessibility, reduced motion and 320/390/768/1440 px layouts **before** building multiple learning engines. See the [book design acceptance checklist](BOOK_DESIGN_SYSTEM.md#8-acceptance--qa-checklist-for-pass-1).
 
-**Pass 1B — Production shell:** works on GitHub Pages from a subdirectory, loads a topic with configurable modes/theme/page types, hides absent chapters/subsections, supports deep links and browser history, has coherent mobile/desktop navigation, accessible focus and landmarks, local progress/bookmarks, and smoke tests.
+**Pass 1B — Production shell:** works on GitHub Pages from a subdirectory, loads a topic with configurable modes/theme/page types, hides absent chapters/subsections, supports deep links and browser history, has coherent mobile/desktop navigation, accessible focus and landmarks, local progress/bookmarks, and smoke tests. Define a reusable question/answer/worked-solution instance contract and opt-in worksheet capability for future offline LaTeX exports; no worksheet generator UI is expected yet.
 
 **Pass 2 — Memorise:** enjoyable flip animation and reduced-motion fallback; all cards view; self-rating and weak-card review; at least Match Up, Missing Words and typed Speed Recall; synonyms, hints and feedback; state restored safely; tests for valid/invalid banks and mastery credit.
 
@@ -138,6 +141,8 @@ This is a **targeted architecture audit**; it does not claim comprehensive imple
 **Pass 4 — Games:** separate Games landing page, Sprint + one multi-stage game, plugin interface for mathematical interactives, no forced timers, shared progress IDs, tests.
 
 **Pass 5 — Authoring:** documented new-topic workflow, robust validators, exam practice as optional, starter theme and deployment checks.
+
+**Pass 5A / 5B — Optional Worksheet Generator:** produce tested, seeded LaTeX student worksheets and matching fully worked solutions from shared question families, then extend scaffolding, TikZ/PGFPlots diagrams and worksheet formats. Compile representative TeX in CI; direct one-click PDF output remains a separate capability. See **[worksheet specification](WORKSHEET_GENERATOR.md)**.
 
 **Pass 6 — Trial:** populate two distinct test topics (one vocabulary-heavy and one algebra/graphs-heavy) to establish true reuse before scaling.
 
