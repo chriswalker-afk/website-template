@@ -4,7 +4,7 @@ import {escapeHTML as e} from './logic.js';
 import {reasoningSummary,recordFor,taskFor} from './reasoning-engine.js';
 const icon=name=>'<svg class="icon" aria-hidden="true"><use href="#i-'+name+'"></use></svg>';
 const labelFor=rating=>rating==='ready'?'Ready to move on':
-  rating==='developing'?'Developing':rating==='revisit'?'Review again':'Not reviewed';
+  rating==='developing'?'Still developing':rating==='revisit'?'Review again':'Not reviewed';
 const toneFor=rating=>rating==='ready'?'ready':rating==='developing'?'developing':
   rating==='revisit'?'revisit':'new';
 const written=entry=>Boolean(entry?.draft?.trim()?.length>=20);
