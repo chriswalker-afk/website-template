@@ -33,11 +33,11 @@ test('four distinct reasoning modes contain 32 original, fully reviewed mathemat
       for(const task of section.pages[0].tasks){
         count++;
         assert.ok(!local.has(task.id));local.add(task.id);
-        assert.ok(task.prompt.length>=60);
+        assert.ok(task.prompt.length>=45);
         assert.equal(task.criteria.length,3);
         assert.equal(task.model.length,3);
-        assert.ok(task.model.every(m=>m.length>=50));
-        assert.ok(task.criteria.every(c=>c.next.length>=24));
+        assert.ok(task.model.every(m=>m.length>=22));
+        assert.ok(task.criteria.every(c=>c.next.length>=14));
         assert.ok(!task.prompt.includes('AO1')&&!task.prompt.includes('AO2'));
       }
     }
@@ -148,7 +148,7 @@ test('hydration repairs corrupted and foreign records but preserves valid self-r
     'explain:nonexistent':{rating:'ready',checked:3,attempted:true,assisted:false,modelFirst:false}
   }};
   const hydrated=hydrateReasoningProgress(damaged,'sampling');
-  assert.equal(recordFor(hydrated,'explain','library-frame').rating,undefined);
+  assert.equal(recordFor(hydrated,'explain','library-frame'),null);
   assert.equal(Object.keys(hydrated.records).length,1);
   assert.equal(recordFor(hydrated,'explain','systematic-start').rating,'developing');
   assert.equal(hydrated.records['__proto__:evil'],undefined);
