@@ -78,7 +78,7 @@ export function quadraticValue(x,model){
 export function quadraticEquation(model){
   const {a,h,k}=quadraticProperties(model);
   const square=h===0?'x²':'(x '+(h>0?'− '+h:'+ '+Math.abs(h))+')²';
-  return 'y = '+(a===1?'':a===-1?'−':String(a))+square+
+  return 'y = '+(a===1?'':a===-1?'−':a<0?'−'+Math.abs(a):String(a))+square+
     (k===0?'':(k>0?' + ':' − ')+Math.abs(k));
 }
 export function validateUnderstandContent(sections){
