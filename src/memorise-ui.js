@@ -87,7 +87,19 @@ export function renderFlashcards(topic,memory,flash,now=Date.now()){
 }
 export function renderMatch(topic,memory,game,now=Date.now()){
   const items=matchRoundCards(topic,game.round||0,4);
-  const defOrder=[...items].reverse();
+  // Stable within a round, but not a predictable reversed column.
+  const shuffled=(arr,salt)=>{
+    const output=[...arr];
+    let seed=(((game.round||0)+1)*1664525+salt)>>>0;
+    for(let i=output.length-1;i>0;i--){
+      seed=(Math.imul(seed,1664525)+1013904223)>>>0;
+      const j=seed%(i+1);
+      [output[i],output[j]]=[output[j],output[i]];
+    }
+    return output;
+  };
+  const termOrder=shuffled(items,97);
+  const defOrder=shuffled(items,3301);
   const complete=game.matched.length===items.length;
   const rounds=Math.ceil(topic.cards.length/4);
   const number=(game.round||0)%rounds+1;
@@ -101,7 +113,7 @@ export function renderMatch(topic,memory,game,now=Date.now()){
     '<p>Match each term with its definition. A correct pair reinforces recognition; try Speed Recall to test recall without choices.</p></div>'+
     '<div class="match-columns">'+
       '<section class="match-column" aria-label="Terms"><p class="match-column__label">Terms</p>'+
-        items.map(card=>cardButton(card,'term',card.term)).join('')+'</section>'+
+        termOrder.map(card=>cardButton(card,'term',card.term)).join('')+'</section>'+
       '<section class="match-column" aria-label="Definitions"><p class="match-column__label">Definitions</p>'+
         defOrder.map(card=>cardButton(card,'definition',card.definition)).join('')+'</section>'+
     '</div>'+
