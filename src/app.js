@@ -167,7 +167,7 @@ function renderWorksheetGenerator(topic){
 
 function renderDots(){
   const dots=Array.from({length:40},(_,i)=>'<span class="dot'+([2,6,11,15,19,26,30,36].includes(i)?' dot--chosen':'')+'"></span>').join('');
-  return '<div class="dot-field" aria-hidden="true">'+dots+'</div><p class="figure-caption">Illustration: 8 selected from a population of 40</p>';
+  return '<div class="dot-field" aria-hidden="true">'+dots+'</div>';
 }
 function renderSmallGraph(){
   return '<svg class="mini-curve" viewBox="0 0 280 195" role="img" aria-label="An upward-opening parabola, with turning point (1, minus 3)">'+
@@ -181,35 +181,73 @@ function heading(title,description){
   return '<h1 class="page-title" id="page-title" tabindex="-1">'+e(title)+'</h1>'+
     '<p class="page-subtitle">'+e(description)+'</p>';
 }
-function renderIntro(topic){
-  const d=topic.intro;
-  return heading('The big idea',d.body)+
-    '<div class="chapter-intro">'+
-      '<aside class="callout" aria-label="Question to consider"><p>'+e(d.question)+'</p></aside>'+
-      '<figure class="math-figure">'+(topic.id==='sampling'?renderDots():renderSmallGraph())+'</figure>'+
-    '</div>'+
-    '<div class="lesson-small"><p><strong>Example:</strong> '+e(d.example)+'</p></div>';
+function renderLessonPage(page,topic){
+  return '<div class="lesson-page">'+page.blocks.map(block=>{
+    if(block.kind==='text')return '<p class="lesson-text">'+e(block.text)+'</p>';
+    if(block.kind==='note')return '<aside class="callout"><p>'+e(block.text)+'</p></aside>';
+    if(block.kind==='example')return '<div class="lesson-small"><p><strong>Example:</strong> '+
+      e(block.prompt)+'</p><ol class="worked-steps">'+block.steps.map(step=>'<li>'+e(step)+'</li>').join('')+'</ol></div>';
+    if(block.kind==='diagram'){
+      const graphic=block.variant==='sampling-dots'?renderDots():renderSmallGraph();
+      return '<figure class="math-figure">'+graphic+'<figcaption class="figure-caption">'+e(block.caption)+'</figcaption></figure>';
+    }
+    if(block.kind==='comparison'){
+      return '<div class="topic-panels'+(block.items.length===2?' topic-panels--two':'')+'">'+block.items.map(item=>
+        '<article class="topic-panel"><strong class="topic-panel__title">'+e(item.label)+'</strong>'+
+        '<p>'+e(item.description)+'</p></article>').join('')+'</div>';
+    }
+    if(block.kind==='table'){
+      return '<div class="lesson-table-wrap"><table class="lesson-table"><thead><tr>'+
+        block.headers.map(h=>'<th scope="col">'+e(h)+'</th>').join('')+'</tr></thead><tbody>'+
+        block.rows.map(row=>'<tr>'+row.map(value=>'<td>'+e(value)+'</td>').join('')+'</tr>').join('')+
+        '</tbody></table></div>';
+    }
+    return '';
+  }).join('')+'</div>';
 }
-function renderDetail(topic,chapterId,section){
-  const detail=topic.details?.[section];
-  if(!detail)return heading('Page unavailable','No activity has been authored for this page.');
-  const sectionLabel=sectionsFor(topic,chapterId).find(item=>item.id===section)?.label||'Activity';
-  let html=heading(sectionLabel,detail.intro);
-  if(detail.panels){
-    html+='<div class="topic-panels">'+detail.panels.map(panel=>
-      '<article class="topic-panel"><strong class="topic-panel__title">'+e(panel.label)+'</strong>'+
-      '<p>'+e(panel.text)+'</p></article>').join('')+'</div>';
-  }
-  if(detail.question){
-    const key=topic.id+':'+section,shown=Boolean(state.revealed[key]);
-    html+='<section class="hint-reveal" aria-label="Practice question" style="margin-top:30px">'+
-      '<p>'+e(detail.question)+'</p>'+
-      '<button class="quiet-button" type="button" data-action="reveal" data-key="'+e(key)+'" aria-expanded="'+shown+'">'+
-      (shown?'Hide answer':'Show answer')+'</button>'+
-      (shown?'<div class="reveal-answer">'+e(detail.answer)+'</div>':'')+
-    '</section>';
-  }
-  return html;
+function renderQuestionPage(page,route){
+  return '<div class="practice-list">'+page.problems.map((problem,index)=>{
+    const key=[route.topicId,route.chapterId,route.sectionId,page.id,problem.id].join(':');
+    const shown=state.revealed[key]||{};
+    return '<article class="practice-question">'+
+      '<div class="practice-question__meta"><span>Question '+(index+1)+'</span>'+
+        '<span>'+problem.marks+' marks</span></div>'+
+      '<p class="practice-question__prompt">'+e(problem.prompt)+'</p>'+
+      '<div class="practice-question__actions">'+
+        (problem.hint?'<button type="button" class="quiet-button" data-action="reveal-problem" data-part="hint" data-key="'+e(key)+'" '+
+          'aria-expanded="'+Boolean(shown.hint)+'">'+(shown.hint?'Hide hint':'Show hint')+'</button>':'')+
+        '<button type="button" class="quiet-button" data-action="reveal-problem" data-part="solution" data-key="'+e(key)+'" '+
+          'aria-expanded="'+Boolean(shown.solution)+'">'+(shown.solution?'Hide solution':'Show solution')+'</button></div>'+
+      (shown.hint&&problem.hint?'<div class="practice-question__hint"><strong>Hint:</strong> '+e(problem.hint)+'</div>':'')+
+      (shown.solution?'<div class="reveal-answer"><strong>Solution:</strong> '+e(problem.solution)+'</div>':'')+
+    '</article>';
+  }).join('')+'</div>';
+}
+function renderGamePage(page){
+  const symbol=page.gameId==='sprint'?'clock':page.gameId==='puzzle-quest'?'puzzle':'grid';
+  return '<section class="game-feature">'+
+    '<div class="game-feature__icon">'+icon(symbol)+'</div>'+
+    '<div class="game-feature__body"><p>'+e(page.objective)+'</p>'+
+    '<p class="game-feature__notice"><strong>Planned game:</strong> '+e(page.mechanic)+'</p></div>'+
+  '</section>';
+}
+function renderReviewAll(topic){
+  return '<ol class="review-deck">'+topic.cards.map(card=>
+    '<li><strong>'+e(card.term)+'</strong><p>'+e(card.definition)+'</p></li>').join('')+'</ol>';
+}
+function renderSpeedRecall(topic){
+  const recall=state.recall,card=cardForIndex(topic,recall.index);
+  return '<div class="recall-workspace">'+
+    '<div class="flashcard-counter">Definition '+(recall.index+1)+' of '+topic.cards.length+'</div>'+
+    '<p class="recall-definition">'+e(card.definition)+'</p>'+
+    '<form id="recall-form" class="recall-form">'+
+      '<label for="recall-answer">Mathematical term</label>'+
+      '<input id="recall-answer" type="text" autocomplete="off" spellcheck="false" required value="'+e(recall.value)+'">'+
+      '<button class="action-button" type="submit">Check answer</button></form>'+
+    (recall.checked?'<p class="game-feedback" role="status" data-state="'+(recall.correct?'correct':'incorrect')+'">'+
+      (recall.correct?'Correct.':('The term is '+e(card.term)+'.'))+'</p>':'')+
+    '<button class="quiet-button recall-next" type="button" data-action="recall-next">'+
+      'Next definition '+icon('arrow')+'</button></div>';
 }
 function renderFlashcards(topic){
   const f=state.flash,card=cardForIndex(topic,f.index),rating=f.ratings[card.id];
