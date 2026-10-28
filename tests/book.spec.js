@@ -110,23 +110,32 @@ test('the quadratic graph teaches shape separately from translations',async({pag
   await expect(page.locator('#graph-observation')).toContainText('Turning point (2, -2)');
   await page.goto('/#/quadratics/fluency/level-1');
   await expect(page.locator('#graph-svg')).toHaveCount(0);
-  await expect(page.locator('.practice-question')).toHaveCount(2);
+  await expect(page.locator('.fluency-question')).toHaveCount(1);
+  await expect(page.locator('.fluency-settings')).toBeVisible();
 });
 
-test('Fluency, Problem Solving and Modelling have meaningful levelled problems',async({page})=>{
-  for(const mode of ['fluency','problemSolving','modelling']){
+test('Fluency, Problem Solving and Modelling stay educationally distinct',async({page})=>{
+  await page.goto('/#/quadratics/fluency/level-1');
+  await expect(page.locator('.side-tab')).toHaveCount(4);
+  await expect(page.locator('.fluency-question')).toBeVisible();
+  await expect(page.locator('.practice-question')).toHaveCount(0);
+  await expect(page.locator('#graph-svg')).toHaveCount(0);
+  await page.locator('.side-tabs a[href$="level-4"]').click();
+  await expect(page.getByRole('heading',{name:/Level 4:/})).toBeVisible();
+  await expect(page.locator('.fluency-answer-form')).toBeVisible();
+  await page.getByRole('button',{name:'Show full solution'}).click();
+  await expect(page.locator('.fluency-solution__steps li').first()).toBeVisible();
+  for(const mode of ['problemSolving','modelling']){
     await page.goto('/#/quadratics/'+mode+'/level-1');
     await expect(page.locator('.side-tab')).toHaveCount(4);
     await expect(page.locator('.practice-question').first()).toBeVisible();
-    await expect(page.locator('#graph-svg')).toHaveCount(0);
+    await expect(page.locator('.fluency-question')).toHaveCount(0);
     await page.locator('.side-tabs a[href$="level-4"]').click();
     await expect(page.getByRole('heading',{name:/Level 4:/})).toBeVisible();
-    const reveal=page.locator('.practice-question').first().getByRole('button',{name:'Show solution'});
-    await reveal.click();
+    await page.locator('.practice-question').first().getByRole('button',{name:'Show solution'}).click();
     await expect(page.locator('.practice-question .reveal-answer').first()).toBeVisible();
   }
 });
-
 test('a level can contain multiple pages without changing its right tab',async({page})=>{
   await page.goto('/#/quadratics/problemSolving/level-1');
   await expect(page.locator('.page-navigation__count')).toHaveText('Page 1 of 2');
