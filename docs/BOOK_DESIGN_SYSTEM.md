@@ -1,5 +1,5 @@
 # Book Design System — Interactive Maths Notebook
-**Status:** Approved design direction for the Pass 1 prototype; this document is a specification, not an implemented UI.
+**Status:** Design system implemented in the interactive prototype; advanced visual variants and complete topic activities remain future work.
 
 ## 1. Design intent
 A topic website should feel like opening and navigating a well-crafted **personal Maths notebook / tabbed reference book**. Take cues from the user's two reference photographs: prominent chapter dividers along a book edge and dense, easy-to-find side index tabs. The result should be contemporary and classroom-friendly, **not** an antique book, a decorative scrapbook, or an animation-heavy novelty.
@@ -45,11 +45,20 @@ A user should be able to work with a keyboard, screen reader or touch screen wit
 - When there are many subsections, use grouping/side index navigation rather than dozens of compressed, overlapping tabs; never truncate away a critical unique label.
 - The side rail contains only items available for the active chapter. It must remain navigable with keyboard, mouse and touch.
 - Do not confuse **Memorise's language/retrieval games** with the separate **Games chapter** for broader challenges.
+- **Each side tab is a distinct subsection, never an individual page number.** The active tab stays selected while students turn pages within it. Default subsection structures and purpose boundaries are documented in [Modes, subsections and pages](MODE_SUBSECTION_PAGE_SYSTEM.md).
 
-### D. Content workspace: a modern, usable page
+### D. Tertiary navigation: pages *within* a subsection
+- A subsection may contain one page, multiple authored pages or one self-contained activity.
+- Show **Previous page / Page X of Y / Next page** controls at the bottom **only when more than one page exists**.
+- Page turns change only the page in the current subsection, not the highlighted right-hand index tab.
+- Each later page has an addressable fourth path segment; bookmarks, back/forward and focus use the exact page.
+- Flashcards, quick language games and larger Games use their **own internal** card/round controls, not the book page footer.
+- Mobile keeps the same page controls after content; chapter/subsection pickers never turn into a page-number list.
+
+### E. Content workspace: a modern, usable page
 - On desktop, the **default is one wide working page** framed by an understated cover/spine and layered-paper edge. Do not force a two-page spread, especially when working with maths inputs, graphing and diagrams.
 - A two-page layout may be an *optional reading variant* for introductory content at ample widths. It must collapse to one reading order for keyboard, screen readers and smaller windows.
-- Page numbering may be shown subtly, preferably as **Chapter / Subsection** plus an optional page index, never at the expense of actual navigation.
+- Show page numbering only within a genuinely multi-page subsection. Keep it distinct from chapter and subsection navigation, never at the expense of actual working space.
 - Space for graphs, tall equations, handwritten-style working grids and wide interactive canvases must take precedence over visual page margins.
 - Content length must scroll naturally. Do not put the primary work into an arbitrarily short fake-page viewport, nested vertical scroller or page-by-page pagination that interrupts answers.
 
@@ -77,6 +86,7 @@ Motion should support a sense of *opening and turning through pages*, never slow
 | --- | --- | --- |
 | Choose chapter (top tab) | Brief page-turn/curl suggestion, subtle shadow shift and content transition | ~180–300 ms |
 | Choose subsection (side tab) | A lighter page slide/crossfade, not a full book turn | ~120–200 ms |
+| Turn page within the subsection | Brief, interruptible page-turn animation; selected tabs unchanged | ~180–300 ms |
 | Hover/focus tab | Tiny lift/edge highlight with immediate label | ~80–150 ms |
 | Flip a flashcard | Card rotates to reveal its other face | ~250–400 ms |
 | Reveal a note | Small slide/fade, no content obstruction | ~120–200 ms |
