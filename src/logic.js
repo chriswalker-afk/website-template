@@ -5,6 +5,8 @@ import {validateMemoriseContent} from './memorise-engine.js';
 import {validateFluencyChapters,FLUENCY_CHAPTERS} from './fluency-engine.js';
 import {validateReasoningContent} from './reasoning-engine.js';
 import {REASONING_CHAPTERS} from './reasoning-content.js';
+import {PROBLEM_SOLVING_CHAPTERS} from './problem-solving-content.js';
+import {validateProblemSolvingChapters} from './problem-solving-engine.js';
 
 export const CHAPTER_BY_ID=Object.fromEntries(CHAPTER_LIBRARY.map(c=>[c.id,c]));
 export const KNOWN_CHAPTER_IDS=CHAPTER_LIBRARY.map(c=>c.id);
@@ -32,7 +34,7 @@ const MODE_PAGE_TYPES={
   memorise:new Set(['flashcards','match-up','missing-words','speed-recall','review-all']),
   fluency:new Set(['fluency']),
   reasoning:new Set(['reasoning']),
-  problemSolving:new Set(['questions']),
+  problemSolving:new Set(['problem-solving']),
   modelling:new Set(['questions']),
   games:new Set(['game']),
   examPractice:new Set(['questions'])
@@ -129,6 +131,8 @@ export function validateTopics(topics=TOPICS){
             issues.push(key+': missing lesson blocks '+page.id);
           if(page.type==='questions'&&(!Array.isArray(page.problems)||!page.problems.length))
             issues.push(key+': missing problems '+page.id);
+          if(page.type==='problem-solving'&&(!Array.isArray(page.tasks)||page.tasks.length<2))
+            issues.push(key+': missing problem-solving tasks '+page.id);
           if(page.type==='reasoning'&&(!Array.isArray(page.tasks)||page.tasks.length<4))
             issues.push(key+': insufficient reasoning tasks '+page.id);
           for(const problem of page.problems||[]){
@@ -152,8 +156,12 @@ export function validateTopics(topics=TOPICS){
     if(topic.chapters?.reasoning?.length&&
       JSON.stringify(topic.chapters.reasoning)!==JSON.stringify(REASONING_CHAPTERS[key]))
       issues.push(key+': invalid Reasoning subsection/task definitions');
+    if(topic.chapters?.problemSolving?.length&&
+      JSON.stringify(topic.chapters.problemSolving)!==JSON.stringify(PROBLEM_SOLVING_CHAPTERS[key]))
+      issues.push(key+': invalid Problem Solving level/page/task definitions');
   }
   issues.push(...validateFluencyChapters().map(message=>'Fluency: '+message));
   issues.push(...validateReasoningContent().map(message=>'Reasoning: '+message));
+  issues.push(...validateProblemSolvingChapters().map(message=>'Problem Solving: '+message));
   return issues;
 }

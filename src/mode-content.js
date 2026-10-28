@@ -1,6 +1,7 @@
 import {UNDERSTAND_CONTENT} from './understand-content.js';
 import {FLUENCY_CHAPTERS} from './fluency-engine.js';
 import {REASONING_CHAPTERS} from './reasoning-content.js';
+import {PROBLEM_SOLVING_CHAPTERS} from './problem-solving-content.js';
 
 // Demonstration *content*, not a second navigation system.
 // Modes → subsections (right tabs) → pages (bottom controls).
@@ -24,6 +25,7 @@ export const DEMO_CHAPTERS = Object.freeze({
     ],
     fluency:FLUENCY_CHAPTERS.sampling,
     reasoning:REASONING_CHAPTERS.sampling,
+    problemSolving:PROBLEM_SOLVING_CHAPTERS.sampling,
     games:[
       section('sprint','Sprint','Answer a sequence of short questions against the clock, or play untimed.',
         game('sprint','Complete as many correct questions as possible in one round.','Rounds, scores and optional timers are planned for the Games pass.')),
@@ -44,26 +46,7 @@ export const DEMO_CHAPTERS = Object.freeze({
     ],
     fluency:FLUENCY_CHAPTERS.quadratics,
     reasoning:REASONING_CHAPTERS.quadratics,
-    problemSolving:[
-      level(1,'Guided','Solve unfamiliar problems with prompts that help you choose a strategy.',
-        practice('two-conditions',
-          q('A quadratic has roots 2 and 5, and its y-intercept is 20. Find its equation.','Write y = a(x − 2)(x − 5). At x = 0, 20 = 10a, so a = 2. Thus y = 2(x − 2)(x − 5).','Start with a factorised quadratic using the two roots.',5)
-        ),practice('unknown-coefficient',
-          q('The curve y = x² + bx + 12 crosses the x-axis at x = 3. Find b and the other root.','At x = 3: 0 = 9 + 3b + 12, so b = −7. Then x² − 7x + 12 = (x − 3)(x − 4), so the other root is 4.','Substitute the known root into y = 0.',5)
-        )),
-      level(2,'Developing','Link more than one quadratic property without a specified method.',
-        practice('conditions',
-          q('A parabola has turning point (2, −3) and passes through (0, 5). Find its equation.','y = a(x − 2)² − 3. Using (0, 5): 5 = 4a − 3, so a = 2. Hence y = 2(x − 2)² − 3.','Use completed-square form.',5)
-        )),
-      level(3,'Independent','Choose and combine methods without guided steps.',
-        practice('parameters',
-          q('The quadratic x² − (k + 2)x + 9 = 0 has equal real roots. Find all possible values of k.','D = (k + 2)² − 36 = 0, so k + 2 = ±6 and k = 4 or k = −8.','',5)
-        )),
-      level(4,'Challenge','Investigate a more demanding problem and justify the result.',
-        practice('always-positive',
-          q('Find the set of real values of m for which x² − 4x + m is strictly positive for every real x.','Complete the square: (x − 2)² + m − 4. The minimum is m − 4, which must be positive, so m > 4.','',6)
-        ))
-    ],
+    problemSolving:PROBLEM_SOLVING_CHAPTERS.quadratics,
     modelling:[
       level(1,'Guided','Use a supplied quadratic model and interpret the result.',
         practice('arch',
