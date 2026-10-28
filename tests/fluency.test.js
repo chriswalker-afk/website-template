@@ -239,3 +239,13 @@ test('worksheet generator and finished practice export reuse the same validated 
   }
   assert.throws(()=>generateWorksheetFromFluencySet({topicId:'sampling',seed:1,questions:[]}),/Invalid/);
 });
+
+test('LaTeX source typesets quadratic-formula radicals without corrupt replacement characters',()=>{
+  const set=buildFluencySet({topicId:'quadratics',levelId:'level-4',
+    pageId:'advanced',seed:506,count:10});
+  assert.ok(set.questions.some(q=>q.family==='formula-roots'));
+  const output=generateWorksheetFromFluencySet(set);
+  assert.match(output.solutionsTex,/\\sqrt\{/);
+  assert.doesNotMatch(output.solutionsTex,/\?D|\?\(/);
+  assert.match(output.studentTex,/\\textsuperscript\{2\}/);
+});
