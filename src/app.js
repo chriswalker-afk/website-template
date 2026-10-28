@@ -339,50 +339,71 @@ function renderCloze(topic){
         (game.checked?(game.correct?'Correct.':'Check the term and try again.'):'')+'</div>'+
     '</section>';
 }
-function renderGraphSvg(){
-  const {magnitude,h,k,sign}=state.graph, a=magnitude*sign;
+function renderGraphSvg(model){
+  const {h,k}=quadraticProperties(model);
   const X=x=>60+(x+5)*55,Y=y=>210-y*22;
-  const gridX=Array.from({length:11},(_,i)=>i-5).map(x=>'<line x1="'+X(x)+'" y1="34" x2="'+X(x)+'" y2="386" stroke="#e4ece6" stroke-width="1"/>').join('');
-  const gridY=Array.from({length:17},(_,i)=>i-8).map(y=>'<line x1="60" y1="'+Y(y)+'" x2="610" y2="'+Y(y)+'" stroke="#e4ece6" stroke-width="1"/>').join('');
-  const labelsX=[-4,-2,0,2,4].map(x=>'<text x="'+X(x)+'" y="'+(Y(0)+19)+'" text-anchor="middle" font-size="13" fill="#667c6d">'+x+'</text>').join('');
-  const labelsY=[-6,-3,3,6].map(y=>'<text x="'+(X(0)-10)+'" y="'+(Y(y)+4)+'" text-anchor="end" font-size="13" fill="#667c6d">'+y+'</text>').join('');
-  const path=Array.from({length:221},(_,i)=>-5+i/22).map((x,i)=>{
-    const y=a*(x-h)**2+k;
-    return (i===0?'M':'L')+X(x).toFixed(1)+' '+Y(y).toFixed(1);
+  const gridX=Array.from({length:11},(_,i)=>i-5).map(x=>
+    '<line x1="'+X(x)+'" y1="34" x2="'+X(x)+'" y2="386" stroke="#e4ece6" stroke-width="1"/>').join('');
+  const gridY=Array.from({length:17},(_,i)=>i-8).map(y=>
+    '<line x1="60" y1="'+Y(y)+'" x2="610" y2="'+Y(y)+'" stroke="#e4ece6" stroke-width="1"/>').join('');
+  const xLabels=[-4,-2,0,2,4].map(x=>
+    '<text x="'+X(x)+'" y="'+(Y(0)+19)+'" text-anchor="middle" font-size="13" fill="#667c6d">'+x+'</text>').join('');
+  const yLabels=[-6,-3,3,6].map(y=>
+    '<text x="'+(X(0)-10)+'" y="'+(Y(y)+4)+'" text-anchor="end" font-size="13" fill="#667c6d">'+y+'</text>').join('');
+  const curve=fn=>Array.from({length:221},(_,i)=>{
+    const x=-5+i/22;
+    return (i===0?'M':'L')+X(x).toFixed(1)+' '+Y(fn(x)).toFixed(1);
   }).join(' ');
-  const vertexY=Y(k), vertexX=X(h);
-  return '<svg id="graph-svg" class="graph-svg" viewBox="0 0 640 420" role="img" aria-label="'+
-    e('Graph of '+mathCurveLabel()+'. Turning point ('+h+', '+k+').')+'">'+
+  const reference=curve(x=>x*x);
+  const current=curve(x=>quadraticValue(x,model));
+  return '<svg id="graph-svg" class="graph-svg" viewBox="0 0 640 420" role="img" '+
+    'aria-label="'+e('Graph of '+quadraticEquation(model)+
+      '. Turning point ('+h+', '+k+'); dotted reference curve y = x squared.')+'">'+
     '<rect x="0" y="0" width="640" height="420" rx="7" fill="#fdfefd"/>'+
     '<defs><clipPath id="graph-clip"><rect x="60" y="34" width="550" height="352"/></clipPath></defs>'+
     gridX+gridY+
     '<line x1="'+X(0)+'" y1="34" x2="'+X(0)+'" y2="386" stroke="#647f71" stroke-width="1.9"/>'+
     '<line x1="60" y1="'+Y(0)+'" x2="610" y2="'+Y(0)+'" stroke="#647f71" stroke-width="1.9"/>'+
-    labelsX+labelsY+
+    xLabels+yLabels+
     '<text x="611" y="'+(Y(0)-10)+'" font-family="Georgia" font-size="16" fill="#355b48">x</text>'+
     '<text x="'+(X(0)+12)+'" y="28" font-family="Georgia" font-size="16" fill="#355b48">y</text>'+
-    '<g clip-path="url(#graph-clip)"><path d="'+path+'" fill="none" stroke="#2d755f" stroke-width="4" stroke-linecap="round"/>'+
-    '<line x1="'+vertexX+'" y1="34" x2="'+vertexX+'" y2="386" stroke="#c69b64" stroke-dasharray="5 6" stroke-width="1.5"/>'+
-    '<circle cx="'+vertexX+'" cy="'+vertexY+'" r="5.7" fill="#d5a665" stroke="#fff" stroke-width="2"/></g>'+
-    ''+
-    '</svg>';
+    '<g clip-path="url(#graph-clip)">'+
+      '<path d="'+reference+'" stroke="#9caaa3" stroke-width="2.5" fill="none" stroke-dasharray="6 7"/>'+
+      '<line x1="'+X(h)+'" y1="34" x2="'+X(h)+'" y2="386" stroke="#c69b64" stroke-dasharray="5 6" stroke-width="1.6"/>'+
+      '<path d="'+current+'" stroke="#2d755f" stroke-width="4" fill="none" stroke-linecap="round"/>'+
+      '<circle cx="'+X(h)+'" cy="'+Y(k)+'" r="6" fill="#d5a665" stroke="#fff" stroke-width="2"/>'+
+    '</g></svg>';
 }
-function renderGraphLab(page){
-  const g=state.graph;
+function graphObservation(model){
+  const props=quadraticProperties(model);
+  return 'Opens '+props.opening+'; '+props.steepness+
+    '. Turning point ('+props.h+', '+props.k+'); symmetry line x = '+props.h+'.';
+}
+function renderGraphLab(page,route){
+  const model=graphState(route);
+  const shape=page.id==='shape';
+  const readout=(key,label,value,min,max,step)=>
+    '<label class="graph-control"><span class="graph-control__label"><span>'+label+'</span>'+
+      '<output id="out-'+key+'">'+value+'</output></span>'+
+      '<input type="range" data-graph="'+key+'" min="'+min+'" max="'+max+'" step="'+step+
+        '" value="'+value+'"></label>';
   return '<div class="math-lab">'+
-      '<div class="graph-card">'+renderGraphSvg()+'</div>'+
+      '<div class="graph-card">'+renderGraphSvg(model)+
+        '<div class="graph-legend"><span><i class="graph-legend__current"></i>Your function</span>'+
+          '<span><i class="graph-legend__reference"></i>Reference: y = x²</span></div>'+
+      '</div>'+
       '<div class="graph-controls">'+
-        '<div class="equation-card"><span>Function</span><strong id="equation-display">'+e(mathCurveLabel())+'</strong></div>'+
-        '<label class="graph-control"><span class="graph-control__label"><span>Steepness |a|</span><output id="out-a">'+displayNumber(g.magnitude)+'</output></span>'+
-          '<input type="range" data-graph="magnitude" min="0.5" max="2.5" step="0.5" value="'+g.magnitude+'"></label>'+
-        '<label class="graph-control"><span class="graph-control__label"><span>Horizontal shift h</span><output id="out-h">'+g.h+'</output></span>'+
-          '<input type="range" data-graph="h" min="-3" max="3" step="1" value="'+g.h+'"></label>'+
-        '<label class="graph-control"><span class="graph-control__label"><span>Vertical shift k</span><output id="out-k">'+g.k+'</output></span>'+
-          '<input type="range" data-graph="k" min="-5" max="4" step="1" value="'+g.k+'"></label>'+
-        '<button class="quiet-button" type="button" data-action="graph-reflect">'+icon('refresh')+' Flip opening direction</button>'+
-        '<div class="vertex-note" style="margin-top:17px">Turning point <strong id="vertex-display">('+g.h+', '+g.k+')</strong></div>'+
+        '<div class="equation-card"><span>Function</span><strong id="equation-display">'+
+          e(mathCurveLabel(model))+'</strong></div>'+
+        (shape?readout('magnitude','Steepness |a|',displayNumber(model.magnitude),'.5','2.5','.5')+
+          '<button class="quiet-button" type="button" data-action="graph-reflect">'+icon('refresh')+
+          ' Flip opening direction</button>':
+          readout('h','Horizontal shift h',model.h,'-3','3','1')+
+          readout('k','Vertical shift k',model.k,'-5','4','1'))+
+        '<p class="graph-property" id="graph-observation">'+e(graphObservation(model))+'</p>'+
+        '<button class="quiet-button graph-reset" type="button" data-action="graph-reset">Reset graph</button>'+
       '</div></div>'+
-      '<div class="callout" aria-label="Question to consider"><p>'+e(page.focus)+'</p></div>';
+      '<div class="callout graph-prompt" aria-label="Question to consider"><p>'+e(page.focus)+'</p></div>';
 }
 function renderPageContent(route,topic){
   const {chapterId,sectionId,pageId}=route;
