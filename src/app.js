@@ -618,7 +618,7 @@ app.addEventListener('click',ev=>{
     if(!session?.complete)return;
     const missed=session.set.questions.filter(q=>{
       const a=session.answers[q.id];
-      return a?.revealed||(a?.correct&&(a.tries>1||a.hint));
+      return a?.revealed||(a?.correct&&(a.tries>1||a.usedHint));
     });
     if(!missed.length)return;
     state.fluencySessions[fluencyRouteKey(state.route)]={
@@ -651,7 +651,7 @@ app.addEventListener('click',ev=>{
     session.confirmFresh=false;session.pendingCount=null;
     rerender();announce('Unfinished practice kept.');
     document.querySelector('button[data-action="fluency-new"]')?.focus({preventScroll:true});
-  if(action==='bookmark'){
+  }else if(action==='bookmark'){
     if(state.bookmarks.has(state.route.canonical))state.bookmarks.delete(state.route.canonical);
     else state.bookmarks.add(state.route.canonical);
     safeStorage.put('bookmarks',JSON.stringify([...state.bookmarks]));
