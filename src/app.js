@@ -251,8 +251,7 @@ function renderSpeedRecall(topic){
 }
 function renderFlashcards(topic){
   const f=state.flash,card=cardForIndex(topic,f.index),rating=f.ratings[card.id];
-  return heading('Flashcards','Recall the definition before flipping each card, then rate your recall.')+
-    '<div class="memory-layout">'+
+  return '<div class="memory-layout">'+
       '<section><div class="flashcard-counter"><span>Card '+(f.index+1)+' of '+topic.cards.length+'</span>'+
         (rating?'<span>Last rated: '+e(rating)+'</span>':'')+'</div>'+
       '<div class="flashcard-stage"><button class="flashcard'+(f.flipped?' is-flipped':'')+
@@ -288,8 +287,7 @@ function renderMatch(topic){
   const complete=game.matched.length===items.length;
   const button=(card,side,label)=>'<button type="button" class="match-choice" data-action="match-choice" data-side="'+side+'" data-id="'+e(card.id)+'" '+
     'aria-pressed="'+(game[side]===card.id)+'" '+(game.matched.includes(card.id)?'disabled':'')+'>'+e(label)+'</button>';
-  return heading('Match Up','Choose a term, then select its matching definition.')+
-    '<div class="match-columns">'+
+  return '<div class="match-columns">'+
       '<section class="match-column" aria-label="Terms"><p class="match-column__label">Terms</p>'+
         items.map(card=>button(card,'term',card.term)).join('')+'</section>'+
       '<section class="match-column" aria-label="Definitions"><p class="match-column__label">Definitions</p>'+
@@ -301,8 +299,7 @@ function renderMatch(topic){
 }
 function renderCloze(topic){
   const game=state.cloze,c=topic.cloze;
-  return heading('Missing Words','Type the missing mathematical term, then check your answer.')+
-    '<section class="cloze-area">'+
+  return '<section class="cloze-area">'+
       '<form id="cloze-form"><p class="cloze-line">'+e(c.before)+
         '<label class="sr-only" for="cloze-answer">Missing mathematical word or phrase</label>'+
         '<input class="cloze-input" id="cloze-answer" name="answer" autocomplete="off" spellcheck="false" value="'+e(game.value)+'" aria-describedby="cloze-feedback">'+
@@ -342,14 +339,9 @@ function renderGraphSvg(){
     ''+
     '</svg>';
 }
-function renderGraphLab(topic,section){
-  const isModel=section==='model-lab';
-  const description=isModel
-    ?'Adjust the parameters and consider whether the curve could model a real arch or water jet.'
-    :'Adjust the parameters to see how the graph changes. The dotted line is its axis of symmetry.';
+function renderGraphLab(page){
   const g=state.graph;
-  return heading(isModel?'Model a curve':'Graph explorer',description)+
-    '<div class="math-lab">'+
+  return '<div class="math-lab">'+
       '<div class="graph-card">'+renderGraphSvg()+'</div>'+
       '<div class="graph-controls">'+
         '<div class="equation-card"><span>Function</span><strong id="equation-display">'+e(mathCurveLabel())+'</strong></div>'+
@@ -362,33 +354,28 @@ function renderGraphLab(topic,section){
         '<button class="quiet-button" type="button" data-action="graph-reflect">'+icon('refresh')+' Flip opening direction</button>'+
         '<div class="vertex-note" style="margin-top:17px">Turning point <strong id="vertex-display">('+g.h+', '+g.k+')</strong></div>'+
       '</div></div>'+
-      '<div class="callout" aria-label="Question to consider"><p>'+
-      (isModel?'What assumptions would you need before using this curve to represent a real arch?':
-       'What happens to the turning point when only the value of a changes?')+'</p></div>';
-}
-function renderGames(topic){
-  const games=[
-    {icon:'clock',title:'Sprint',detail:'Answer as many questions as possible in a set time, or play untimed.'},
-    {icon:'puzzle',title:'Puzzle Quest',detail:'Solve a sequence of problems to unlock new challenges.'},
-    {icon:'grid',title:topic.id==='quadratics'?'Curve Quest':'Sort & Discover',
-      detail:topic.id==='quadratics'?'Explore quadratic graph transformations.':'Compare and classify sampling methods.'}
-  ];
-  return heading('Game library','Preview the planned challenges. These games are not playable yet.')+
-    '<div class="games-shelf">'+games.map(game=>
-      '<article class="shelf-game">'+icon(game.icon)+'<h2>'+e(game.title)+'</h2>'+
-      '<p>'+e(game.detail)+'</p></article>').join('')+'</div>';
+      '<div class="callout" aria-label="Question to consider"><p>'+e(page.focus)+'</p></div>';
 }
 function renderPageContent(route,topic){
-  const {chapterId,sectionId}=route;
+  const {chapterId,sectionId,pageId}=route;
   if(chapterId==='home')return renderContents(topic);
   if(chapterId==='resources'&&sectionId==='worksheet-generator')return renderWorksheetGenerator(topic);
-  if(chapterId==='understand'&&sectionId==='big-idea')return renderIntro(topic);
-  if(chapterId==='memorise'&&sectionId==='flashcards')return renderFlashcards(topic);
-  if(chapterId==='memorise'&&sectionId==='match-up')return renderMatch(topic);
-  if(chapterId==='memorise'&&sectionId==='missing-words')return renderCloze(topic);
-  if((chapterId==='fluency'&&sectionId==='graph-lab')||(chapterId==='modelling'&&sectionId==='model-lab'))return renderGraphLab(topic,sectionId);
-  if(chapterId==='games')return renderGames(topic);
-  return renderDetail(topic,chapterId,sectionId);
+  const section=sectionsFor(topic,chapterId).find(s=>s.id===sectionId);
+  const page=section?.pages.find(p=>p.id===pageId);
+  if(!section||!page)return heading('Page unavailable','This page could not be opened.');
+  const intro=heading(section.label,section.description);
+  const renderers={
+    lesson:()=>renderLessonPage(page,topic),
+    questions:()=>renderQuestionPage(page,route),
+    graph:()=>renderGraphLab(page),
+    flashcards:()=>renderFlashcards(topic),
+    'match-up':()=>renderMatch(topic),
+    'missing-words':()=>renderCloze(topic),
+    'speed-recall':()=>renderSpeedRecall(topic),
+    'review-all':()=>renderReviewAll(topic),
+    game:()=>renderGamePage(page)
+  };
+  return intro+(renderers[page.type]?.()||'');
 }
 function renderTabNav(topic,route){
   return '<nav class="chapter-tabs" aria-label="Book chapters">'+chaptersFor(topic).map(chapter=>
@@ -413,7 +400,7 @@ function renderMobileNavigation(topic,route){
     chaptersFor(topic).map(chapter=>'<option value="'+chapter.id+'"'+selected(route.chapterId,chapter.id)+'>'+e(chapter.label)+'</option>').join('')+
     (supportsWorksheets(topic.id)?'<option value="resources"'+selected(route.chapterId,'resources')+'>Resources</option>':'')+
     '</select></div>'+
-    (resource?'':'<div class="mobile-pick'+(route.chapterId==='home'?' mobile-pick--disabled':'')+'"><label for="mobile-section">Page index</label>'+
+    (resource?'':'<div class="mobile-pick'+(route.chapterId==='home'?' mobile-pick--disabled':'')+'"><label for="mobile-section">Subsection</label>'+
       '<select id="mobile-section" data-role="section-select"'+(route.chapterId==='home'?' disabled':'')+'>'+
         (route.chapterId==='home'?'<option>Choose a chapter</option>':currentSection.map(section=>
           '<option value="'+section.id+'"'+selected(route.sectionId,section.id)+'>'+e(section.label)+'</option>').join(''))+
