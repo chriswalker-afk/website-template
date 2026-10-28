@@ -102,7 +102,9 @@ test('factorised and expanded quadratic questions preserve the exact roots',()=>
       assert.ok(q.answerTex.includes('x='+r));
       if(q.skill==='expanded'){
         assert.ok(q.solutionTex.includes(String(p*r)));
-        assert.ok(q.hintTex.includes(String(p+r)));
+        const coefficient=-(p+r);
+        assert.ok(q.solutionTex.includes('sum \\('+coefficient+'\\)'));
+        assert.ok(q.hintTex.includes('sum is \\('+coefficient+'\\)'));
       }
     }
   }
