@@ -1,6 +1,6 @@
 import {CHAPTER_LIBRARY,TOPICS} from './topics.js';
 import {generateWorksheet,supportsWorksheets,worksheetSkills} from './worksheet-generator.js';
-import {chaptersFor,sectionsFor,chapterFor,routeHref,resolveRoute,topicSwitchHref,escapeHTML as e,normaliseAnswer,cardForIndex,sampleMatchCards,validateTopics} from './logic.js';
+import {chaptersFor,sectionsFor,pagesFor,chapterFor,routeHref,resolveRoute,topicSwitchHref,escapeHTML as e,normaliseAnswer,cardForIndex,sampleMatchCards,validateTopics} from './logic.js';
 
 const app=document.querySelector('#app');
 const status=document.querySelector('#live-message');
@@ -23,6 +23,7 @@ const state={
   flash:{index:0,flipped:false,ratings:{}},
   match:{term:null,definition:null,matched:[],message:''},
   cloze:{value:'',hint:false,checked:false,correct:false},
+  recall:{index:0,value:'',checked:false,correct:false},
   graph:{magnitude:1,h:0,k:-2,sign:1},
   revealed:{},
   worksheets:{}
@@ -35,6 +36,7 @@ function chapterHref(topic,chapter){const section=sectionsFor(topic,chapter)[0];
 function pagePaper(route){
   if(route.chapterId==='home'||route.chapterId==='resources')return 'plain';
   if(['fluency','modelling','problemSolving'].includes(route.chapterId))return 'squared';
+  if(route.chapterId==='understand'&&route.sectionId==='visual-explanations')return 'squared';
   if(['memorise','games'].includes(route.chapterId))return 'plain';
   return 'ruled';
 }
@@ -65,7 +67,7 @@ function renderContents(topic){
     const r=resolveRoute(href);
     if(r.canonical!==href||r.topicId!==topic.id||r.chapterId==='home')return '';
     const section=sectionsFor(topic,r.chapterId).find(item=>item.id===r.sectionId);
-    return '<a href="'+href+'">'+e(chapterFor(r.chapterId)?.label||'Section')+' · '+e(section?.label||'Page')+'</a>';
+    return '<a href="'+r.canonical+'">'+e(chapterFor(r.chapterId)?.label||'Section')+' · '+e(section?.label||'Page')+(r.pageIndex>0?' (page '+(r.pageIndex+1)+')':'')+'</a>';
   }).filter(Boolean).slice(0,4).join('');
   const last=state.lastPage?resolveRoute(state.lastPage):null;
   const continuation=last?.topicId===topic.id&&last.chapterId!=='home'
@@ -422,6 +424,7 @@ function navigate(){
     state.flash={index:0,flipped:false,ratings:{}};
     state.match={term:null,definition:null,matched:[],message:''};
     state.cloze={value:'',hint:false,checked:false,correct:false};
+    state.recall={index:0,value:'',checked:false,correct:false};
     state.graph={magnitude:1,h:0,k:-2,sign:1};
     state.revealed={};
     lastTopic=next.topicId;
