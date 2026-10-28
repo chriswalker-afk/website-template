@@ -1,5 +1,6 @@
 import {CHAPTER_LIBRARY,TOPICS,DEFAULT_TOPIC} from './topics.js';
 import {supportsWorksheets} from './worksheet-generator.js';
+import {validateUnderstandContent} from './understand-engine.js';
 
 export const CHAPTER_BY_ID=Object.fromEntries(CHAPTER_LIBRARY.map(c=>[c.id,c]));
 export const KNOWN_CHAPTER_IDS=CHAPTER_LIBRARY.map(c=>c.id);
@@ -23,7 +24,7 @@ const LEGACY_ROUTES={
 };
 const isSlug=value=>typeof value==='string'&&/^[a-z][a-z0-9-]*$/.test(value);
 const MODE_PAGE_TYPES={
-  understand:new Set(['lesson','graph']),
+  understand:new Set(['lesson','graph','sampling-lab','workshop']),
   memorise:new Set(['flashcards','match-up','missing-words','speed-recall','review-all']),
   fluency:new Set(['questions']),
   reasoning:new Set(['questions']),
@@ -135,6 +136,8 @@ export function validateTopics(topics=TOPICS){
           issues.push(key+': activity subsection must own its internal progression '+section.id);
       }
     }
+    if(topic.chapters?.understand?.length)
+      issues.push(...validateUnderstandContent(topic.chapters.understand).map(message=>key+': '+message));
     if(topic.chapters?.memorise?.length&&!topic.cloze?.answer)issues.push(key+': no cloze answer');
   }
   return issues;
