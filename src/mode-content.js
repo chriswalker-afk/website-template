@@ -1,74 +1,18 @@
+import {UNDERSTAND_CONTENT} from './understand-content.js';
+
 // Demonstration *content*, not a second navigation system.
 // Modes → subsections (right tabs) → pages (bottom controls).
 // A self-contained game or retrieval activity normally has exactly one page.
 const section=(id,label,description,pages)=>({id,label,description,pages});
-const lesson=(id,...blocks)=>({id,type:'lesson',blocks});
 const practice=(id,...problems)=>({id,type:'questions',problems:problems.map((p,i)=>({id:'q'+(i+1),...p}))});
 const q=(prompt,solution,hint='',marks=3)=>({prompt,solution,hint,marks});
-const text=text=>({kind:'text',text});
-const note=text=>({kind:'note',text});
-const example=(prompt,...steps)=>({kind:'example',prompt,steps});
-const diagram=(variant,caption)=>({kind:'diagram',variant,caption});
-const comparison=(...items)=>({kind:'comparison',items:items.map(([label,description])=>({label,description}))});
-const table=(headers,rows)=>({kind:'table',headers,rows});
 const one=(type)=>[{id:'main',type}];
 const game=(id,objective,mechanic)=>[{id:'main',type:'game',gameId:id,objective,mechanic}];
 const level=(n,label,description,...pages)=>section('level-'+n,'Level '+n+': '+label,description,pages);
 
 export const DEMO_CHAPTERS = Object.freeze({
   sampling:{
-    understand:[
-      section('big-idea','The big idea','Understand populations, samples and what makes a sample representative.',
-        [lesson('population',
-          text('A population is the complete group you want to investigate. A census collects data from every member; a sample collects data from only part of the population.'),
-          diagram('sampling-dots','Eight selected individuals from a population of forty.'),
-          note('The population must be defined before deciding whom to sample.')
-        ),lesson('representativeness',
-          text('A sample is useful only if it gives reasonable evidence about the intended population. A large sample can still be unrepresentative if the selection process excludes important groups.'),
-          example('A survey of school travel asks only students who arrive early.',
-            'The target population includes all students, but late arrivals are excluded.',
-            'The results might overrepresent journeys taken by early arrivals.'
-          )
-        )]),
-      section('how-it-works','How it works','Follow the steps used to select different types of samples.',
-        [lesson('random-systematic',
-          comparison(
-            ['Simple random','List the population and choose a fixed-size group so each possible group of that size is equally likely.'],
-            ['Systematic','Choose a random starting position and then select every kth entry in an appropriately arranged sampling frame.']
-          ),
-          note('For systematic sampling, a regular pattern in the ordered list can introduce bias.')
-        ),lesson('stratified',
-          text('Stratified sampling divides the population into distinct groups and uses random selection within each group. Proportional allocation preserves each group’s share of the population.'),
-          example('A school has 150 students in Year 10 and 250 in Year 11. A sample of 40 is required.',
-            'Total population = 400.',
-            'Year 10: (150/400) × 40 = 15 students.',
-            'Year 11: (250/400) × 40 = 25 students.'
-          )
-        )]),
-      section('visual-explanations','Visual explanations','Use diagrams and tables to see why different selection methods behave differently.',
-        [lesson('census-sample',
-          diagram('sampling-dots','Highlighted members form one possible sample.'),
-          text('Selecting a smaller group is quicker than collecting data from everybody, but it introduces sampling uncertainty.')
-        ),lesson('proportion',
-          table(['Group','Population','Share','Sample of 40'],[
-            ['A','100','25%','10'],['B','200','50%','20'],['C','100','25%','10']
-          ]),
-          text('A proportional stratified sample keeps the same group percentages as the population.')
-        )]),
-      section('worked-examples','Worked examples','Study complete solutions to typical sampling questions.',
-        [lesson('systematic',
-          example('A list contains 240 names. Select a systematic sample of 30.',
-            'Sampling interval: 240 ÷ 30 = 8.',
-            'Choose a random starting position from 1 to 8.',
-            'Select that name and every eighth name thereafter.'
-          )
-        ),lesson('bias',
-          example('A researcher surveys only members of a gym to estimate the exercise habits of a town.',
-            'The gym members are more likely to exercise regularly than the town as a whole.',
-            'The sampling method may overestimate physical activity. A wider sampling frame would improve representativeness.'
-          )
-        )])
-    ],
+    understand:UNDERSTAND_CONTENT.sampling,
     memorise:[
       section('flashcards','Flashcards','Recall each definition before flipping the card and rating your recall.',one('flashcards')),
       section('match-up','Match Up','Match mathematical terms to their precise definitions.',one('match-up')),
@@ -128,47 +72,7 @@ export const DEMO_CHAPTERS = Object.freeze({
     ]
   },
   quadratics:{
-    understand:[
-      section('big-idea','The big idea','Understand what makes a function quadratic and how its graph behaves.',
-        [lesson('parabolas',
-          text('A quadratic function has an x² term and graphs as a parabola. Its turning point is where the graph changes direction.'),
-          diagram('quadratic-static','A parabola with a marked turning point.')
-        ),lesson('shape',
-          text('For y = ax² + bx + c, a controls whether the parabola opens upwards or downwards and affects its width.'),
-          note('If a is positive, the turning point is a minimum; if a is negative, it is a maximum.')
-        )]),
-      section('how-it-works','How it works','Connect expanded, factorised and completed-square forms to graph features.',
-        [lesson('forms',
-          comparison(
-            ['Expanded','ax² + bx + c: reveals the y-intercept c.'],
-            ['Factorised','a(x − p)(x − q): reveals roots p and q when real factorisation exists.'],
-            ['Completed square','a(x − h)² + k: reveals the turning point (h, k).']
-          )
-        ),lesson('translate',
-          example('Describe the graph y = 2(x − 3)² + 1.',
-            'The coefficient a = 2 is positive, so the parabola opens upwards.',
-            'The turning point is (3, 1), and the axis of symmetry is x = 3.',
-            'The graph is narrower than y = x².'
-          )
-        )]),
-      section('visual-explanations','Visual explanations','Explore how parameters change a quadratic graph.',
-        [{id:'shape',type:'graph',focus:'Change the magnitude and sign of a. What changes about the shape and turning point?'},
-         {id:'position',type:'graph',focus:'Adjust h and k while holding a constant. Which coordinates of the turning point change?'}]),
-      section('worked-examples','Worked examples','Study complete methods for finding key features and solving equations.',
-        [lesson('turning-point',
-          example('Find the turning point and type of turning point for y = −2(x + 1)² + 5.',
-            'Compare with y = a(x − h)² + k, giving h = −1 and k = 5.',
-            'The turning point is (−1, 5).',
-            'Because a = −2, the graph opens downwards and this is a maximum.'
-          )
-        ),lesson('roots',
-          example('Solve x² − 5x + 6 = 0 by factorising.',
-            'Find two numbers with sum −5 and product 6: −2 and −3.',
-            'Factorise: (x − 2)(x − 3) = 0.',
-            'Therefore x = 2 or x = 3.'
-          )
-        )])
-    ],
+    understand:UNDERSTAND_CONTENT.quadratics,
     memorise:[
       section('flashcards','Flashcards','Recall each definition before flipping the card and rating your recall.',one('flashcards')),
       section('match-up','Match Up','Match mathematical terms to their precise definitions.',one('match-up')),
