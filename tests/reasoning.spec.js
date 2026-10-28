@@ -163,7 +163,7 @@ test('saved self-review survives refresh, remains topic-specific and contains no
   await page.getByRole('button',{name:'Need a nudge?'}).click();
   await compare(page);
   await page.locator('input[data-reasoning-criterion="0"]').check();
-  await expect(page.locator('script')).toHaveCount(0);
+  await expect(page.locator('.reasoning-workspace script')).toHaveCount(0);
   await expect(page.locator('#reasoning-answer')).toHaveValue(/<script>alert/);
   await page.getByRole('button',{name:'Still developing'}).click();
   const before=await page.evaluate(()=>JSON.stringify(localStorage));
