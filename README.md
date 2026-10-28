@@ -76,3 +76,7 @@ The architecture and implementation notes are maintained alongside the code in t
 - [Inequality Ink](https://github.com/chriswalker-afk/inequality-ink) — distinct, topic-specific mathematical game engines.
 
 These are **design references**, not copied dependencies. Source code should be reused only after explicit review and generalisation.
+
+## Modelling quality upgrade
+
+The four-level Modelling chapter now has a genuine **Formulate → Calculate → Interpret → Evaluate** workflow, with 16 scenarios per demonstration topic. Models are reviewed through mathematical sensitivity, residuals, domain restrictions and limitations, rather than keyword-scored responses. See the [Modelling Mode Guide](docs/MODELLING_MODE_GUIDE.md).
