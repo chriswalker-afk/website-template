@@ -603,8 +603,83 @@ app.addEventListener('click',ev=>{
     const input=document.querySelector('#cloze-answer');state.cloze.value=input?.value||state.cloze.value;
     state.cloze.hint=!state.cloze.hint;rerender();
     document.querySelector('#cloze-answer')?.focus({preventScroll:true});
+  }else if(action==='understand-check'){
+    const route=state.route,key=button.dataset.key,id=button.dataset.choice;
+    const page=pagesFor(topic,route.chapterId,route.sectionId).find(p=>p.id===route.pageId);
+    const block=page?.blocks?.find(b=>b.kind==='concept-check'&&understandKey(route,b.id)===key);
+    const choice=block?.choices.find(c=>c.id===id);
+    if(!choice)return;
+    state.understand.checks[key]={choice:id};
+    rerender();
+    document.querySelector('button[data-action="understand-check"][data-choice="'+id+'"]')?.focus({preventScroll:true});
+    announce((choice.correct?'Correct. ':'Not yet. ')+choice.feedback);
+  }else if(action==='understand-step-next'||action==='understand-step-prev'||action==='understand-step-reset'){
+    const key=button.dataset.key;
+    const current=state.understand.steppers[key]||0;
+    const total=Number(button.dataset.total)||current;
+    state.understand.steppers[key]=action==='understand-step-reset'?0:
+      action==='understand-step-prev'?Math.max(0,current-1):Math.min(total,current+1);
+    rerender();
+    const nextAction=action==='understand-step-reset'?'understand-step-next':
+      (action==='understand-step-prev'?'understand-step-prev':
+       state.understand.steppers[key]===total?'understand-step-reset':'understand-step-next');
+    document.querySelector('button[data-action="'+nextAction+'"][data-key="'+key+'"]')?.focus({preventScroll:true});
+    announce('Step '+state.understand.steppers[key]+' revealed.');
+  }else if(action==='sampling-method'||action==='sampling-redraw'){
+    const route=state.route,key=button.dataset.key;
+    const page=pagesFor(topic,route.chapterId,route.sectionId).find(p=>p.id===route.pageId);
+    if(page?.type!=='sampling-lab')return;
+    const prior=state.understand.labs[key]||{method:page.methods[0],run:1};
+    const method=action==='sampling-method'?button.dataset.method:prior.method;
+    if(!page.methods.includes(method))return;
+    state.understand.labs[key]={method,run:action==='sampling-method'?1:prior.run+1};
+    rerender();
+    const focus=action==='sampling-method'?
+      'button[data-action="sampling-method"][data-method="'+method+'"]':
+      'button[data-action="sampling-redraw"]';
+    document.querySelector(focus)?.focus({preventScroll:true});
+    announce(method+' selection updated.');
+  }else if(action==='understand-guided'){
+    const route=state.route,key=button.dataset.key,id=button.dataset.choice;
+    const page=pagesFor(topic,route.chapterId,route.sectionId).find(p=>p.id===route.pageId);
+    const chosen=page?.type==='workshop'?page.guided.choices.find(c=>c[0]===id):null;
+    if(!chosen||understandKey(route,'workshop')!==key)return;
+    const prior=state.understand.workshops[key]||{};
+    state.understand.workshops[key]={...prior,choice:id};
+    rerender();
+    document.querySelector('button[data-action="understand-guided"][data-choice="'+id+'"]')?.focus({preventScroll:true});
+    announce((chosen[3]?'Correct. ':'Not yet. ')+chosen[2]);
+  }else if(action==='understand-own-hint'||action==='understand-own-solution'){
+    const key=button.dataset.key;
+    if(key!==understandKey(state.route,'workshop'))return;
+    const prior=state.understand.workshops[key]||{};
+    const part=action==='understand-own-hint'?'hint':'solution';
+    state.understand.workshops[key]={...prior,[part]:!prior[part]};
+    rerender();
+    document.querySelector('button[data-action="'+action+'"]')?.focus({preventScroll:true});
+    announce(part+(state.understand.workshops[key][part]?' shown.':' hidden.'));
+  }else if(action==='understand-self-rate'){
+    const key=button.dataset.key,rating=button.dataset.rating;
+    if(key!==understandKey(state.route,'workshop')||!['ready','review'].includes(rating))return;
+    const prior=state.understand.workshops[key]||{};
+    state.understand.workshops[key]={...prior,rating};
+    rerender();
+    document.querySelector('button[data-action="understand-self-rate"][data-rating="'+rating+'"]')
+      ?.focus({preventScroll:true});
+    announce(rating==='ready'?'Marked as confident for this session.':'Marked for review in this session.');
+  }else if(action==='graph-reset'){
+    const id=state.route.pageId;
+    if(!GRAPH_DEFAULTS[id])return;
+    state.understand.graphs[id]={...GRAPH_DEFAULTS[id]};
+    rerender();
+    document.querySelector('button[data-action="graph-reset"]')?.focus({preventScroll:true});
+    announce('Graph reset to its starting position.');
   }else if(action==='graph-reflect'){
-    state.graph.sign*=-1;updateGraph();announce('Parabola opening reversed: '+mathCurveLabel());
+    const model=graphState(state.route);
+    if(state.route.pageId!=='shape')return;
+    model.sign*=-1;
+    updateGraph();
+    announce('Parabola now opens '+quadraticProperties(model).opening+'.');
   }else if(action==='worksheet-regenerate'){
     const input=document.querySelector('#worksheet-seed');
     const previous=Number(input?.value)||20261028;
