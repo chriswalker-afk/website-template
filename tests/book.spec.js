@@ -79,23 +79,35 @@ test('Memorise subsections have independent retrieval activities',async({page})=
   await expect(page.locator('.review-deck li')).toHaveCount(6);
 });
 
-test('graph explorer lives only under Understand / Visual explanations',async({page})=>{
+test('the quadratic graph teaches shape separately from translations',async({page})=>{
   await page.goto('/#/quadratics/understand/visual-explanations');
   await expect(page.locator('.book-page')).toHaveAttribute('data-paper','squared');
   await expect(page.locator('#graph-svg')).toBeVisible();
+  await expect(page.locator('input[data-graph="magnitude"]')).toBeVisible();
+  await expect(page.locator('input[data-graph="h"]')).toHaveCount(0);
+  await expect(page.locator('#graph-svg path[stroke="#9caaa3"]')).toBeVisible();
   const original=await page.locator('#graph-svg path[stroke="#2d755f"]').getAttribute('d');
-  await page.locator('input[data-graph="h"]').evaluate(el=>{
+  await page.locator('input[data-graph="magnitude"]').evaluate(el=>{
     el.value='2';el.dispatchEvent(new Event('input',{bubbles:true}));
   });
-  await expect(page.locator('#vertex-display')).toContainText('(2, -2)');
+  await expect(page.locator('#graph-observation')).toContainText('narrower than y = x²');
   const updated=await page.locator('#graph-svg path[stroke="#2d755f"]').getAttribute('d');
   expect(updated).not.toBe(original);
   await page.getByRole('button',{name:'Flip opening direction'}).click();
-  await expect(page.locator('#equation-display')).toContainText('−');
+  await expect(page.locator('#equation-display')).toContainText('−2x²');
+  await expect(page.locator('#graph-observation')).toContainText('opens downwards');
+  await page.getByRole('button',{name:'Reset graph'}).click();
+  await expect(page.locator('#equation-display')).toHaveText('y = x²');
   await page.getByRole('link',{name:'Next page'}).click();
   await expect(page).toHaveURL(/#\/quadratics\/understand\/visual-explanations\/position/);
   await expect(page.locator('.side-tab[aria-current="page"]')).toContainText('Visual explanations');
-  await expect(page.locator('#graph-svg')).toBeVisible();
+  await expect(page.locator('input[data-graph="magnitude"]')).toHaveCount(0);
+  await expect(page.locator('input[data-graph="h"]')).toBeVisible();
+  await expect(page.locator('input[data-graph="k"]')).toBeVisible();
+  await page.locator('input[data-graph="h"]').evaluate(el=>{
+    el.value='2';el.dispatchEvent(new Event('input',{bubbles:true}));
+  });
+  await expect(page.locator('#graph-observation')).toContainText('Turning point (2, -2)');
   await page.goto('/#/quadratics/fluency/level-1');
   await expect(page.locator('#graph-svg')).toHaveCount(0);
   await expect(page.locator('.practice-question')).toHaveCount(2);
