@@ -21,7 +21,7 @@ export const UNDERSTAND_CONTENT = {
         diagram('sampling-dots','A population of 40 people, with eight highlighted in one possible sample.'),
         check('target-population','A school investigates how all Year 11 students travel to school. What is the population?',[
           ['surveyed','Only the students who answer the questionnaire.','Those students form the sample, not the population.'],
-          ['all-year-11','Every Year 11 student in that school.','Correct. The population is the entire group the school wants to investigate.',true],
+          ['all-year-11','Every Year 11 student in that school.','The population is the entire group the school wants to investigate.',true],
           ['whole-school','Every student in the school.','That is larger than the group specified in the investigation.']
         ])
       ),lesson('representativeness',
@@ -29,7 +29,7 @@ export const UNDERSTAND_CONTENT = {
         note('A large but biased sample can be less informative than a smaller sample selected appropriately.'),
         check('representative','A student surveys the first 30 people to arrive at school about their journey times. What is the main concern?',[
           ['time','It takes too little time to collect data.','Time alone does not tell us whether the sample is representative.'],
-          ['selection','Late arrivals cannot be included.','Correct. Excluding late arrivals could distort the estimate of journey times.',true],
+          ['selection','Late arrivals cannot be included.','Excluding late arrivals could distort the estimate of journey times.',true],
           ['thirty','The sample size must be an even number.','There is no requirement that a sample size be even.']
         ])
       )]),
@@ -56,7 +56,7 @@ export const UNDERSTAND_CONTENT = {
         ]),
         check('strata','Why is selecting 20 students from each year group not a proportional stratified sample here?',[
           ['fixed','Equal numbers are always required for stratified sampling.','Proportional allocation depends on group sizes, not equal numbers.'],
-          ['ratios','It gives the smaller year group too much weight.','Correct. Year 10 forms 150/400 of the population, not half.',true],
+          ['ratios','It gives the smaller year group too much weight.','Year 10 forms 150/400 of the population, not half.',true],
           ['total','It selects fewer than 40 students.','Twenty plus twenty is 40; the issue is the group proportions.']
         ])
       )]),
@@ -78,8 +78,8 @@ export const UNDERSTAND_CONTENT = {
           'There are 30 selected entries; the random start prevents choosing the same positions by default.'
         ]},
         {prompt:'A list has 180 names. What interval gives a systematic sample of 20?',choices:[
-          ['six','6','Not quite. Multiply 6 by the required sample size to check.'],
-          ['nine','9','Correct. 180 ÷ 20 = 9, then choose a random starting position from 1 to 9.',true],
+          ['six','6','Multiply 6 by the required sample size to check.'],
+          ['nine','9','180 ÷ 20 = 9, then choose a random starting position from 1 to 9.',true],
           ['twenty','20','That is the desired sample size, not the interval.']
         ]},
         {prompt:'A list contains 168 names. Describe how to select a systematic sample of 24.',hint:'Find the interval and state how the random starting position is chosen.',
@@ -93,7 +93,7 @@ export const UNDERSTAND_CONTENT = {
           'Improve the sampling frame to cover town residents and select appropriately from that wider frame.'
         ]},
         {prompt:'Which limitation most affects a survey of school travel answered only by students who arrive early?',choices:[
-          ['timing','It can exclude students with different travel times.','Correct. Early arrivals may not represent every student.',true],
+          ['timing','It can exclude students with different travel times.','Early arrivals may not represent every student.',true],
           ['words','Travel times must always be rounded to whole hours.','Measurement precision is not the main selection issue.'],
           ['large','The entire school is automatically included.','Students who arrive later are excluded.']
         ]},
@@ -112,7 +112,7 @@ export const UNDERSTAND_CONTENT = {
         diagram('quadratic-static','The parabola y = (x − 1)² − 3 has a minimum at (1, −3).'),
         check('quadratic-term','Which expression is quadratic?',[
           ['linear','4x + 3','This is linear because the highest power is x¹.'],
-          ['quadratic','2x² − x + 1','Correct. The highest power of x is 2 and the coefficient is non-zero.',true],
+          ['quadratic','2x² − x + 1','The highest power of x is 2 and the coefficient is non-zero.',true],
           ['cubic','x³ + 2','This is cubic because its highest power is x³.']
         ])
       ),lesson('shape',
@@ -120,7 +120,7 @@ export const UNDERSTAND_CONTENT = {
         note('A negative a does not mean every y-value is negative: it means the turning point is a maximum.'),
         check('opening','Which function has a maximum turning point?',[
           ['positive','y = 2(x − 1)² + 4','Since a = 2, the curve opens upwards and has a minimum.'],
-          ['negative','y = −(x − 1)² + 4','Correct. The coefficient of the squared term is negative, so it opens downwards.',true],
+          ['negative','y = −(x − 1)² + 4','The coefficient of the squared term is negative, so it opens downwards.',true],
           ['positive-small','y = 0.5(x + 1)² − 4','A positive coefficient gives a minimum, even if the turning point has negative y-coordinate.']
         ])
       )]),
@@ -134,7 +134,7 @@ export const UNDERSTAND_CONTENT = {
         ),
         check('best-form','Which form most directly reveals the turning point?',[
           ['expanded','Expanded form','Expanded form is useful for the y-intercept; it does not directly display both vertex coordinates.'],
-          ['square','Completed-square form','Correct. Read off h and k from a(x − h)² + k.',true],
+          ['square','Completed-square form','Read off h and k from a(x − h)² + k.',true],
           ['factored','Factorised form','Factorised form is especially useful for finding the roots.']
         ])
       ),lesson('translate',
@@ -160,7 +160,7 @@ export const UNDERSTAND_CONTENT = {
         ]},
         {prompt:'What is the turning point of y = 3(x − 4)² − 2?',choices:[
           ['wrong-sign','(−4, −2)','The form x − h gives h = 4, not −4.'],
-          ['correct','(4, −2), a minimum','Correct. Here h = 4, k = −2 and a > 0.',true],
+          ['correct','(4, −2), a minimum','Here h = 4, k = −2 and a > 0.',true],
           ['wrong-y','(4, 2), a maximum','k = −2, and a positive coefficient opens upwards.']
         ]},
         {prompt:'Find the turning point and its type for y = −(x + 2)² + 7.',
