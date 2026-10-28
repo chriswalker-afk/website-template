@@ -300,14 +300,14 @@ const QUADRATICS={
   'unknown-coefficient':rng=>{
     const a=pick(rng,[1,2,3]),r=pick(rng,[-5,-4,-3,-2,-1,1,2,3,4,5]),
       b=int(rng,-9,9),c=-a*r*r-b*r;
+    const equation=(a===1?'x²':a+'x²')+' + bx'+(c===0?'':(c<0?' − ':' + ')+Math.abs(c));
     return question({family:'unknown-coefficient',signature:[a,r,b].join(':'),skill:'Unknown coefficients',
-      prompt:'The equation '+poly(a,1,c).replace(' + x',' + bx').replace(' − x',' − bx')+
-        ' = 0 has a root x = '+r+'. Find b.',
-      values:[b],steps:['Substitute the given root x = '+r+' into a x² + b x + c = 0.',
-        a+'('+r+')² + b('+r+') + ('+c+') = 0.',
-        'Therefore '+(b*r)+' = −('+a*r*r+' + ('+c+')), giving b = '+b+'.'],
-      hint:'Substitute the known root and solve the resulting linear equation for b.',
-      mistake:'Use the fact that the quadratic equals zero at a root.',marks:4});
+      prompt:'The equation '+equation+' = 0 has a root x = '+r+'. Find b.',
+      values:[b],steps:['Substitute x = '+r+' into the equation: '+a+'('+r+')² + b('+r+') + ('+c+') = 0.',
+        'Simplify: '+(b*r)+' = −('+a*r*r+' + ('+c+')).',
+        'Divide by '+r+' to obtain b = '+b+'.'],
+      hint:'Set x equal to the given root, then rearrange the equation to find b.',
+      mistake:'At a root, the quadratic expression equals zero. Do not differentiate.',marks:4});
   },
   'extreme-value':rng=>{
     const a=pick(rng,[-3,-2,2,3]),h=int(rng,-4,4),k=int(rng,-7,7);
@@ -321,20 +321,6 @@ const QUADRATICS={
       mistake:'The extreme value is the y-coordinate k, not the x-coordinate h.',marks:4});
   }
 };
-// Fix the unknown-b equation as a clear symbolic coefficient, not a substitute "1x".
-QUADRATICS['unknown-coefficient']=rng=>{
-  const a=pick(rng,[1,2,3]),r=pick(rng,[-5,-4,-3,-2,-1,1,2,3,4,5]),
-    b=int(rng,-9,9),c=-a*r*r-b*r;
-  const equation=(a===1?'x²':a+'x²')+' + bx'+(c===0?'':(c<0?' − ':' + ')+Math.abs(c));
-  return question({family:'unknown-coefficient',signature:[a,r,b].join(':'),skill:'Unknown coefficients',
-    prompt:'The equation '+equation+' = 0 has a root x = '+r+'. Find b.',
-    values:[b],steps:['Substitute x = '+r+' into the equation: '+a+'('+r+')² + b('+r+') + ('+c+') = 0.',
-      'Simplify: '+(b*r)+' = −('+a*r*r+' + ('+c+')).',
-      'Divide by '+r+' to obtain b = '+b+'.'],
-    hint:'Set x equal to the given root, then rearrange the equation to find b.',
-    mistake:'At a root, the quadratic expression equals zero. Do not substitute into the derivative.',marks:4});
-};
-
 const FAMILIES={sampling:SAMPLING,quadratics:QUADRATICS};
 export function fluencyFamilyIds(topicId,levelId,pageId){
   const section=FLUENCY_CHAPTERS[topicId]?.find(s=>s.id===levelId);
