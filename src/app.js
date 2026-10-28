@@ -1,4 +1,9 @@
 import {CHAPTER_LIBRARY,TOPICS} from './topics.js';
+import {emptyMemory,hydrateMemory,gradeCard,toggleCardFlag,deckQueue,matchRoundCards,
+  assessTerm,recordFor} from './memorise-engine.js';
+import {renderFlashcards as memoryFlashcards,renderMatch as memoryMatch,
+  renderCloze as memoryCloze,renderSpeedRecall as memorySpeedRecall,
+  renderReviewAll as memoryReviewAll,renderReviewList} from './memorise-ui.js';
 import {generateWorksheet,supportsWorksheets,worksheetSkills} from './worksheet-generator.js';
 import {GRAPH_DEFAULTS,quadraticProperties,quadraticValue,quadraticEquation} from './understand-engine.js';
 import {understandKey,renderSteps,renderConceptCheck,renderWalkthrough,renderSamplingLab,renderWorkshop} from './understand-ui.js';
@@ -26,15 +31,46 @@ function getBookmarks(){
 const state={
   route:null, motionOff:safeStorage.get('motion-off')==='true', bookmarks:getBookmarks(),
   lastPage:safeStorage.get('last-page'),
-  flash:{index:0,flipped:false,ratings:{}},
-  match:{term:null,definition:null,matched:[],message:''},
-  cloze:{value:'',hint:false,checked:false,correct:false},
-  recall:{index:0,value:'',checked:false,correct:false},
+  memory:{},
+  flash:null,match:null,cloze:null,recall:null,review:null,
   understand:{steppers:{},checks:{},workshops:{},labs:{},graphs:{}},
   revealed:{},
   worksheets:{}
 };
 let lastTopic=null;
+
+function memoryFor(topic){
+  if(!state.memory[topic.id])
+    state.memory[topic.id]=hydrateMemory(safeStorage.get('memorise:'+topic.id),topic);
+  return state.memory[topic.id];
+}
+function saveMemory(topic,next){
+  state.memory[topic.id]=next;
+  safeStorage.put('memorise:'+topic.id,JSON.stringify(next));
+}
+function flashSession(topic,mode='all'){
+  return {mode,ids:deckQueue(topic,memoryFor(topic),mode),index:0,flipped:false,complete:false,rated:0};
+}
+function clozeSession(topic,mode='all'){
+  const allowed=mode==='all'?new Set(topic.cards.map(c=>c.id)):
+    new Set(deckQueue(topic,memoryFor(topic),mode));
+  return {mode,ids:topic.clozes.filter(c=>allowed.has(c.cardId)).map(c=>c.id),
+    index:0,value:'',hint:false,checked:false,correct:false,resultKind:null,complete:false,correctCount:0};
+}
+function recallSession(topic,mode='all'){
+  return {mode,ids:deckQueue(topic,memoryFor(topic),mode),index:0,value:'',
+    checked:false,correct:false,resultKind:null,complete:false,correctCount:0};
+}
+function resetMemoriseSessions(topic){
+  state.flash=flashSession(topic);
+  state.match={round:0,term:null,definition:null,matched:[],message:''};
+  state.cloze=clozeSession(topic);
+  state.recall=recallSession(topic);
+  state.review={query:'',filter:'all',showDefinitions:true,confirmReset:false};
+}
+function currentFlashCard(topic){
+  return topic.cards.find(c=>c.id===state.flash?.ids?.[state.flash.index]);
+}
 
 function announce(message){status.textContent='';status.textContent=message;}
 function selected(value,expected){return value===expected?' selected':'';}
@@ -508,10 +544,7 @@ function navigate(){
   const next=resolveRoute(location.hash);
   if(location.hash!==next.canonical){history.replaceState(null,'',next.canonical);}
   if(next.topicId!==lastTopic){
-    state.flash={index:0,flipped:false,ratings:{}};
-    state.match={term:null,definition:null,matched:[],message:''};
-    state.cloze={value:'',hint:false,checked:false,correct:false};
-    state.recall={index:0,value:'',checked:false,correct:false};
+    resetMemoriseSessions(TOPICS[next.topicId]);
     state.understand={steppers:{},checks:{},workshops:{},labs:{},graphs:{}};
     state.revealed={};
     lastTopic=next.topicId;
