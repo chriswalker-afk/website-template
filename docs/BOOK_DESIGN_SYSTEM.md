@@ -11,6 +11,16 @@ A *book metaphor* describes visual form and navigation, not an inflexible simula
 
 A user should be able to work with a keyboard, screen reader or touch screen without needing to understand the decorative metaphor.
 
+### Editorial hierarchy: one title, one explanation
+- **Each section/subsection page has exactly one visible page title (`h1`)**. Use the configured subsection name, not a second creative headline (for example, `Flashcards` rather than both `Memorise / Index Cards` and `Make it stick`).
+- **Directly under that title, show one useful, concise explanation** of the concept or what to do. For an understanding page, this can be the real mathematical explanation, not an introductory sentence followed by the same explanation again.
+- The Contents page has **Contents** and one short orientation. The topic's actual name belongs on the book cover; avoid a second slogan or tagline competing with it.
+- Breadcrumbs identify **Contents and the chapter**, not the current subsection already displayed as the heading. Side tabs remain navigation, not additional body headings.
+- Remove decorative eyebrows, repeated instruction strips, filler slogans, duplicated headings in graphs/cards/sidebars, verbose prototype notices, redundant footers and vague motivational copy.
+- Retain meaningful **questions, worked examples, task labels, field labels, headings of individual game cards, feedback, hints and comparison labels**. These are learning content or operational UI, not duplicate page introductions.
+- Future topic content should be reviewed for specificity and readability. Prefer `Change a, h and k to see how the parabola moves` over `Explore the magic of curves`.
+- Browser QA checks that every route has one main `h1`, one nonempty page explanation, and no template-level filler labels. The book aesthetic comes from styling and movement, **not extra words**.
+
 ## 2. Information architecture as a book
 
 ### A. Front matter: Contents
