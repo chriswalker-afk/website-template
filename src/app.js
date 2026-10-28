@@ -645,7 +645,8 @@ app.addEventListener('click',ev=>{
     const session=problemSession(),current=currentProblem(session);
     if(!current||session.complete||current.response.rating)return;
     session.entries[current.task.id]={...current.response,
-      strategiesOpen:!current.response.strategiesOpen};
+      strategiesOpen:!current.response.strategiesOpen,
+      assisted:Boolean(current.response.assisted||!current.response.strategiesOpen)};
     rerender();
     document.querySelector('button[data-action="ps-strategies"]')?.focus({preventScroll:true});
     announce('Possible approaches '+(session.entries[current.task.id].strategiesOpen?'shown.':'hidden.'));
