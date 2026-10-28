@@ -561,6 +561,83 @@ app.addEventListener('click',ev=>{
   const button=ev.target.closest('button[data-action]');
   if(!button)return;
   const action=button.dataset.action,topic=TOPICS[state.route.topicId];
+  if(action==='fluency-hint'){
+    const session=fluencySession(),current=fluencyAnswer(session);
+    if(!current||session.complete)return;
+    const a=current.response;
+    session.answers[current.question.id]={...a,hint:!a.hint};
+    rerender();
+    document.querySelector('button[data-action="fluency-hint"]')?.focus({preventScroll:true});
+    announce(session.answers[current.question.id].hint?'Hint displayed.':'Hint hidden.');
+  }else if(action==='fluency-working'){
+    const session=fluencySession(),current=fluencyAnswer(session);
+    if(!current||!(current.response.correct||current.response.revealed))return;
+    const a=current.response;
+    session.answers[current.question.id]={...a,showWorking:!a.showWorking};
+    rerender();
+    document.querySelector('button[data-action="fluency-working"]')?.focus({preventScroll:true});
+    announce('Worked solution '+(session.answers[current.question.id].showWorking?'shown.':'hidden.'));
+  }else if(action==='fluency-reveal'){
+    const session=fluencySession(),current=fluencyAnswer(session);
+    if(!current||session.complete||current.response.correct||current.response.revealed)return;
+    session.answers[current.question.id]={...current.response,correct:false,revealed:true,
+      showWorking:true,feedback:'Full solution revealed for self-review. This does not count as a correct answer.'};
+    rerender();
+    document.querySelector('button[data-action="fluency-next"]')?.focus({preventScroll:true});
+    announce('Full worked solution displayed. This question needs further practice.');
+  }else if(action==='fluency-next'){
+    const session=fluencySession(),current=fluencyAnswer(session);
+    if(!current||session.complete||!(current.response.correct||current.response.revealed))return;
+    if(session.index<session.set.questions.length-1){
+      session.index++;
+      rerender();announce('Next Fluency question.');
+      document.querySelector('#fluency-answer')?.focus({preventScroll:true});
+    }else{
+      const summary=roundScores(session),topic=TOPICS[state.route.topicId];
+      session.complete=true;
+      saveFluencyProgress(topic,saveFluencyRound(fluencyProgressFor(topic),
+        state.route.sectionId,summary));
+      rerender();announce('Fluency round complete; practice totals saved locally.');
+      document.querySelector('.fluency-complete__lead')?.focus?.({preventScroll:true});
+    }
+  }else if(action==='fluency-retry'){
+    const session=fluencySession();
+    if(!session?.complete)return;
+    const missed=session.set.questions.filter(q=>{
+      const a=session.answers[q.id];
+      return a?.revealed||(a?.correct&&(a.tries>1||a.hint));
+    });
+    if(!missed.length)return;
+    state.fluencySessions[fluencyRouteKey(state.route)]={
+      set:{...session.set,questions:missed,count:missed.length},configCount:session.configCount,
+      index:0,answers:{},complete:false,confirmFresh:false,pendingCount:null
+    };
+    rerender();announce('Review practice started with '+missed.length+' questions.');
+    document.querySelector('#fluency-answer')?.focus({preventScroll:true});
+  }else if(action==='fluency-new'){
+    const session=fluencySession();
+    if(!session)return;
+    if(!session.complete&&Object.values(session.answers).some(a=>a.tries||a.revealed||a.draft?.trim()||a.working?.trim())){
+      session.confirmFresh=true;session.pendingCount=session.configCount;rerender();
+      document.querySelector('button[data-action="fluency-cancel-new"]')?.focus({preventScroll:true});
+      announce('Confirm replacing your unfinished Fluency set.');
+    }else{
+      fluencyNewSet(state.route,session.configCount);rerender();
+      document.querySelector('#fluency-answer')?.focus({preventScroll:true});
+      announce('New Fluency questions generated.');
+    }
+  }else if(action==='fluency-confirm-new'){
+    const session=fluencySession();
+    if(!session?.confirmFresh)return;
+    fluencyNewSet(state.route,session.pendingCount||session.configCount);
+    rerender();announce('Replacement Fluency set created.');
+    document.querySelector('#fluency-answer')?.focus({preventScroll:true});
+  }else if(action==='fluency-cancel-new'){
+    const session=fluencySession();
+    if(!session)return;
+    session.confirmFresh=false;session.pendingCount=null;
+    rerender();announce('Unfinished practice kept.');
+    document.querySelector('button[data-action="fluency-new"]')?.focus({preventScroll:true});
   if(action==='bookmark'){
     if(state.bookmarks.has(state.route.canonical))state.bookmarks.delete(state.route.canonical);
     else state.bookmarks.add(state.route.canonical);
