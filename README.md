@@ -2,17 +2,17 @@
 
 A reusable, topic-configurable foundation for high-quality Maths learning websites across age groups, curricula and qualifications.
 
-**Current status:** Pass 1A interactive book prototype plus a **working sample LaTeX Worksheet Generator** in Contents → Resources. This is a limited, validated demo, not yet the complete authoring engine described for later passes.
+**Current status:** Functional interactive notebook prototype with **three-level navigation** (mode → subsection → pages), sample question levels and a working LaTeX Worksheet Generator. This remains a demonstration of the design and content contract, not a complete production curriculum site.
 
 ## Try the book prototype
 
 The static application starts at **index.html** and includes two contrasting sample books:
-- **Sampling Methods:** vocabulary-heavy study pages, flashcards, Match Up, Missing Words, Reasoning and a preview Games shelf.
-- **Quadratic Functions:** algebra and graph-focused study pages, the same Memorise interactions, a live quadratic graph explorer, Problem Solving, Modelling and a preview Games shelf.
+- **Sampling Methods:** Understanding across four subsections, Memorise with five distinct activities, levelled Fluency questions, Reasoning and three separate Games previews.
+- **Quadratic Functions:** Understand with its interactive graph explorer under Visual explanations, Memorise, levelled Fluency/Problem Solving/Modelling questions, Reasoning and three distinct Games previews.
 
 Open **Contents → Worksheet Generator** in either sample topic. Choose skills, difficulty, number of questions, style and solution depth. It creates an on-screen question preview and downloads editable `worksheet.tex` and a matching `worked-solutions.tex` (or `answers.tex`). The optional scaffolded style includes an early worked model and hints. Questions are reproducible from a numerical seed. Compile the source in Overleaf or a local TeX installation; **the website does not compile PDFs directly**.
 
-The book uses top chapter tabs and right-edge subsection tabs on desktop; on smaller screens these become labelled chapter and section selectors. The page-turn and flashcard motion follow reduced-motion preferences, with an additional manual motion control.
+The book uses **top tabs for learning modes**, **right-edge tabs for distinct subsections**, and **Previous/Next page controls within multi-page subsections**. Page turns do not switch the active subsection. On smaller screens, labelled mode/subsection selectors replace the physical tabs. Flashcards and Games use their own internal activity navigation. Motion follows reduced-motion preferences, with a manual off setting.
 
 Launch locally (Node 22 or newer):
 
@@ -34,6 +34,7 @@ A modern, tabbed reference-book aesthetic built into the reusable shell: **chapt
 - [Pass 0 learning architecture](docs/PASS_0_ARCHITECTURE.md) — learning modes, activities, configuration and implementation stages.
 - [Book Design System](docs/BOOK_DESIGN_SYSTEM.md) — visual language, component behaviours, responsive layouts, motion, accessibility and acceptance checklist.
 - [Worksheet Generator specification](docs/WORKSHEET_GENERATOR.md) — optional Contents/Resources tool, worksheet settings, reproducible question families, LaTeX output and worked-solution safeguards.
+- [Modes, subsections and pages](docs/MODE_SUBSECTION_PAGE_SYSTEM.md) — navigation hierarchy, default tabs, rules separating learning modes and deep links.
 
 ## Design principles
 
@@ -41,7 +42,7 @@ A modern, tabbed reference-book aesthetic built into the reusable shell: **chapt
 - **Memorise is a rich learning space:** flipping flashcards, browse/review all cards, self-rating and retry, Match Up, Missing Words, Speed Recall and other vocabulary/retrieval games.
 - **Games has its own home:** playful, reusable whole-topic challenges such as Sprint and Quests, plus optional topic-specific games. Games can draw on the same validated question banks without duplicating progress.
 - **Printable resources:** the optional, topic-aware Worksheet Generator prototype exports editable LaTeX student worksheets and matching worked solutions from vetted, reproducible example question families.
-- **Modular:** no empty or disabled sections for a topic that does not need them.
+- **Modular:** no empty or disabled sections for a topic that does not need them; no right-hand tab for each page. Each subsection can contain one or several pages.
 - **Mathematically careful:** distinguish recall from exposure, support symbols and graphs, require reviewed answers and worked solutions.
 - **Accessible:** responsive, keyboard-friendly, reduced-motion support and no compulsory timers.
 - **Tactile but functional:** a recognizable notebook/book identity with chapter tabs, side indexes, readable paper surfaces and fast, optional page motion.
@@ -51,14 +52,14 @@ A modern, tabbed reference-book aesthetic built into the reusable shell: **chapt
 
 1. **Pass 0 — Blueprint and reuse audit:** modules, content contract, activity catalogue, testing and rollout plan.
 2. **Pass 1A — Notebook visual prototype (implemented):** Contents, chapter and subsection tabs, page variants, transitions, two sample topics, interactive flashcards and graph workspace.
-3. **Pass 1B — Reusable production shell (next):** validated topic loading, routing, responsive navigation, bookmarks, local progress and automated checks. Include a reusable question/solution data contract capable of future LaTeX export.
+3. **Pass 1B — Reusable production shell (navigation prototype in place; remaining authoring work next):** mode/subsection/page routing, validated example content, deep links, responsive navigation and bookmarks now work. A generalised content-authoring workflow, persistent learning progress and cross-topic publishing pipeline remain future work.
 4. **Pass 2 — Memorise experience:** premium flashcards and playable language/retrieval games.
 5. **Pass 3 — Other learning modes:** understanding, fluency, reasoning, problem solving and modelling engines.
 6. **Pass 4 — Games arcade:** reusable challenges with optional special topic modules.
 7. **Pass 5 — Assessment, authoring and deployment:** examination practice, validation, tests, GitHub Pages guides; plan a separate **Pass 5A Worksheet Generator** and **Pass 5B worksheet expansion** once the question engine exists.
 8. **Pass 6 — Prove the template:** two very different topics; refine the authoring process.
 
-The planning documents are maintained alongside this README in the Pass 0 architecture pull request.
+The architecture and implementation notes are maintained alongside the code in the `docs/` directory.
 
 ## Existing projects for inspiration
 

@@ -3,13 +3,13 @@ import {readFile} from 'node:fs/promises';
 
 test('Worksheet Generator is a Contents resource, not an extra chapter tab',async({page})=>{
   await page.goto('/#/sampling/home');
-  await expect(page.locator('.chapter-tab')).toHaveCount(4);
+  await expect(page.locator('.chapter-tab')).toHaveCount(5);
   await expect(page.getByRole('link',{name:/Worksheet Generator/})).toBeVisible();
   await page.getByRole('link',{name:/Worksheet Generator/}).click();
   await expect(page).toHaveURL(/#\/sampling\/resources\/worksheet-generator/);
   await expect(page.locator('.book-page h1')).toHaveText('Worksheet Generator');
   await expect(page.locator('.book-page .page-subtitle')).toHaveCount(1);
-  await expect(page.locator('.chapter-tab')).toHaveCount(4);
+  await expect(page.locator('.chapter-tab')).toHaveCount(5);
   await expect(page.locator('.side-tabs')).toHaveCount(0);
   await expect(page.getByLabel('Variation seed')).toBeVisible();
   await page.goBack();

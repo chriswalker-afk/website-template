@@ -1,6 +1,6 @@
 import {CHAPTER_LIBRARY,TOPICS} from './topics.js';
 import {generateWorksheet,supportsWorksheets,worksheetSkills} from './worksheet-generator.js';
-import {chaptersFor,sectionsFor,chapterFor,routeHref,resolveRoute,topicSwitchHref,escapeHTML as e,normaliseAnswer,cardForIndex,sampleMatchCards,validateTopics} from './logic.js';
+import {chaptersFor,sectionsFor,pagesFor,chapterFor,routeHref,resolveRoute,topicSwitchHref,escapeHTML as e,normaliseAnswer,cardForIndex,sampleMatchCards,validateTopics} from './logic.js';
 
 const app=document.querySelector('#app');
 const status=document.querySelector('#live-message');
@@ -14,7 +14,11 @@ const safeStorage={
   put(key,value){try{localStorage.setItem(STORAGE+key,value);}catch{/* private mode */}}
 };
 function getBookmarks(){
-  try {const value=JSON.parse(safeStorage.get('bookmarks')||'[]');return new Set(Array.isArray(value)?value.filter(v=>typeof v==='string'&&v.startsWith('#/')):[]);}
+  try {
+    const value=JSON.parse(safeStorage.get('bookmarks')||'[]');
+    const links=Array.isArray(value)?value.filter(v=>typeof v==='string'&&v.startsWith('#/')):[];
+    return new Set(links.map(href=>resolveRoute(href)).filter(r=>r.chapterId!=='home').map(r=>r.canonical));
+  }
   catch{return new Set();}
 }
 const state={
@@ -23,6 +27,7 @@ const state={
   flash:{index:0,flipped:false,ratings:{}},
   match:{term:null,definition:null,matched:[],message:''},
   cloze:{value:'',hint:false,checked:false,correct:false},
+  recall:{index:0,value:'',checked:false,correct:false},
   graph:{magnitude:1,h:0,k:-2,sign:1},
   revealed:{},
   worksheets:{}
@@ -35,6 +40,7 @@ function chapterHref(topic,chapter){const section=sectionsFor(topic,chapter)[0];
 function pagePaper(route){
   if(route.chapterId==='home'||route.chapterId==='resources')return 'plain';
   if(['fluency','modelling','problemSolving'].includes(route.chapterId))return 'squared';
+  if(route.chapterId==='understand'&&route.sectionId==='visual-explanations')return 'squared';
   if(['memorise','games'].includes(route.chapterId))return 'plain';
   return 'ruled';
 }
@@ -65,7 +71,7 @@ function renderContents(topic){
     const r=resolveRoute(href);
     if(r.canonical!==href||r.topicId!==topic.id||r.chapterId==='home')return '';
     const section=sectionsFor(topic,r.chapterId).find(item=>item.id===r.sectionId);
-    return '<a href="'+href+'">'+e(chapterFor(r.chapterId)?.label||'Section')+' · '+e(section?.label||'Page')+'</a>';
+    return '<a href="'+r.canonical+'">'+e(chapterFor(r.chapterId)?.label||'Section')+' · '+e(section?.label||'Page')+(r.pageIndex>0?' (page '+(r.pageIndex+1)+')':'')+'</a>';
   }).filter(Boolean).slice(0,4).join('');
   const last=state.lastPage?resolveRoute(state.lastPage):null;
   const continuation=last?.topicId===topic.id&&last.chapterId!=='home'
@@ -165,7 +171,7 @@ function renderWorksheetGenerator(topic){
 
 function renderDots(){
   const dots=Array.from({length:40},(_,i)=>'<span class="dot'+([2,6,11,15,19,26,30,36].includes(i)?' dot--chosen':'')+'"></span>').join('');
-  return '<div class="dot-field" aria-hidden="true">'+dots+'</div><p class="figure-caption">Illustration: 8 selected from a population of 40</p>';
+  return '<div class="dot-field" aria-hidden="true">'+dots+'</div>';
 }
 function renderSmallGraph(){
   return '<svg class="mini-curve" viewBox="0 0 280 195" role="img" aria-label="An upward-opening parabola, with turning point (1, minus 3)">'+
@@ -179,40 +185,77 @@ function heading(title,description){
   return '<h1 class="page-title" id="page-title" tabindex="-1">'+e(title)+'</h1>'+
     '<p class="page-subtitle">'+e(description)+'</p>';
 }
-function renderIntro(topic){
-  const d=topic.intro;
-  return heading('The big idea',d.body)+
-    '<div class="chapter-intro">'+
-      '<aside class="callout" aria-label="Question to consider"><p>'+e(d.question)+'</p></aside>'+
-      '<figure class="math-figure">'+(topic.id==='sampling'?renderDots():renderSmallGraph())+'</figure>'+
-    '</div>'+
-    '<div class="lesson-small"><p><strong>Example:</strong> '+e(d.example)+'</p></div>';
+function renderLessonPage(page,topic){
+  return '<div class="lesson-page">'+page.blocks.map(block=>{
+    if(block.kind==='text')return '<p class="lesson-text">'+e(block.text)+'</p>';
+    if(block.kind==='note')return '<aside class="callout"><p>'+e(block.text)+'</p></aside>';
+    if(block.kind==='example')return '<div class="lesson-small"><p><strong>Example:</strong> '+
+      e(block.prompt)+'</p><ol class="worked-steps">'+block.steps.map(step=>'<li>'+e(step)+'</li>').join('')+'</ol></div>';
+    if(block.kind==='diagram'){
+      const graphic=block.variant==='sampling-dots'?renderDots():renderSmallGraph();
+      return '<figure class="math-figure">'+graphic+'<figcaption class="figure-caption">'+e(block.caption)+'</figcaption></figure>';
+    }
+    if(block.kind==='comparison'){
+      return '<div class="topic-panels'+(block.items.length===2?' topic-panels--two':'')+'">'+block.items.map(item=>
+        '<article class="topic-panel"><strong class="topic-panel__title">'+e(item.label)+'</strong>'+
+        '<p>'+e(item.description)+'</p></article>').join('')+'</div>';
+    }
+    if(block.kind==='table'){
+      return '<div class="lesson-table-wrap"><table class="lesson-table"><thead><tr>'+
+        block.headers.map(h=>'<th scope="col">'+e(h)+'</th>').join('')+'</tr></thead><tbody>'+
+        block.rows.map(row=>'<tr>'+row.map(value=>'<td>'+e(value)+'</td>').join('')+'</tr>').join('')+
+        '</tbody></table></div>';
+    }
+    return '';
+  }).join('')+'</div>';
 }
-function renderDetail(topic,chapterId,section){
-  const detail=topic.details?.[section];
-  if(!detail)return heading('Page unavailable','No activity has been authored for this page.');
-  const sectionLabel=sectionsFor(topic,chapterId).find(item=>item.id===section)?.label||'Activity';
-  let html=heading(sectionLabel,detail.intro);
-  if(detail.panels){
-    html+='<div class="topic-panels">'+detail.panels.map(panel=>
-      '<article class="topic-panel"><strong class="topic-panel__title">'+e(panel.label)+'</strong>'+
-      '<p>'+e(panel.text)+'</p></article>').join('')+'</div>';
-  }
-  if(detail.question){
-    const key=topic.id+':'+section,shown=Boolean(state.revealed[key]);
-    html+='<section class="hint-reveal" aria-label="Practice question" style="margin-top:30px">'+
-      '<p>'+e(detail.question)+'</p>'+
-      '<button class="quiet-button" type="button" data-action="reveal" data-key="'+e(key)+'" aria-expanded="'+shown+'">'+
-      (shown?'Hide answer':'Show answer')+'</button>'+
-      (shown?'<div class="reveal-answer">'+e(detail.answer)+'</div>':'')+
-    '</section>';
-  }
-  return html;
+function renderQuestionPage(page,route){
+  return '<div class="practice-list">'+page.problems.map((problem,index)=>{
+    const key=[route.topicId,route.chapterId,route.sectionId,page.id,problem.id].join(':');
+    const shown=state.revealed[key]||{};
+    return '<article class="practice-question">'+
+      '<div class="practice-question__meta"><span>Question '+(index+1)+'</span>'+
+        '<span>'+problem.marks+' marks</span></div>'+
+      '<p class="practice-question__prompt">'+e(problem.prompt)+'</p>'+
+      '<div class="practice-question__actions">'+
+        (problem.hint?'<button type="button" class="quiet-button" data-action="reveal-problem" data-part="hint" data-key="'+e(key)+'" '+
+          'aria-expanded="'+Boolean(shown.hint)+'">'+(shown.hint?'Hide hint':'Show hint')+'</button>':'')+
+        '<button type="button" class="quiet-button" data-action="reveal-problem" data-part="solution" data-key="'+e(key)+'" '+
+          'aria-expanded="'+Boolean(shown.solution)+'">'+(shown.solution?'Hide solution':'Show solution')+'</button></div>'+
+      (shown.hint&&problem.hint?'<div class="practice-question__hint"><strong>Hint:</strong> '+e(problem.hint)+'</div>':'')+
+      (shown.solution?'<div class="reveal-answer"><strong>Solution:</strong> '+e(problem.solution)+'</div>':'')+
+    '</article>';
+  }).join('')+'</div>';
+}
+function renderGamePage(page){
+  const symbol=page.gameId==='sprint'?'clock':page.gameId==='puzzle-quest'?'puzzle':'grid';
+  return '<section class="game-feature">'+
+    '<div class="game-feature__icon">'+icon(symbol)+'</div>'+
+    '<div class="game-feature__body"><p>'+e(page.objective)+'</p>'+
+    '<p class="game-feature__notice"><strong>Planned game:</strong> '+e(page.mechanic)+'</p></div>'+
+  '</section>';
+}
+function renderReviewAll(topic){
+  return '<ol class="review-deck">'+topic.cards.map(card=>
+    '<li><strong>'+e(card.term)+'</strong><p>'+e(card.definition)+'</p></li>').join('')+'</ol>';
+}
+function renderSpeedRecall(topic){
+  const recall=state.recall,card=cardForIndex(topic,recall.index);
+  return '<div class="recall-workspace">'+
+    '<div class="flashcard-counter">Definition '+(recall.index+1)+' of '+topic.cards.length+'</div>'+
+    '<p class="recall-definition">'+e(card.definition)+'</p>'+
+    '<form id="recall-form" class="recall-form">'+
+      '<label for="recall-answer">Mathematical term</label>'+
+      '<input id="recall-answer" type="text" autocomplete="off" spellcheck="false" required value="'+e(recall.value)+'">'+
+      '<button class="action-button" type="submit">Check answer</button></form>'+
+    (recall.checked?'<p class="game-feedback" role="status" data-state="'+(recall.correct?'correct':'incorrect')+'">'+
+      (recall.correct?'Correct.':('The term is '+e(card.term)+'.'))+'</p>':'')+
+    '<button class="quiet-button recall-next" type="button" data-action="recall-next">'+
+      'Next definition '+icon('arrow')+'</button></div>';
 }
 function renderFlashcards(topic){
   const f=state.flash,card=cardForIndex(topic,f.index),rating=f.ratings[card.id];
-  return heading('Flashcards','Recall the definition before flipping each card, then rate your recall.')+
-    '<div class="memory-layout">'+
+  return '<div class="memory-layout">'+
       '<section><div class="flashcard-counter"><span>Card '+(f.index+1)+' of '+topic.cards.length+'</span>'+
         (rating?'<span>Last rated: '+e(rating)+'</span>':'')+'</div>'+
       '<div class="flashcard-stage"><button class="flashcard'+(f.flipped?' is-flipped':'')+
@@ -248,8 +291,7 @@ function renderMatch(topic){
   const complete=game.matched.length===items.length;
   const button=(card,side,label)=>'<button type="button" class="match-choice" data-action="match-choice" data-side="'+side+'" data-id="'+e(card.id)+'" '+
     'aria-pressed="'+(game[side]===card.id)+'" '+(game.matched.includes(card.id)?'disabled':'')+'>'+e(label)+'</button>';
-  return heading('Match Up','Choose a term, then select its matching definition.')+
-    '<div class="match-columns">'+
+  return '<div class="match-columns">'+
       '<section class="match-column" aria-label="Terms"><p class="match-column__label">Terms</p>'+
         items.map(card=>button(card,'term',card.term)).join('')+'</section>'+
       '<section class="match-column" aria-label="Definitions"><p class="match-column__label">Definitions</p>'+
@@ -261,8 +303,7 @@ function renderMatch(topic){
 }
 function renderCloze(topic){
   const game=state.cloze,c=topic.cloze;
-  return heading('Missing Words','Type the missing mathematical term, then check your answer.')+
-    '<section class="cloze-area">'+
+  return '<section class="cloze-area">'+
       '<form id="cloze-form"><p class="cloze-line">'+e(c.before)+
         '<label class="sr-only" for="cloze-answer">Missing mathematical word or phrase</label>'+
         '<input class="cloze-input" id="cloze-answer" name="answer" autocomplete="off" spellcheck="false" value="'+e(game.value)+'" aria-describedby="cloze-feedback">'+
@@ -302,14 +343,9 @@ function renderGraphSvg(){
     ''+
     '</svg>';
 }
-function renderGraphLab(topic,section){
-  const isModel=section==='model-lab';
-  const description=isModel
-    ?'Adjust the parameters and consider whether the curve could model a real arch or water jet.'
-    :'Adjust the parameters to see how the graph changes. The dotted line is its axis of symmetry.';
+function renderGraphLab(page){
   const g=state.graph;
-  return heading(isModel?'Model a curve':'Graph explorer',description)+
-    '<div class="math-lab">'+
+  return '<div class="math-lab">'+
       '<div class="graph-card">'+renderGraphSvg()+'</div>'+
       '<div class="graph-controls">'+
         '<div class="equation-card"><span>Function</span><strong id="equation-display">'+e(mathCurveLabel())+'</strong></div>'+
@@ -322,33 +358,28 @@ function renderGraphLab(topic,section){
         '<button class="quiet-button" type="button" data-action="graph-reflect">'+icon('refresh')+' Flip opening direction</button>'+
         '<div class="vertex-note" style="margin-top:17px">Turning point <strong id="vertex-display">('+g.h+', '+g.k+')</strong></div>'+
       '</div></div>'+
-      '<div class="callout" aria-label="Question to consider"><p>'+
-      (isModel?'What assumptions would you need before using this curve to represent a real arch?':
-       'What happens to the turning point when only the value of a changes?')+'</p></div>';
-}
-function renderGames(topic){
-  const games=[
-    {icon:'clock',title:'Sprint',detail:'Answer as many questions as possible in a set time, or play untimed.'},
-    {icon:'puzzle',title:'Puzzle Quest',detail:'Solve a sequence of problems to unlock new challenges.'},
-    {icon:'grid',title:topic.id==='quadratics'?'Curve Quest':'Sort & Discover',
-      detail:topic.id==='quadratics'?'Explore quadratic graph transformations.':'Compare and classify sampling methods.'}
-  ];
-  return heading('Game library','Preview the planned challenges. These games are not playable yet.')+
-    '<div class="games-shelf">'+games.map(game=>
-      '<article class="shelf-game">'+icon(game.icon)+'<h2>'+e(game.title)+'</h2>'+
-      '<p>'+e(game.detail)+'</p></article>').join('')+'</div>';
+      '<div class="callout" aria-label="Question to consider"><p>'+e(page.focus)+'</p></div>';
 }
 function renderPageContent(route,topic){
-  const {chapterId,sectionId}=route;
+  const {chapterId,sectionId,pageId}=route;
   if(chapterId==='home')return renderContents(topic);
   if(chapterId==='resources'&&sectionId==='worksheet-generator')return renderWorksheetGenerator(topic);
-  if(chapterId==='understand'&&sectionId==='big-idea')return renderIntro(topic);
-  if(chapterId==='memorise'&&sectionId==='flashcards')return renderFlashcards(topic);
-  if(chapterId==='memorise'&&sectionId==='match-up')return renderMatch(topic);
-  if(chapterId==='memorise'&&sectionId==='missing-words')return renderCloze(topic);
-  if((chapterId==='fluency'&&sectionId==='graph-lab')||(chapterId==='modelling'&&sectionId==='model-lab'))return renderGraphLab(topic,sectionId);
-  if(chapterId==='games')return renderGames(topic);
-  return renderDetail(topic,chapterId,sectionId);
+  const section=sectionsFor(topic,chapterId).find(s=>s.id===sectionId);
+  const page=section?.pages.find(p=>p.id===pageId);
+  if(!section||!page)return heading('Page unavailable','This page could not be opened.');
+  const intro=heading(section.label,section.description);
+  const renderers={
+    lesson:()=>renderLessonPage(page,topic),
+    questions:()=>renderQuestionPage(page,route),
+    graph:()=>renderGraphLab(page),
+    flashcards:()=>renderFlashcards(topic),
+    'match-up':()=>renderMatch(topic),
+    'missing-words':()=>renderCloze(topic),
+    'speed-recall':()=>renderSpeedRecall(topic),
+    'review-all':()=>renderReviewAll(topic),
+    game:()=>renderGamePage(page)
+  };
+  return intro+(renderers[page.type]?.()||'');
 }
 function renderTabNav(topic,route){
   return '<nav class="chapter-tabs" aria-label="Book chapters">'+chaptersFor(topic).map(chapter=>
@@ -373,7 +404,7 @@ function renderMobileNavigation(topic,route){
     chaptersFor(topic).map(chapter=>'<option value="'+chapter.id+'"'+selected(route.chapterId,chapter.id)+'>'+e(chapter.label)+'</option>').join('')+
     (supportsWorksheets(topic.id)?'<option value="resources"'+selected(route.chapterId,'resources')+'>Resources</option>':'')+
     '</select></div>'+
-    (resource?'':'<div class="mobile-pick'+(route.chapterId==='home'?' mobile-pick--disabled':'')+'"><label for="mobile-section">Page index</label>'+
+    (resource?'':'<div class="mobile-pick'+(route.chapterId==='home'?' mobile-pick--disabled':'')+'"><label for="mobile-section">Subsection</label>'+
       '<select id="mobile-section" data-role="section-select"'+(route.chapterId==='home'?' disabled':'')+'>'+
         (route.chapterId==='home'?'<option>Choose a chapter</option>':currentSection.map(section=>
           '<option value="'+section.id+'"'+selected(route.sectionId,section.id)+'>'+e(section.label)+'</option>').join(''))+
@@ -383,10 +414,13 @@ function renderMobileNavigation(topic,route){
 function renderBook(route,{animate=true}={}){
   const topic=TOPICS[route.topicId],chap=chapterFor(route.chapterId);
   const section=sectionsFor(topic,route.chapterId).find(item=>item.id===route.sectionId);
+  const pages=section?.pages||[];
   const bookmarkCurrent=state.bookmarks.has(route.canonical);
   const previous=state.route;
   const motionClass=animate&&previous
-    ? (previous.chapterId!==route.chapterId||previous.topicId!==route.topicId?'page-enter--turn':previous.sectionId!==route.sectionId?'page-enter--slide':'')
+    ? (previous.chapterId!==route.chapterId||previous.topicId!==route.topicId?'page-enter--turn':
+       previous.sectionId!==route.sectionId?'page-enter--slide':
+       previous.pageId!==route.pageId?'page-enter--turn':'')
     : '';
   const chapterHeader=route.chapterId==='home'?'':(
     '<div class="paper-head"><div class="crumbs">'+
@@ -397,22 +431,30 @@ function renderBook(route,{animate=true}={}){
         (bookmarkCurrent?'Remove bookmark':'Bookmark this page')+'">'+icon('bookmark')+
         '<span>'+(bookmarkCurrent?'Saved':'Bookmark')+'</span></button></div></div>'
   );
-  const pageIndex=route.chapterId==='home'||route.chapterId==='resources'?'':(
-    '<footer class="page-foot" aria-label="Page number"><span class="page-number">'+
-      (sectionsFor(topic,route.chapterId).findIndex(item=>item.id===route.sectionId)+1)+
-      ' / '+sectionsFor(topic,route.chapterId).length+'</span></footer>'
-  );
+  const pageNavigation=pages.length>1?
+    '<nav class="page-navigation" aria-label="Pages within '+e(section.label)+'">'+
+      (route.pageIndex>0?
+        '<a class="page-navigation__link" href="'+routeHref(topic.id,route.chapterId,route.sectionId,
+           route.pageIndex-1===0?undefined:pages[route.pageIndex-1].id)+'">'+icon('arrow-left')+' Previous page</a>':
+        '<span class="page-navigation__edge">First page</span>')+
+      '<span class="page-navigation__count">Page '+(route.pageIndex+1)+' of '+pages.length+'</span>'+
+      (route.pageIndex<pages.length-1?
+        '<a class="page-navigation__link" href="'+routeHref(topic.id,route.chapterId,route.sectionId,
+           pages[route.pageIndex+1].id)+'">Next page '+icon('arrow')+'</a>':
+        '<span class="page-navigation__edge">Last page</span>')+
+    '</nav>':'';
   app.innerHTML='<div class="book-wrap">'+
     renderMobileNavigation(topic,route)+
     '<div class="book">'+renderTabNav(topic,route)+
       '<div class="book-paper"><main class="book-page '+motionClass+'" data-paper="'+pagePaper(route)+'" id="book-page">'+
         chapterHeader+
         '<div class="page-body">'+renderPageContent(route,topic)+'</div>'+
-        pageIndex+
+        pageNavigation+
       '</main></div>'+renderSideTabs(topic,route)+'</div></div>';
   topicSwitch.value=topic.id;
   state.route=route;
-  document.title=(section?section.label+' · ':route.chapterId==='home'?'Contents · ':'')+topic.title+' | The Maths Notebook';
+  document.title=(section?section.label+(pages.length>1?' · Page '+(route.pageIndex+1):'')+' · ':
+    route.chapterId==='home'?'Contents · ':'')+topic.title+' | The Maths Notebook';
 }
 function navigate(){
   const hadPreviousPage=Boolean(state.route);
@@ -422,6 +464,7 @@ function navigate(){
     state.flash={index:0,flipped:false,ratings:{}};
     state.match={term:null,definition:null,matched:[],message:''};
     state.cloze={value:'',hint:false,checked:false,correct:false};
+    state.recall={index:0,value:'',checked:false,correct:false};
     state.graph={magnitude:1,h:0,k:-2,sign:1};
     state.revealed={};
     lastTopic=next.topicId;
@@ -431,7 +474,7 @@ function navigate(){
     state.lastPage=next.canonical;
     safeStorage.put('last-page',next.canonical);
   }
-  const label=next.chapterId==='home'?'Contents':(chapterFor(next.chapterId)?.label+' — '+sectionsFor(TOPICS[next.topicId],next.chapterId).find(s=>s.id===next.sectionId)?.label);
+  const label=next.chapterId==='home'?'Contents':(chapterFor(next.chapterId)?.label+' — '+sectionsFor(TOPICS[next.topicId],next.chapterId).find(s=>s.id===next.sectionId)?.label+(pagesFor(TOPICS[next.topicId],next.chapterId,next.sectionId).length>1?' — page '+(next.pageIndex+1):''));
   announce(label+' page opened');
   if(hadPreviousPage){ // Move focus on chapter navigation, not on first page load.
     const title=document.querySelector('#page-title');
@@ -545,6 +588,21 @@ app.addEventListener('click',ev=>{
         ()=>announce('Copy failed. Open View LaTeX source to copy it manually.')
       );
     }
+  }else if(action==='reveal-problem'){
+    const key=button.dataset.key,part=button.dataset.part;
+    if(!['hint','solution'].includes(part))return;
+    const parts=state.revealed[key]||{};
+    state.revealed[key]={...parts,[part]:!parts[part]};
+    rerender();
+    document.querySelector('button[data-action="reveal-problem"][data-key="'+key+'"][data-part="'+part+'"]')
+      ?.focus({preventScroll:true});
+  }else if(action==='recall-next'){
+    state.recall={
+      index:(state.recall.index+1)%topic.cards.length,
+      value:'',checked:false,correct:false
+    };
+    rerender();
+    document.querySelector('#recall-answer')?.focus({preventScroll:true});
   }else if(action==='reveal'){
     const key=button.dataset.key;
     state.revealed[key]=!state.revealed[key];
@@ -565,12 +623,24 @@ app.addEventListener('change',ev=>{
 app.addEventListener('input',ev=>{
   const target=ev.target;
   if(target.id==='cloze-answer'){state.cloze.value=target.value;state.cloze.checked=false;}
+  if(target.id==='recall-answer'){state.recall.value=target.value;state.recall.checked=false;}
   if(target.matches('input[data-graph]')){
     const key=target.dataset.graph;
     if(['magnitude','h','k'].includes(key)){state.graph[key]=Number(target.value);updateGraph();}
   }
 });
 app.addEventListener('submit',ev=>{
+  if(ev.target.id==='recall-form'){
+    ev.preventDefault();
+    const card=cardForIndex(TOPICS[state.route.topicId],state.recall.index);
+    state.recall.value=document.querySelector('#recall-answer').value;
+    state.recall.checked=true;
+    state.recall.correct=normaliseAnswer(state.recall.value)===normaliseAnswer(card.term);
+    rerender();
+    announce(state.recall.correct?'Correct recall':'Answer revealed: '+card.term);
+    document.querySelector('#recall-answer')?.focus({preventScroll:true});
+    return;
+  }
   if(ev.target.id==='worksheet-form'){
     ev.preventDefault();
     const data=new FormData(ev.target);
@@ -613,7 +683,7 @@ document.querySelector('#skip-page').addEventListener('click',()=>{
 });
 
 topicSwitch.addEventListener('change',()=>{
-  location.hash=topicSwitchHref(topicSwitch.value,state.route?.chapterId,state.route?.sectionId);
+  location.hash=topicSwitchHref(topicSwitch.value,state.route?.chapterId,state.route?.sectionId,state.route?.pageId);
 });
 function syncMotion(){
   document.body.classList.toggle('motion-off',state.motionOff);
