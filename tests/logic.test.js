@@ -39,7 +39,11 @@ test('practice and game modes only contain the intended activity types',()=>{
       assert.ok(section.pages.every(page=>page.type==='fluency'));
       assert.ok(section.pages.every(page=>Array.isArray(page.families)&&page.families.length>0));
     }
-    for(const mode of ['reasoning','problemSolving','modelling']){
+    for(const section of sectionsFor(topic,'reasoning')){
+      assert.equal(section.pages.length,1);
+      assert.ok(section.pages.every(page=>page.type==='reasoning'&&page.tasks.length>=4));
+    }
+    for(const mode of ['problemSolving','modelling']){
       for(const section of sectionsFor(topic,mode)){
         assert.ok(section.pages.every(page=>page.type==='questions'));
       }
