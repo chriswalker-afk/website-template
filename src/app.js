@@ -414,9 +414,11 @@ function renderPageContent(route,topic){
   if(!section||!page)return heading('Page unavailable','This page could not be opened.');
   const intro=heading(section.label,section.description);
   const renderers={
-    lesson:()=>renderLessonPage(page,topic),
+    lesson:()=>renderLessonPage(page,topic,route),
     questions:()=>renderQuestionPage(page,route),
-    graph:()=>renderGraphLab(page),
+    graph:()=>renderGraphLab(page,route),
+    'sampling-lab':()=>renderSamplingLab(page,route,state.understand.labs),
+    workshop:()=>renderWorkshop(page,route,state.understand.steppers,state.understand.workshops),
     flashcards:()=>renderFlashcards(topic),
     'match-up':()=>renderMatch(topic),
     'missing-words':()=>renderCloze(topic),
@@ -543,11 +545,13 @@ function updateFlashFlip(){
 function updateGraph(){
   const svg=document.querySelector('#graph-svg');
   if(!svg)return;
-  svg.outerHTML=renderGraphSvg();
-  document.querySelector('#equation-display').textContent=mathCurveLabel();
-  document.querySelector('#vertex-display').textContent='('+state.graph.h+', '+state.graph.k+')';
-  for(const [key,id] of [['magnitude','out-a'],['h','out-h'],['k','out-k']]){
-    document.getElementById(id).textContent=displayNumber(state.graph[key]);
+  const model=graphState(state.route);
+  svg.outerHTML=renderGraphSvg(model);
+  document.querySelector('#equation-display').textContent=mathCurveLabel(model);
+  document.querySelector('#graph-observation').textContent=graphObservation(model);
+  for(const [key,id] of [['magnitude','out-magnitude'],['h','out-h'],['k','out-k']]){
+    const output=document.getElementById(id);
+    if(output)output.textContent=displayNumber(model[key]);
   }
 }
 
