@@ -811,6 +811,12 @@ svg { display: block; }
   .bookmark-button { border-radius: 6px; }
   .flashcard__face--back .flashcard__main { font-size: 18px; }
 }
+
+/* At narrow phone widths, give longer subsection names the full row. */
+@media (max-width:360px) {
+  .mobile-navigation:not(.mobile-navigation--single) { grid-template-columns:1fr; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
