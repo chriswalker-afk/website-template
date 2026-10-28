@@ -96,6 +96,7 @@ for(const width of [320,390,768,1024,1440]){
     expect(result.width).toBeLessThanOrEqual(result.viewport+1);
     if(width<=960){
       await expect(page.locator('#mobile-chapter')).toHaveValue('resources');
+      await expect(page.locator('#mobile-section')).toHaveCount(0);
       await expect(page.locator('.chapter-tabs')).toBeHidden();
     }
   });
