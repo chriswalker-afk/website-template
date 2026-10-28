@@ -1,5 +1,7 @@
 import {CHAPTER_LIBRARY,TOPICS} from './topics.js';
 import {generateWorksheet,supportsWorksheets,worksheetSkills} from './worksheet-generator.js';
+import {GRAPH_DEFAULTS,quadraticProperties,quadraticValue,quadraticEquation} from './understand-engine.js';
+import {understandKey,renderSteps,renderConceptCheck,renderWalkthrough,renderSamplingLab,renderWorkshop} from './understand-ui.js';
 import {chaptersFor,sectionsFor,pagesFor,chapterFor,routeHref,resolveRoute,topicSwitchHref,escapeHTML as e,normaliseAnswer,cardForIndex,sampleMatchCards,validateTopics} from './logic.js';
 
 const app=document.querySelector('#app');
@@ -28,7 +30,7 @@ const state={
   match:{term:null,definition:null,matched:[],message:''},
   cloze:{value:'',hint:false,checked:false,correct:false},
   recall:{index:0,value:'',checked:false,correct:false},
-  graph:{magnitude:1,h:0,k:-2,sign:1},
+  understand:{steppers:{},checks:{},workshops:{},labs:{},graphs:{}},
   revealed:{},
   worksheets:{}
 };
@@ -45,12 +47,14 @@ function pagePaper(route){
   return 'ruled';
 }
 function displayNumber(n){return Number.isInteger(n)?String(n):String(Number(n.toFixed(2)));}
-function mathCurveLabel(){
-  const {magnitude,h,k,sign}=state.graph;
-  const a=magnitude*sign;
-  const squared=h===0?'x²':'(x '+(h>0?'− '+h:'+ '+Math.abs(h))+')²';
-  return 'y = '+(a===1?'':a===-1?'−':displayNumber(a))+squared+
-    (k===0?'':(' '+(k>0?'+':'−')+' '+Math.abs(k)));
+function graphState(route=state.route){
+  const id=route?.pageId==='position'?'position':'shape';
+  if(!state.understand.graphs[id])
+    state.understand.graphs[id]={...GRAPH_DEFAULTS[id]};
+  return state.understand.graphs[id];
+}
+function mathCurveLabel(model=graphState()){
+  return quadraticEquation(model);
 }
 function renderCoverArt(){
   return '<svg class="cover-illustration" viewBox="0 0 320 220" fill="none" aria-hidden="true">'+
@@ -174,18 +178,30 @@ function renderDots(){
   return '<div class="dot-field" aria-hidden="true">'+dots+'</div>';
 }
 function renderSmallGraph(){
-  return '<svg class="mini-curve" viewBox="0 0 280 195" role="img" aria-label="An upward-opening parabola, with turning point (1, minus 3)">'+
-    '<path d="M15 150H268M137 13V182" stroke="#7b998a" stroke-width="1.6"/>'+
-    '<path d="M15 73H268M15 111H268M15 188H268M92 13V183M182 13V183" stroke="#cfdbd1" stroke-width="1"/>'+
-    '<path d="M48 8Q138 310 236 8" stroke="#367664" stroke-width="3.5" fill="none" stroke-linecap="round"/>'+
-    '<circle cx="142" cy="160" r="5" fill="#bb8a53"/>'+
-    '<text x="151" y="178" font-family="Georgia" font-size="13" fill="#355c4c">(1, −3)</text></svg>';
+  const X=x=>42+(x+3)*31,Y=y=>105-y*16;
+  const path=Array.from({length:101},(_,i)=>{
+    const x=-3+i*.075, y=(x-1)**2-3;
+    return (i===0?'M':'L')+X(x).toFixed(1)+','+Y(y).toFixed(1);
+  }).join(' ');
+  return '<svg class="mini-curve" viewBox="0 0 300 220" role="img" '+
+    'aria-label="Graph y equals open bracket x minus 1 close bracket squared minus 3; upward parabola with turning point 1, minus 3.">'+
+    '<defs><clipPath id="small-quad-clip"><rect x="19" y="14" width="262" height="186"/></clipPath></defs>'+
+    '<g stroke="#dce6df" stroke-width="1"><line x1="19" y1="'+Y(-3)+'" x2="281" y2="'+Y(-3)+'"/>'+
+    '<line x1="'+X(1)+'" y1="14" x2="'+X(1)+'" y2="200" stroke-dasharray="3 5"/></g>'+
+    '<line x1="19" y1="'+Y(0)+'" x2="281" y2="'+Y(0)+'" stroke="#7b998a" stroke-width="1.5"/>'+
+    '<line x1="'+X(0)+'" y1="14" x2="'+X(0)+'" y2="200" stroke="#7b998a" stroke-width="1.5"/>'+
+    '<g clip-path="url(#small-quad-clip)"><path d="'+path+'" stroke="#367664" stroke-width="3.5" fill="none"/></g>'+
+    '<circle cx="'+X(1)+'" cy="'+Y(-3)+'" r="5" fill="#c79756" stroke="white" stroke-width="2"/>'+
+    '<text x="'+(X(1)+11)+'" y="'+(Y(-3)+16)+'" font-size="13" font-family="Georgia" fill="#315b47">(1, −3)</text>'+
+    '<text x="283" y="'+(Y(0)-7)+'" font-size="13" fill="#355b48">x</text>'+
+    '<text x="'+(X(0)+9)+'" y="22" font-size="13" fill="#355b48">y</text>'+
+  '</svg>';
 }
 function heading(title,description){
   return '<h1 class="page-title" id="page-title" tabindex="-1">'+e(title)+'</h1>'+
     '<p class="page-subtitle">'+e(description)+'</p>';
 }
-function renderLessonPage(page,topic){
+function renderLessonPage(page,topic,route){
   return '<div class="lesson-page">'+page.blocks.map(block=>{
     if(block.kind==='text')return '<p class="lesson-text">'+e(block.text)+'</p>';
     if(block.kind==='note')return '<aside class="callout"><p>'+e(block.text)+'</p></aside>';
@@ -205,6 +221,14 @@ function renderLessonPage(page,topic){
         block.headers.map(h=>'<th scope="col">'+e(h)+'</th>').join('')+'</tr></thead><tbody>'+
         block.rows.map(row=>'<tr>'+row.map(value=>'<td>'+e(value)+'</td>').join('')+'</tr>').join('')+
         '</tbody></table></div>';
+    }
+    if(block.kind==='concept-check'){
+      const key=understandKey(route,block.id);
+      return renderConceptCheck(block,key,state.understand.checks[key]);
+    }
+    if(block.kind==='stepper'){
+      const key=understandKey(route,block.id);
+      return renderWalkthrough(block,key,state.understand.steppers[key]||0);
     }
     return '';
   }).join('')+'</div>';
@@ -315,50 +339,71 @@ function renderCloze(topic){
         (game.checked?(game.correct?'Correct.':'Check the term and try again.'):'')+'</div>'+
     '</section>';
 }
-function renderGraphSvg(){
-  const {magnitude,h,k,sign}=state.graph, a=magnitude*sign;
+function renderGraphSvg(model){
+  const {h,k}=quadraticProperties(model);
   const X=x=>60+(x+5)*55,Y=y=>210-y*22;
-  const gridX=Array.from({length:11},(_,i)=>i-5).map(x=>'<line x1="'+X(x)+'" y1="34" x2="'+X(x)+'" y2="386" stroke="#e4ece6" stroke-width="1"/>').join('');
-  const gridY=Array.from({length:17},(_,i)=>i-8).map(y=>'<line x1="60" y1="'+Y(y)+'" x2="610" y2="'+Y(y)+'" stroke="#e4ece6" stroke-width="1"/>').join('');
-  const labelsX=[-4,-2,0,2,4].map(x=>'<text x="'+X(x)+'" y="'+(Y(0)+19)+'" text-anchor="middle" font-size="13" fill="#667c6d">'+x+'</text>').join('');
-  const labelsY=[-6,-3,3,6].map(y=>'<text x="'+(X(0)-10)+'" y="'+(Y(y)+4)+'" text-anchor="end" font-size="13" fill="#667c6d">'+y+'</text>').join('');
-  const path=Array.from({length:221},(_,i)=>-5+i/22).map((x,i)=>{
-    const y=a*(x-h)**2+k;
-    return (i===0?'M':'L')+X(x).toFixed(1)+' '+Y(y).toFixed(1);
+  const gridX=Array.from({length:11},(_,i)=>i-5).map(x=>
+    '<line x1="'+X(x)+'" y1="34" x2="'+X(x)+'" y2="386" stroke="#e4ece6" stroke-width="1"/>').join('');
+  const gridY=Array.from({length:17},(_,i)=>i-8).map(y=>
+    '<line x1="60" y1="'+Y(y)+'" x2="610" y2="'+Y(y)+'" stroke="#e4ece6" stroke-width="1"/>').join('');
+  const xLabels=[-4,-2,0,2,4].map(x=>
+    '<text x="'+X(x)+'" y="'+(Y(0)+19)+'" text-anchor="middle" font-size="13" fill="#667c6d">'+x+'</text>').join('');
+  const yLabels=[-6,-3,3,6].map(y=>
+    '<text x="'+(X(0)-10)+'" y="'+(Y(y)+4)+'" text-anchor="end" font-size="13" fill="#667c6d">'+y+'</text>').join('');
+  const curve=fn=>Array.from({length:221},(_,i)=>{
+    const x=-5+i/22;
+    return (i===0?'M':'L')+X(x).toFixed(1)+' '+Y(fn(x)).toFixed(1);
   }).join(' ');
-  const vertexY=Y(k), vertexX=X(h);
-  return '<svg id="graph-svg" class="graph-svg" viewBox="0 0 640 420" role="img" aria-label="'+
-    e('Graph of '+mathCurveLabel()+'. Turning point ('+h+', '+k+').')+'">'+
+  const reference=curve(x=>x*x);
+  const current=curve(x=>quadraticValue(x,model));
+  return '<svg id="graph-svg" class="graph-svg" viewBox="0 0 640 420" role="img" '+
+    'aria-label="'+e('Graph of '+quadraticEquation(model)+
+      '. Turning point ('+h+', '+k+'); dotted reference curve y = x squared.')+'">'+
     '<rect x="0" y="0" width="640" height="420" rx="7" fill="#fdfefd"/>'+
     '<defs><clipPath id="graph-clip"><rect x="60" y="34" width="550" height="352"/></clipPath></defs>'+
     gridX+gridY+
     '<line x1="'+X(0)+'" y1="34" x2="'+X(0)+'" y2="386" stroke="#647f71" stroke-width="1.9"/>'+
     '<line x1="60" y1="'+Y(0)+'" x2="610" y2="'+Y(0)+'" stroke="#647f71" stroke-width="1.9"/>'+
-    labelsX+labelsY+
+    xLabels+yLabels+
     '<text x="611" y="'+(Y(0)-10)+'" font-family="Georgia" font-size="16" fill="#355b48">x</text>'+
     '<text x="'+(X(0)+12)+'" y="28" font-family="Georgia" font-size="16" fill="#355b48">y</text>'+
-    '<g clip-path="url(#graph-clip)"><path d="'+path+'" fill="none" stroke="#2d755f" stroke-width="4" stroke-linecap="round"/>'+
-    '<line x1="'+vertexX+'" y1="34" x2="'+vertexX+'" y2="386" stroke="#c69b64" stroke-dasharray="5 6" stroke-width="1.5"/>'+
-    '<circle cx="'+vertexX+'" cy="'+vertexY+'" r="5.7" fill="#d5a665" stroke="#fff" stroke-width="2"/></g>'+
-    ''+
-    '</svg>';
+    '<g clip-path="url(#graph-clip)">'+
+      '<path d="'+reference+'" stroke="#9caaa3" stroke-width="2.5" fill="none" stroke-dasharray="6 7"/>'+
+      '<line x1="'+X(h)+'" y1="34" x2="'+X(h)+'" y2="386" stroke="#c69b64" stroke-dasharray="5 6" stroke-width="1.6"/>'+
+      '<path d="'+current+'" stroke="#2d755f" stroke-width="4" fill="none" stroke-linecap="round"/>'+
+      '<circle cx="'+X(h)+'" cy="'+Y(k)+'" r="6" fill="#d5a665" stroke="#fff" stroke-width="2"/>'+
+    '</g></svg>';
 }
-function renderGraphLab(page){
-  const g=state.graph;
+function graphObservation(model){
+  const props=quadraticProperties(model);
+  return 'Opens '+props.opening+'; '+props.steepness+
+    '. Turning point ('+props.h+', '+props.k+'); symmetry line x = '+props.h+'.';
+}
+function renderGraphLab(page,route){
+  const model=graphState(route);
+  const shape=page.id==='shape';
+  const readout=(key,label,value,min,max,step)=>
+    '<label class="graph-control"><span class="graph-control__label"><span>'+label+'</span>'+
+      '<output id="out-'+key+'">'+value+'</output></span>'+
+      '<input type="range" data-graph="'+key+'" min="'+min+'" max="'+max+'" step="'+step+
+        '" value="'+value+'"></label>';
   return '<div class="math-lab">'+
-      '<div class="graph-card">'+renderGraphSvg()+'</div>'+
+      '<div class="graph-card">'+renderGraphSvg(model)+
+        '<div class="graph-legend"><span><i class="graph-legend__current"></i>Your function</span>'+
+          '<span><i class="graph-legend__reference"></i>Reference: y = x²</span></div>'+
+      '</div>'+
       '<div class="graph-controls">'+
-        '<div class="equation-card"><span>Function</span><strong id="equation-display">'+e(mathCurveLabel())+'</strong></div>'+
-        '<label class="graph-control"><span class="graph-control__label"><span>Steepness |a|</span><output id="out-a">'+displayNumber(g.magnitude)+'</output></span>'+
-          '<input type="range" data-graph="magnitude" min="0.5" max="2.5" step="0.5" value="'+g.magnitude+'"></label>'+
-        '<label class="graph-control"><span class="graph-control__label"><span>Horizontal shift h</span><output id="out-h">'+g.h+'</output></span>'+
-          '<input type="range" data-graph="h" min="-3" max="3" step="1" value="'+g.h+'"></label>'+
-        '<label class="graph-control"><span class="graph-control__label"><span>Vertical shift k</span><output id="out-k">'+g.k+'</output></span>'+
-          '<input type="range" data-graph="k" min="-5" max="4" step="1" value="'+g.k+'"></label>'+
-        '<button class="quiet-button" type="button" data-action="graph-reflect">'+icon('refresh')+' Flip opening direction</button>'+
-        '<div class="vertex-note" style="margin-top:17px">Turning point <strong id="vertex-display">('+g.h+', '+g.k+')</strong></div>'+
+        '<div class="equation-card"><span>Function</span><strong id="equation-display">'+
+          e(mathCurveLabel(model))+'</strong></div>'+
+        (shape?readout('magnitude','Steepness |a|',displayNumber(model.magnitude),'.5','2.5','.5')+
+          '<button class="quiet-button" type="button" data-action="graph-reflect">'+icon('refresh')+
+          ' Flip opening direction</button>':
+          readout('h','Horizontal shift h',model.h,'-3','3','1')+
+          readout('k','Vertical shift k',model.k,'-5','4','1'))+
+        '<p class="graph-property" id="graph-observation">'+e(graphObservation(model))+'</p>'+
+        '<button class="quiet-button graph-reset" type="button" data-action="graph-reset">Reset graph</button>'+
       '</div></div>'+
-      '<div class="callout" aria-label="Question to consider"><p>'+e(page.focus)+'</p></div>';
+      '<div class="callout graph-prompt" aria-label="Question to consider"><p>'+e(page.focus)+'</p></div>';
 }
 function renderPageContent(route,topic){
   const {chapterId,sectionId,pageId}=route;
@@ -369,9 +414,11 @@ function renderPageContent(route,topic){
   if(!section||!page)return heading('Page unavailable','This page could not be opened.');
   const intro=heading(section.label,section.description);
   const renderers={
-    lesson:()=>renderLessonPage(page,topic),
+    lesson:()=>renderLessonPage(page,topic,route),
     questions:()=>renderQuestionPage(page,route),
-    graph:()=>renderGraphLab(page),
+    graph:()=>renderGraphLab(page,route),
+    'sampling-lab':()=>renderSamplingLab(page,route,state.understand.labs),
+    workshop:()=>renderWorkshop(page,route,state.understand.steppers,state.understand.workshops),
     flashcards:()=>renderFlashcards(topic),
     'match-up':()=>renderMatch(topic),
     'missing-words':()=>renderCloze(topic),
@@ -465,7 +512,7 @@ function navigate(){
     state.match={term:null,definition:null,matched:[],message:''};
     state.cloze={value:'',hint:false,checked:false,correct:false};
     state.recall={index:0,value:'',checked:false,correct:false};
-    state.graph={magnitude:1,h:0,k:-2,sign:1};
+    state.understand={steppers:{},checks:{},workshops:{},labs:{},graphs:{}};
     state.revealed={};
     lastTopic=next.topicId;
   }
@@ -498,11 +545,13 @@ function updateFlashFlip(){
 function updateGraph(){
   const svg=document.querySelector('#graph-svg');
   if(!svg)return;
-  svg.outerHTML=renderGraphSvg();
-  document.querySelector('#equation-display').textContent=mathCurveLabel();
-  document.querySelector('#vertex-display').textContent='('+state.graph.h+', '+state.graph.k+')';
-  for(const [key,id] of [['magnitude','out-a'],['h','out-h'],['k','out-k']]){
-    document.getElementById(id).textContent=displayNumber(state.graph[key]);
+  const model=graphState(state.route);
+  svg.outerHTML=renderGraphSvg(model);
+  document.querySelector('#equation-display').textContent=mathCurveLabel(model);
+  document.querySelector('#graph-observation').textContent=graphObservation(model);
+  for(const [key,id] of [['magnitude','out-magnitude'],['h','out-h'],['k','out-k']]){
+    const output=document.getElementById(id);
+    if(output)output.textContent=displayNumber(model[key]);
   }
 }
 
@@ -554,8 +603,84 @@ app.addEventListener('click',ev=>{
     const input=document.querySelector('#cloze-answer');state.cloze.value=input?.value||state.cloze.value;
     state.cloze.hint=!state.cloze.hint;rerender();
     document.querySelector('#cloze-answer')?.focus({preventScroll:true});
+  }else if(action==='understand-check'){
+    const route=state.route,key=button.dataset.key,id=button.dataset.choice;
+    const page=pagesFor(topic,route.chapterId,route.sectionId).find(p=>p.id===route.pageId);
+    const block=page?.blocks?.find(b=>b.kind==='concept-check'&&understandKey(route,b.id)===key);
+    const choice=block?.choices.find(c=>c.id===id);
+    if(!choice)return;
+    state.understand.checks[key]={choice:id};
+    rerender();
+    document.querySelector('button[data-action="understand-check"][data-choice="'+id+'"]')?.focus({preventScroll:true});
+    announce((choice.correct?'Correct. ':'Not yet. ')+choice.feedback);
+  }else if(action==='understand-step-next'||action==='understand-step-prev'||action==='understand-step-reset'){
+    const key=button.dataset.key;
+    const current=state.understand.steppers[key]||0;
+    const total=Number(button.dataset.total)||current;
+    state.understand.steppers[key]=action==='understand-step-reset'?0:
+      action==='understand-step-prev'?Math.max(0,current-1):Math.min(total,current+1);
+    rerender();
+    const nextAction=action==='understand-step-reset'?'understand-step-next':
+      (action==='understand-step-prev'?
+        (state.understand.steppers[key]===0?'understand-step-next':'understand-step-prev'):
+        state.understand.steppers[key]===total?'understand-step-reset':'understand-step-next');
+    document.querySelector('button[data-action="'+nextAction+'"][data-key="'+key+'"]')?.focus({preventScroll:true});
+    announce('Step '+state.understand.steppers[key]+' revealed.');
+  }else if(action==='sampling-method'||action==='sampling-redraw'){
+    const route=state.route,key=button.dataset.key;
+    const page=pagesFor(topic,route.chapterId,route.sectionId).find(p=>p.id===route.pageId);
+    if(page?.type!=='sampling-lab')return;
+    const prior=state.understand.labs[key]||{method:page.methods[0],run:1};
+    const method=action==='sampling-method'?button.dataset.method:prior.method;
+    if(!page.methods.includes(method))return;
+    state.understand.labs[key]={method,run:action==='sampling-method'?1:prior.run+1};
+    rerender();
+    const focus=action==='sampling-method'?
+      'button[data-action="sampling-method"][data-method="'+method+'"]':
+      'button[data-action="sampling-redraw"]';
+    document.querySelector(focus)?.focus({preventScroll:true});
+    announce(method+' selection updated.');
+  }else if(action==='understand-guided'){
+    const route=state.route,key=button.dataset.key,id=button.dataset.choice;
+    const page=pagesFor(topic,route.chapterId,route.sectionId).find(p=>p.id===route.pageId);
+    const chosen=page?.type==='workshop'?page.guided.choices.find(c=>c[0]===id):null;
+    if(!chosen||understandKey(route,'workshop')!==key)return;
+    const prior=state.understand.workshops[key]||{};
+    state.understand.workshops[key]={...prior,choice:id};
+    rerender();
+    document.querySelector('button[data-action="understand-guided"][data-choice="'+id+'"]')?.focus({preventScroll:true});
+    announce((chosen[3]?'Correct. ':'Not yet. ')+chosen[2]);
+  }else if(action==='understand-own-hint'||action==='understand-own-solution'){
+    const key=button.dataset.key;
+    if(key!==understandKey(state.route,'workshop'))return;
+    const prior=state.understand.workshops[key]||{};
+    const part=action==='understand-own-hint'?'hint':'solution';
+    state.understand.workshops[key]={...prior,[part]:!prior[part]};
+    rerender();
+    document.querySelector('button[data-action="'+action+'"]')?.focus({preventScroll:true});
+    announce(part+(state.understand.workshops[key][part]?' shown.':' hidden.'));
+  }else if(action==='understand-self-rate'){
+    const key=button.dataset.key,rating=button.dataset.rating;
+    if(key!==understandKey(state.route,'workshop')||!['ready','review'].includes(rating))return;
+    const prior=state.understand.workshops[key]||{};
+    state.understand.workshops[key]={...prior,rating};
+    rerender();
+    document.querySelector('button[data-action="understand-self-rate"][data-rating="'+rating+'"]')
+      ?.focus({preventScroll:true});
+    announce(rating==='ready'?'Marked as confident for this session.':'Marked for review in this session.');
+  }else if(action==='graph-reset'){
+    const id=state.route.pageId;
+    if(!GRAPH_DEFAULTS[id])return;
+    state.understand.graphs[id]={...GRAPH_DEFAULTS[id]};
+    rerender();
+    document.querySelector('button[data-action="graph-reset"]')?.focus({preventScroll:true});
+    announce('Graph reset to its starting position.');
   }else if(action==='graph-reflect'){
-    state.graph.sign*=-1;updateGraph();announce('Parabola opening reversed: '+mathCurveLabel());
+    const model=graphState(state.route);
+    if(state.route.pageId!=='shape')return;
+    model.sign*=-1;
+    updateGraph();
+    announce('Parabola now opens '+quadraticProperties(model).opening+'.');
   }else if(action==='worksheet-regenerate'){
     const input=document.querySelector('#worksheet-seed');
     const previous=Number(input?.value)||20261028;
@@ -624,9 +749,20 @@ app.addEventListener('input',ev=>{
   const target=ev.target;
   if(target.id==='cloze-answer'){state.cloze.value=target.value;state.cloze.checked=false;}
   if(target.id==='recall-answer'){state.recall.value=target.value;state.recall.checked=false;}
+  if(target.matches('textarea[data-understand-response]')){
+    const key=target.dataset.understandResponse;
+    if(key!==understandKey(state.route,'workshop'))return;
+    const prior=state.understand.workshops[key]||{};
+    state.understand.workshops[key]={...prior,response:target.value};
+  }
   if(target.matches('input[data-graph]')){
-    const key=target.dataset.graph;
-    if(['magnitude','h','k'].includes(key)){state.graph[key]=Number(target.value);updateGraph();}
+    const key=target.dataset.graph,id=state.route?.pageId;
+    const permitted=id==='shape'?['magnitude']:id==='position'?['h','k']:[];
+    const number=Number(target.value);
+    if(permitted.includes(key)&&Number.isFinite(number)){
+      graphState(state.route)[key]=number;
+      updateGraph();
+    }
   }
 });
 app.addEventListener('submit',ev=>{
