@@ -480,6 +480,11 @@ svg { display: block; }
   .population-stratum { padding:12px; }
   .population-stratum__people { grid-template-columns:repeat(8,16px); gap:9px 8px; }
   .population-person { width:16px; height:16px; }
+  .sampling-lab__compare table { table-layout:fixed; font-size:11px; }
+  .sampling-lab__compare th, .sampling-lab__compare td { padding:9px 6px; }
+  .sampling-lab__compare caption { padding:10px 8px; }
+  .sampling-lab__compare th:first-child { width:24%; }
+
   .workshop { gap:13px; margin-top:20px; }
   .explain-steps__list li { font-size:13px; padding:11px; }
   .sampling-lab__metrics strong { font-size:20px; }
