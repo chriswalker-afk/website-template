@@ -31,12 +31,14 @@ A modern, tabbed reference-book aesthetic built into the reusable shell: **chapt
 
 - [Pass 0 learning architecture](docs/PASS_0_ARCHITECTURE.md) — learning modes, activities, configuration and implementation stages.
 - [Book Design System](docs/BOOK_DESIGN_SYSTEM.md) — visual language, component behaviours, responsive layouts, motion, accessibility and acceptance checklist.
+- [Worksheet Generator specification](docs/WORKSHEET_GENERATOR.md) — optional Contents/Resources tool, worksheet settings, reproducible question families, LaTeX output and worked-solution safeguards.
 
 ## Design principles
 
 - **Qualification-neutral:** use learning modes such as Understand, Memorise, Fluency, Reasoning, Problem Solving and Modelling rather than AO1/AO2/AO3.
 - **Memorise is a rich learning space:** flipping flashcards, browse/review all cards, self-rating and retry, Match Up, Missing Words, Speed Recall and other vocabulary/retrieval games.
 - **Games has its own home:** playful, reusable whole-topic challenges such as Sprint and Quests, plus optional topic-specific games. Games can draw on the same validated question banks without duplicating progress.
+- **Printable resources:** an optional, topic-aware Worksheet Generator will export editable LaTeX student worksheets and fully worked solutions, using vetted question families.
 - **Modular:** no empty or disabled sections for a topic that does not need them.
 - **Mathematically careful:** distinguish recall from exposure, support symbols and graphs, require reviewed answers and worked solutions.
 - **Accessible:** responsive, keyboard-friendly, reduced-motion support and no compulsory timers.
@@ -47,11 +49,11 @@ A modern, tabbed reference-book aesthetic built into the reusable shell: **chapt
 
 1. **Pass 0 — Blueprint and reuse audit:** modules, content contract, activity catalogue, testing and rollout plan.
 2. **Pass 1A — Notebook visual prototype (implemented):** Contents, chapter and subsection tabs, page variants, transitions, two sample topics, interactive flashcards and graph workspace.
-3. **Pass 1B — Reusable production shell (next):** validated topic loading, routing, responsive navigation, bookmarks, local progress and automated checks.
+3. **Pass 1B — Reusable production shell (next):** validated topic loading, routing, responsive navigation, bookmarks, local progress and automated checks. Include a reusable question/solution data contract capable of future LaTeX export.
 4. **Pass 2 — Memorise experience:** premium flashcards and playable language/retrieval games.
 5. **Pass 3 — Other learning modes:** understanding, fluency, reasoning, problem solving and modelling engines.
 6. **Pass 4 — Games arcade:** reusable challenges with optional special topic modules.
-7. **Pass 5 — Assessment, authoring and deployment:** examination practice, validation, tests, GitHub Pages guides.
+7. **Pass 5 — Assessment, authoring and deployment:** examination practice, validation, tests, GitHub Pages guides; plan a separate **Pass 5A Worksheet Generator** and **Pass 5B worksheet expansion** once the question engine exists.
 8. **Pass 6 — Prove the template:** two very different topics; refine the authoring process.
 
 The planning documents are maintained alongside this README in the Pass 0 architecture pull request.
