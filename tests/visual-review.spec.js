@@ -1,0 +1,24 @@
+import {test,expect} from '@playwright/test';
+import {mkdir} from 'node:fs/promises';
+
+test('render representative visual-review images',async({page})=>{
+  await mkdir('visual-review',{recursive:true});
+  await page.setViewportSize({width:1440,height:1000});
+  await page.goto('/#/sampling/home');
+  await expect(page.getByRole('heading',{name:'Contents'})).toBeVisible();
+  await page.screenshot({path:'visual-review/01-contents-desktop.png',fullPage:true,animations:'disabled'});
+  await page.goto('/#/sampling/memorise/flashcards');
+  await expect(page.getByRole('heading',{name:'Make it stick.'})).toBeVisible();
+  await page.screenshot({path:'visual-review/02-flashcards-desktop.png',fullPage:true,animations:'disabled'});
+  await page.goto('/#/quadratics/fluency/graph-lab');
+  await expect(page.locator('#graph-svg')).toBeVisible();
+  await page.screenshot({path:'visual-review/03-quadratic-graph-desktop.png',fullPage:true,animations:'disabled'});
+  await page.setViewportSize({width:390,height:844});
+  await page.goto('/#/sampling/memorise/flashcards');
+  await expect(page.locator('#mobile-chapter')).toBeVisible();
+  await page.screenshot({path:'visual-review/04-flashcards-mobile-390.png',fullPage:true,animations:'disabled'});
+  await page.setViewportSize({width:320,height:720});
+  await page.goto('/#/quadratics/home');
+  await expect(page.getByRole('heading',{name:'Contents'})).toBeVisible();
+  await page.screenshot({path:'visual-review/05-contents-mobile-320.png',fullPage:true,animations:'disabled'});
+});

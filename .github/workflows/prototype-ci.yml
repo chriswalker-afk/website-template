@@ -1,0 +1,39 @@
+name: Notebook prototype checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  validate-and-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install test dependencies
+        run: npm install --no-audit --no-fund
+      - name: Validate configuration and JavaScript
+        run: npm run check
+      - name: Install browser
+        run: npx playwright install --with-deps chromium
+      - name: Run responsive interaction tests
+        run: npm run test:browser
+      - name: Attach visual review images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: notebook-visual-review
+          path: visual-review/
+          if-no-files-found: ignore
+      - name: Attach failure screenshots and traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: notebook-playwright-failures
+          path: |
+            test-results/
+          if-no-files-found: ignore
