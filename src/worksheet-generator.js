@@ -205,7 +205,7 @@ const QUADRATIC_FAMILIES=[
       answerTex:math('x='+roots[0])+' or '+math('x='+roots[1])+'.',
       solutionTex:'Find two numbers with sum '+math(String(-b))+' and product '+
         math(String(c))+'. Then \\['+expanded+'='+factors+'=0.\\]'+
-        'By the zero-product rule, '+math('x='+roots[0]')+' or '+math('x='+roots[1])+'.',
+        'By the zero-product rule, '+math('x='+roots[0])+' or '+math('x='+roots[1])+'.',
       hintTex:'Find two integers whose sum is '+math(String(-b))+' and product is '+math(String(c))+'.'};
   }},
   {id:'quadratic-discriminant',skill:'discriminant',create(rng){
