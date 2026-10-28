@@ -10,9 +10,15 @@ test('render representative visual-review images',async({page})=>{
   await page.goto('/#/sampling/memorise/flashcards');
   await expect(page.getByRole('heading',{name:'Flashcards'})).toBeVisible();
   await page.screenshot({path:'visual-review/02-flashcards-desktop.png',fullPage:true,animations:'disabled'});
-  await page.goto('/#/quadratics/fluency/graph-lab');
+  await page.goto('/#/quadratics/understand/visual-explanations');
   await expect(page.locator('#graph-svg')).toBeVisible();
-  await page.screenshot({path:'visual-review/03-quadratic-graph-desktop.png',fullPage:true,animations:'disabled'});
+  await page.screenshot({path:'visual-review/03-understand-visual-explanations-desktop.png',fullPage:true,animations:'disabled'});
+  await page.goto('/#/quadratics/problemSolving/level-1');
+  await expect(page.locator('.page-navigation__count')).toHaveText('Page 1 of 2');
+  await page.screenshot({path:'visual-review/08-levelled-problem-solving-desktop.png',fullPage:true,animations:'disabled'});
+  await page.goto('/#/quadratics/games/curve-quest');
+  await expect(page.getByRole('heading',{name:'Curve Quest'})).toBeVisible();
+  await page.screenshot({path:'visual-review/09-games-right-tabs-desktop.png',fullPage:true,animations:'disabled'});
   await page.setViewportSize({width:390,height:844});
   await page.goto('/#/sampling/memorise/flashcards');
   await expect(page.locator('#mobile-chapter')).toBeVisible();
