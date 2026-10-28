@@ -41,6 +41,8 @@ Legacy links to the old Graph explorer, Game library and initial activity pages 
 
 These are **defaults, not obligatory content**. Empty modes and subsections stay hidden. A subsection may have 1, 2 or many pages if the topic benefits; avoid unnecessary pagination.
 
+**Memorise quality upgrade:** Flashcards, Match Up, Missing Words, Speed Recall and Review All now use a shared locally persisted per-card revision model. Flashcards can focus on new/due/flagged items, Match Up covers the full deck over multiple rounds, contextual Missing Words and typed Speed Recall share reviewed terminology data, and Review All supports searching, filtering, flags and a guarded reset. See [Memorise mode quality guide](MEMORISE_MODE_GUIDE.md) for scheduling, privacy and correctness limits.
+
 **Understand quality upgrade:** The shared Understand component system now supports explanatory concept checks with choice-specific feedback, step-by-step method reveals, data-driven sampling visualisation, separate quadratic shape/translation graph experiments, and Show me → Help me → My turn worked-example workshops. See [Understand mode quality guide](UNDERSTAND_MODE_GUIDE.md). These blocks belong only to Understand; Fluency, Problem Solving and Modelling still contain levelled questions.
 
 The demo illustrates both a terminology-heavy subject (Sampling Methods) and a graph/algebra-heavy subject (Quadratic Functions). Sampling currently omits Problem Solving and Modelling because suitable topic-authored examples have not been added; Quadratics demonstrates all seven core modes.
