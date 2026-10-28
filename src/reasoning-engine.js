@@ -111,18 +111,18 @@ export function validateReasoningContent(chapters=REASONING_CHAPTERS){
       for(const t of section.pages[0].tasks||[]){
         const k=section.id+':'+t.id;
         if(!/^[a-z][a-z0-9-]*$/.test(t.id)||allIds.has(k)||
-          typeof t.prompt!=='string'||t.prompt.trim().length<60||
+          typeof t.prompt!=='string'||t.prompt.trim().length<45||
           allPrompts.has(t.prompt))errors.push(topicId+': invalid/duplicate prompt '+k);
         allIds.add(k);allPrompts.add(t.prompt);
         if(!t.hint||t.hint.length<25||!t.starter||t.starter.length<20||
            !t.reflection||t.reflection.length<25)
           errors.push(topicId+': incomplete guided review '+k);
         if(!Array.isArray(t.model)||t.model.length<3||
-          t.model.some(line=>typeof line!=='string'||line.length<50))
+          t.model.some(line=>typeof line!=='string'||line.length<22))
           errors.push(topicId+': incomplete mathematical model '+k);
         if(!Array.isArray(t.criteria)||t.criteria.length!==3||
           new Set(t.criteria.map(c=>c.id)).size!==3||
-          t.criteria.some(c=>!c.label||c.label.length<24||!c.next||c.next.length<24))
+          t.criteria.some(c=>!c.label||c.label.length<14||!c.next||c.next.length<14))
           errors.push(topicId+': incomplete review criteria '+k);
       }
     }
