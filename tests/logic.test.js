@@ -78,6 +78,17 @@ test('topic switching preserves valid positions and falls back when a mode is un
     '#/sampling/understand/big-idea/representativeness');
   assert.equal(topicSwitchHref('sampling','modelling','level-3'),'#/sampling/home');
 });
+test('legacy graph and game URLs resolve to their new subsection destinations',()=>{
+  assert.equal(resolveRoute('#/quadratics/fluency/graph-lab').canonical,
+    '#/quadratics/understand/visual-explanations');
+  assert.equal(resolveRoute('#/quadratics/modelling/model-lab').chapterId,'understand');
+  assert.equal(resolveRoute('#/quadratics/problemSolving/strategy').canonical,
+    '#/quadratics/problemSolving/level-1');
+  assert.equal(resolveRoute('#/sampling/games/arcade').canonical,
+    '#/sampling/games/sprint');
+  assert.equal(resolveRoute('#/sampling/understand/methods').canonical,
+    '#/sampling/understand/how-it-works');
+});
 test('existing single-activity URLs and Resources worksheet route remain usable',()=>{
   assert.equal(resolveRoute('#/sampling/memorise/flashcards').canonical,
     '#/sampling/memorise/flashcards');
