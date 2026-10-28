@@ -206,3 +206,40 @@ test('render Problem Solving strategy, hint, solution, review and mobile screens
   await page.screenshot({path:'visual-review/42-ps-writing-mobile-320.png',
     fullPage:true,animations:'disabled'});
 });
+
+
+test('render Modelling stages, comparisons and narrow-screen notebook screenshots',async({page})=>{
+  test.setTimeout(80000);
+  await mkdir('visual-review',{recursive:true});
+  await page.setViewportSize({width:1440,height:960});
+  await page.goto('/#/quadratics/modelling/level-1');
+  await expect(page.locator('.mdl-case')).toBeVisible();
+  await page.screenshot({path:'visual-review/43-modelling-formulate-desktop.png',
+    fullPage:true,animations:'disabled'});
+  await page.locator('#mdl-answer').fill('Let x measure horizontal distance in metres; I will use the supplied parabola within the arch opening.');
+  await page.getByRole('button',{name:'Need a modelling nudge?'}).click();
+  await page.getByRole('button',{name:'Compare this stage'}).click();
+  await page.screenshot({path:'visual-review/44-modelling-guided-desktop.png',
+    fullPage:true,animations:'disabled'});
+  await page.goto('/#/sampling/modelling/level-3');
+  for(const label of ['Calculate','Interpret','Evaluate']){
+    await page.getByRole('button',{name:'Continue to '+label}).click();
+  }
+  await page.getByRole('button',{name:'Review the whole model'}).click();
+  await expect(page.locator('.mdl-comparison-stage')).toHaveCount(4);
+  await page.screenshot({path:'visual-review/45-modelling-comparison-desktop.png',
+    fullPage:true,animations:'disabled'});
+  await page.goto('/#/quadratics/modelling/level-4');
+  await expect(page.locator('.mdl-stage')).toBeVisible();
+  await page.screenshot({path:'visual-review/46-modelling-challenge-desktop.png',
+    fullPage:true,animations:'disabled'});
+  await page.setViewportSize({width:390,height:844});
+  await page.goto('/#/quadratics/modelling/level-2');
+  await page.getByRole('button',{name:'Continue to Calculate'}).click();
+  await page.screenshot({path:'visual-review/47-modelling-calculate-mobile-390.png',
+    fullPage:true,animations:'disabled'});
+  await page.setViewportSize({width:320,height:740});
+  await page.goto('/#/sampling/modelling/level-1');
+  await page.screenshot({path:'visual-review/48-modelling-formulate-mobile-320.png',
+    fullPage:true,animations:'disabled'});
+});

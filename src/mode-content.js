@@ -2,6 +2,7 @@ import {UNDERSTAND_CONTENT} from './understand-content.js';
 import {FLUENCY_CHAPTERS} from './fluency-engine.js';
 import {REASONING_CHAPTERS} from './reasoning-content.js';
 import {PROBLEM_SOLVING_CHAPTERS} from './problem-solving-content.js';
+import {MODELLING_CHAPTERS} from './modelling-content.js';
 
 // Demonstration *content*, not a second navigation system.
 // Modes → subsections (right tabs) → pages (bottom controls).
@@ -26,6 +27,7 @@ export const DEMO_CHAPTERS = Object.freeze({
     fluency:FLUENCY_CHAPTERS.sampling,
     reasoning:REASONING_CHAPTERS.sampling,
     problemSolving:PROBLEM_SOLVING_CHAPTERS.sampling,
+    modelling:MODELLING_CHAPTERS.sampling,
     games:[
       section('sprint','Sprint','Answer a sequence of short questions against the clock, or play untimed.',
         game('sprint','Complete as many correct questions as possible in one round.','Rounds, scores and optional timers are planned for the Games pass.')),
@@ -47,24 +49,7 @@ export const DEMO_CHAPTERS = Object.freeze({
     fluency:FLUENCY_CHAPTERS.quadratics,
     reasoning:REASONING_CHAPTERS.quadratics,
     problemSolving:PROBLEM_SOLVING_CHAPTERS.quadratics,
-    modelling:[
-      level(1,'Guided','Use a supplied quadratic model and interpret the result.',
-        practice('arch',
-          q('An arch is modelled by h(x) = −(x − 3)² + 9, with x and h in metres. Find its maximum height and horizontal position. State one limitation of the model.','The maximum is 9 m at x = 3 m. The equation assumes the arch follows an exact parabola and neglects thickness or irregularities.','Use the completed-square form and interpret both coordinates.',5)
-        )),
-      level(2,'Structured','Create a model from given information and explain its assumptions.',
-        practice('ball',
-          q('The height of a ball is modelled by h(t) = −5t² + 20t + 1, where t is seconds. Find the maximum modelled height and time, then state the time interval for which the model makes physical sense.','h(t) = −5(t − 2)² + 21, so the maximum is 21 m at t = 2 s. The physically meaningful time runs from t = 0 until the positive root of h(t) = 0: t = (20 + √420)/10 ≈ 4.05 s.','Complete the square; then solve h(t) = 0.',6)
-        )),
-      level(3,'Independent','Formulate a quadratic model and evaluate how well it represents a situation.',
-        practice('tunnel',
-          q('A symmetric parabolic tunnel opening is 8 m wide at ground level and 6 m high at its centre. With x measured from the centre, find a quadratic model and estimate the height 2 m from the centre. State a limitation.','With vertex (0, 6), h = ax² + 6. At x = 4, h = 0, so 16a + 6 = 0 and a = −3/8. Thus h(x) = 6 − (3/8)x². At x = 2, h = 4.5 m. The real shape may not be an exact parabola.','',7)
-        )),
-      level(4,'Extended','Test a model, explain its weaknesses and suggest improvements.',
-        practice('fountain',
-          q('A water jet is modelled by h(x) = −0.5(x − 4)² + 8 (metres). A measured point is (6, 5.5). Calculate the predicted height there, find the residual (measured − predicted), and discuss whether one reading is enough to judge the model.','The prediction is h(6) = −0.5(2)² + 8 = 6 m. The residual is 5.5 − 6 = −0.5 m. One reading cannot establish the overall fit; take multiple measurements, consider uncertainty, and inspect residuals across the range.','',8)
-        ))
-    ],
+    modelling:MODELLING_CHAPTERS.quadratics,
     games:[
       section('sprint','Sprint','Answer a sequence of short questions against the clock, or play untimed.',
         game('sprint','Complete as many correct quadratic questions as possible in one round.','Rounds, scores and optional timers are planned for the Games pass.')),

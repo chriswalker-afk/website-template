@@ -4,7 +4,7 @@ import {TOPICS} from '../src/topics.js';
 test('Contents, top modes and right-hand subsections are separate navigation levels',async({page})=>{
   await page.goto('/#/sampling/home');
   await expect(page.getByRole('heading',{name:'Contents'})).toBeVisible();
-  await expect(page.locator('.chapter-tab')).toHaveCount(6);
+  await expect(page.locator('.chapter-tab')).toHaveCount(7);
   await expect(page.locator('.side-tabs')).toHaveCount(0);
   await page.locator('.chapter-tabs').getByRole('link',{name:'Understand'}).click();
   await expect(page.getByRole('heading',{name:'The big idea'})).toBeVisible();
@@ -136,11 +136,12 @@ test('Fluency, Problem Solving and Modelling stay educationally distinct',async(
   await expect(page.locator('.ps-writing-grid')).toBeVisible();
   await page.goto('/#/quadratics/modelling/level-1');
   await expect(page.locator('.side-tab')).toHaveCount(4);
-  await expect(page.locator('.practice-question').first()).toBeVisible();
+  await expect(page.locator('.mdl-case')).toBeVisible();
+  await expect(page.locator('.practice-question')).toHaveCount(0);
   await page.locator('.side-tabs a[href$="level-4"]').click();
   await expect(page.getByRole('heading',{name:/Level 4:/})).toBeVisible();
-  await page.locator('.practice-question').first().getByRole('button',{name:'Show solution'}).click();
-  await expect(page.locator('.practice-question .reveal-answer').first()).toBeVisible();
+  await page.getByRole('button',{name:'Need a modelling nudge?'}).click();
+  await expect(page.locator('.mdl-hint')).toBeVisible();
 });
 test('a level can contain multiple pages without changing its right tab',async({page})=>{
   await page.goto('/#/quadratics/problemSolving/level-1');

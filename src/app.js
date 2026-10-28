@@ -4,6 +4,9 @@ import {emptyFluencyProgress,hydrateFluencyProgress,saveFluencyRound} from './fl
 import {renderFluencyPage,roundScores} from './fluency-ui.js';
 import {renderReasoningPage} from './reasoning-ui.js';
 import {renderProblemSolvingPage} from './problem-solving-ui.js';
+import {renderModellingPage} from './modelling-ui.js';
+import {MODELLING_PHASES} from './modelling-content.js';
+import {MODEL_PHASE_IDS,hydrateModellingProgress,blankModellingEntry,queueModelling,modellingTask,attemptedModelling,canSelfRateModel,saveModelReview} from './modelling-engine.js';
 import {hydrateProblemSolvingProgress,emptyProblemSolvingProgress,queueProblems,problemFor,
   attemptedProblem,canRateProblem,reviewProblem} from './problem-solving-engine.js';
 import {emptyReasoningProgress,hydrateReasoningProgress,queueReasoning,taskFor,
@@ -47,7 +50,8 @@ const state={
   worksheets:{},
   fluencySessions:{},fluencyProgress:{},
   reasoningSessions:{},reasoningProgress:{},
-  problemSessions:{},problemProgress:{}
+  problemSessions:{},problemProgress:{},
+  modellingSessions:{},modellingProgress:{}
 };
 let lastTopic=null;
 
@@ -187,6 +191,39 @@ function selectProblemSet(selection){
   state.problemSessions[problemRouteKey(state.route)]=freshProblemSession(state.route,selection);
 }
 
+// Modelling: progress survives page changes, while free-text work stays in memory only.
+function modellingProgressFor(topic){
+  if(!state.modellingProgress[topic.id])
+    state.modellingProgress[topic.id]=hydrateModellingProgress(
+      safeStorage.get('modelling:'+topic.id),topic.id);
+  return state.modellingProgress[topic.id];
+}
+function persistModellingProgress(topic,value){
+  state.modellingProgress[topic.id]=value;
+  safeStorage.put('modelling:'+topic.id,JSON.stringify(value));
+}
+const modellingRouteKey=route=>[route.topicId,route.sectionId,route.pageId].join(':');
+function freshModellingSession(route,selection='all'){
+  return {selection,ids:queueModelling(route.topicId,route.sectionId,route.pageId,
+      modellingProgressFor(TOPICS[route.topicId]),selection),
+    index:0,stage:0,maxStage:0,entries:{},complete:false,
+    confirmSwitch:false,pendingSelection:null};
+}
+function modellingSession(route=state.route){
+  if(route?.chapterId!=='modelling')return null;
+  const key=modellingRouteKey(route);
+  if(!state.modellingSessions[key])state.modellingSessions[key]=freshModellingSession(route);
+  return state.modellingSessions[key];
+}
+function currentModelling(session=modellingSession()){
+  const task=modellingTask(state.route.topicId,state.route.sectionId,state.route.pageId,
+    session?.ids?.[session.index]);
+  if(!task)return null;
+  return {task,entry:session.entries[task.id]||blankModellingEntry()};
+}
+function selectModellingSet(selection){
+  state.modellingSessions[modellingRouteKey(state.route)]=freshModellingSession(state.route,selection);
+}
 function currentFlashCard(topic){
   return topic.cards.find(c=>c.id===state.flash?.ids?.[state.flash.index]);
 }
@@ -500,6 +537,7 @@ function renderPageContent(route,topic){
     fluency:()=>renderFluencyPage(page,topic,route,fluencySession(route),fluencyProgressFor(topic)),
     reasoning:()=>renderReasoningPage(page,topic,route,reasoningSession(route),reasoningProgressFor(topic)),
     'problem-solving':()=>renderProblemSolvingPage(page,topic,route,problemSession(route),problemProgressFor(topic)),
+    modelling:()=>renderModellingPage(page,topic,route,modellingSession(route),modellingProgressFor(topic)),
     graph:()=>renderGraphLab(page,route),
     'sampling-lab':()=>renderSamplingLab(page,route,state.understand.labs),
     workshop:()=>renderWorkshop(page,route,state.understand.steppers,state.understand.workshops),
@@ -641,7 +679,108 @@ app.addEventListener('click',ev=>{
   const button=ev.target.closest('button[data-action]');
   if(!button)return;
   const action=button.dataset.action,topic=TOPICS[state.route.topicId];
-  if(action==='ps-strategies'){
+  if(action==='mdl-hint'){
+    const session=modellingSession(),current=currentModelling(session);
+    if(!current||session.complete||session.stage>=4||current.entry.rating)return;
+    const id=MODEL_PHASE_IDS[session.stage],open=!current.entry.hints[id];
+    session.entries[current.task.id]={...current.entry,
+      hints:{...current.entry.hints,[id]:open},
+      assisted:Boolean(current.entry.assisted||open)};
+    rerender();
+    document.querySelector('button[data-action="mdl-hint"]')?.focus({preventScroll:true});
+    announce(open?'Modelling nudge shown.':'Modelling nudge hidden.');
+  }else if(action==='mdl-example'){
+    const session=modellingSession(),current=currentModelling(session);
+    if(!current||session.complete||session.stage>=4||current.entry.rating)return;
+    const id=MODEL_PHASE_IDS[session.stage],open=!current.entry.examples[id];
+    session.entries[current.task.id]={...current.entry,
+      examples:{...current.entry.examples,[id]:open},
+      modelFirst:Boolean(current.entry.modelFirst||
+        (open&&current.entry.drafts[id].trim().length<20))};
+    rerender();
+    document.querySelector('button[data-action="mdl-example"]')?.focus({preventScroll:true});
+    announce(open?'Worked modelling stage shown.':'Worked modelling stage hidden.');
+  }else if(action==='mdl-next'||action==='mdl-prev'||action==='mdl-review'){
+    const session=modellingSession(),current=currentModelling(session);
+    if(!current||session.complete||current.entry.rating)return;
+    if(action==='mdl-prev')session.stage=Math.max(0,session.stage-1);
+    else if(action==='mdl-review'||session.stage===3){
+      if(action==='mdl-review'&&!current.entry.compared)return;
+      session.stage=4;
+      session.entries[current.task.id]={...current.entry,compared:true,
+        modelFirst:Boolean(current.entry.modelFirst||!attemptedModelling(current.entry))};
+    }else session.stage=Math.min(4,session.stage+1);
+    session.maxStage=Math.max(session.maxStage,session.stage);
+    rerender();
+    document.querySelector(session.stage===4?'input[data-mdl-check="0"]':'#mdl-answer')
+      ?.focus({preventScroll:true});
+    announce(session.stage===4?'The model comparison and review are shown.':
+      MODELLING_PHASES[session.stage][1]+' stage.');
+  }else if(action==='mdl-phase'){
+    const session=modellingSession(),current=currentModelling(session),index=Number(button.dataset.phase);
+    if(!current||session.complete||current.entry.rating||!Number.isInteger(index)||
+      index<0||index>=4||index>session.maxStage)return;
+    session.stage=index;rerender();
+    document.querySelector('#mdl-answer')?.focus({preventScroll:true});
+    announce(MODELLING_PHASES[index][1]+' stage selected.');
+  }else if(action==='mdl-rate'){
+    const session=modellingSession(),current=currentModelling(session),rating=button.dataset.rating;
+    if(!current||session.complete||session.stage!==4||!canSelfRateModel(current.entry,rating))return;
+    try{persistModellingProgress(topic,saveModelReview(modellingProgressFor(topic),
+      topic.id,state.route.sectionId,state.route.pageId,current.task.id,current.entry,rating));}
+    catch(error){announce(error instanceof Error?error.message:'Modelling review not saved.');return;}
+    session.entries[current.task.id]={...current.entry,rating};
+    rerender();
+    document.querySelector('button[data-action="mdl-next-case"]')?.focus({preventScroll:true});
+    announce('Self-review recorded as '+rating+'. This is not an automatic mark.');
+  }else if(action==='mdl-next-case'){
+    const session=modellingSession(),current=currentModelling(session);
+    if(!current?.entry?.rating||session.complete)return;
+    if(session.index===session.ids.length-1){
+      session.complete=true;rerender();
+      document.querySelector('button[data-action="mdl-repeat"]')?.focus({preventScroll:true});
+      announce('This modelling page is reviewed.');
+    }else{
+      session.index++;session.stage=0;session.maxStage=0;
+      rerender();document.querySelector('#mdl-answer')?.focus({preventScroll:true});
+      announce('Next modelling scenario.');
+    }
+  }else if(action==='mdl-selection'){
+    const session=modellingSession(),selection=button.dataset.selection;
+    if(!session||!['all','focus'].includes(selection)||session.selection===selection)return;
+    const current=currentModelling(session),entry=current?.entry;
+    const unfinished=entry&&!entry.rating&&(MODEL_PHASE_IDS.some(id=>
+      entry.drafts[id].trim()||entry.examples[id]||entry.hints[id])||session.maxStage>0);
+    if(unfinished){
+      session.confirmSwitch=true;session.pendingSelection=selection;
+      rerender();document.querySelector('button[data-action="mdl-cancel"]')?.focus({preventScroll:true});
+      announce('Confirm replacement of unfinished modelling work.');
+    }else{
+      selectModellingSet(selection);rerender();
+      document.querySelector('button[data-action="mdl-selection"][data-selection="'+selection+'"]')
+        ?.focus({preventScroll:true});
+      announce('Modelling scenario selection changed.');
+    }
+  }else if(action==='mdl-cancel'){
+    const session=modellingSession();if(!session)return;
+    session.confirmSwitch=false;session.pendingSelection=null;
+    rerender();document.querySelector('#mdl-answer')?.focus({preventScroll:true});
+    announce('Your modelling work has been preserved.');
+  }else if(action==='mdl-confirm'){
+    const session=modellingSession();
+    if(!session?.confirmSwitch||!['all','focus'].includes(session.pendingSelection))return;
+    const selected=session.pendingSelection;selectModellingSet(selected);rerender();
+    document.querySelector('button[data-action="mdl-selection"][data-selection="'+selected+'"]')
+      ?.focus({preventScroll:true});
+    announce('Previous unfinished modelling attempt replaced.');
+  }else if(action==='mdl-repeat'){
+    const session=modellingSession(),selected=button.dataset.selection;
+    if(!session?.complete||!['all','focus'].includes(selected))return;
+    selectModellingSet(selected);rerender();
+    document.querySelector('#mdl-answer,button[data-action="mdl-selection"]')
+      ?.focus({preventScroll:true});
+    announce('Modelling practice restarted.');
+  }else if(action==='ps-strategies'){
     const session=problemSession(),current=currentProblem(session);
     if(!current||session.complete||current.response.rating)return;
     session.entries[current.task.id]={...current.response,
@@ -1199,7 +1338,18 @@ app.addEventListener('click',ev=>{
   }
 });
 app.addEventListener('change',ev=>{
-  if(ev.target.matches('input[data-ps-criterion]')&&state.route?.chapterId==='problemSolving'){
+  if(ev.target.matches('input[data-mdl-check]')&&state.route?.chapterId==='modelling'){
+    const session=modellingSession(),current=currentModelling(session);
+    if(!current||session.stage!==4||!current.entry.compared||current.entry.rating)return;
+    const index=Number(ev.target.dataset.mdlCheck);
+    if(!Number.isInteger(index)||index<0||index>=3)return;
+    const checked=[...current.entry.checked];checked[index]=ev.target.checked;
+    session.entries[current.task.id]={...current.entry,checked};
+    rerender();
+    document.querySelector('input[data-mdl-check="'+index+'"]')?.focus({preventScroll:true});
+    announce('Modelling criterion '+(index+1)+(checked[index]?' checked.':' unchecked.'));
+    return;
+  }  if(ev.target.matches('input[data-ps-criterion]')&&state.route?.chapterId==='problemSolving'){
     const session=problemSession(),current=currentProblem(session);
     if(!current||!current.response.modelComplete||current.response.rating)return;
     const index=Number(ev.target.dataset.psCriterion);
@@ -1258,7 +1408,15 @@ app.addEventListener('change',ev=>{
 });
 app.addEventListener('input',ev=>{
   const target=ev.target;
-  if((target.id==='ps-plan'||target.id==='ps-work')&&state.route?.chapterId==='problemSolving'){
+  if(target.id==='mdl-answer'&&state.route?.chapterId==='modelling'){
+    const session=modellingSession(),current=currentModelling(session);
+    if(current&&!session.complete&&session.stage<4&&!current.entry.rating){
+      const id=MODEL_PHASE_IDS[session.stage];
+      session.entries[current.task.id]={...current.entry,
+        drafts:{...current.entry.drafts,[id]:target.value}};
+    }
+    return;
+  }  if((target.id==='ps-plan'||target.id==='ps-work')&&state.route?.chapterId==='problemSolving'){
     const session=problemSession(),current=currentProblem(session);
     if(current&&!session.complete&&!current.response.rating){
       const field=target.id==='ps-plan'?'plan':'working';
