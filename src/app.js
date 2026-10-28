@@ -366,19 +366,20 @@ function renderSideTabs(topic,route){
     '</nav>';
 }
 function renderMobileNavigation(topic,route){
-  const currentSection=sectionsFor(topic,route.chapterId);
-  return '<div class="mobile-navigation">'+
+  const currentSection=sectionsFor(topic,route.chapterId),resource=route.chapterId==='resources';
+  return '<div class="mobile-navigation'+(resource?' mobile-navigation--single':'')+'">'+
     '<div class="mobile-pick"><label for="mobile-chapter">Chapter</label><select id="mobile-chapter" data-role="chapter-select">'+
     '<option value="home"'+selected(route.chapterId,'home')+'>Contents</option>'+
     chaptersFor(topic).map(chapter=>'<option value="'+chapter.id+'"'+selected(route.chapterId,chapter.id)+'>'+e(chapter.label)+'</option>').join('')+
     (supportsWorksheets(topic.id)?'<option value="resources"'+selected(route.chapterId,'resources')+'>Resources</option>':'')+
     '</select></div>'+
-    '<div class="mobile-pick'+(route.chapterId==='home'?' mobile-pick--disabled':'')+'"><label for="mobile-section">Page index</label>'+
-    '<select id="mobile-section" data-role="section-select"'+(route.chapterId==='home'?' disabled':'')+'>'+
-      (route.chapterId==='home'?'<option>Choose a chapter</option>':currentSection.map(section=>
-        '<option value="'+section.id+'"'+selected(route.sectionId,section.id)+'>'+e(section.label)+'</option>').join(''))+
-    '</select></div></div>';
+    (resource?'':'<div class="mobile-pick'+(route.chapterId==='home'?' mobile-pick--disabled':'')+'"><label for="mobile-section">Page index</label>'+
+      '<select id="mobile-section" data-role="section-select"'+(route.chapterId==='home'?' disabled':'')+'>'+
+        (route.chapterId==='home'?'<option>Choose a chapter</option>':currentSection.map(section=>
+          '<option value="'+section.id+'"'+selected(route.sectionId,section.id)+'>'+e(section.label)+'</option>').join(''))+
+      '</select></div>')+'</div>';
 }
+
 function renderBook(route,{animate=true}={}){
   const topic=TOPICS[route.topicId],chap=chapterFor(route.chapterId);
   const section=sectionsFor(topic,route.chapterId).find(item=>item.id===route.sectionId);
