@@ -102,3 +102,5 @@ Current pages are **original demonstration material**, with authored example que
 The **Worksheet Generator remains an optional Contents/Resources utility**, not a main learning mode. It continues to create editable LaTeX documents from its validated question families.
 
 Before scaling, each new topic must be audited for mathematical validity, varied tasks, adequate questions at every advertised level, accessibility, proper page lengths and honest descriptions of unimplemented modes.
+
+**Modelling quality upgrade:** Four separate levels with two pages per level. Each case has four paced stages, optional per-stage nudge and worked comparison, model validation and transparent self-review. See [Modelling Mode Guide](MODELLING_MODE_GUIDE.md).
