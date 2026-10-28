@@ -275,7 +275,8 @@ function renderDocument(topic,opts,questions,answers){
     const q=questions[i];
     lines.push('% Question '+(i+1)+' | '+q.familyId+' | '+q.signature);
     if(student){
-      lines.push('\\item '+q.questionTex+' \\hfill\\mbox{\\textit{['+q.marks+' marks]}}');
+      lines.push('\\item \\begin{minipage}[t]{0.79\\linewidth}'+q.questionTex+'\\end{minipage}'+
+        '\\hfill\\begin{minipage}[t]{0.19\\linewidth}\\raggedleft\\textit{['+q.marks+' marks]}\\end{minipage}');
       if(opts.style==='scaffolded'&&i===0){
         lines.push('\\par\\smallskip\\textit{Worked model:}\\par '+q.solutionTex+'\\par\\vspace{5mm}');
       }else{
