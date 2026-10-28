@@ -171,8 +171,8 @@ for(const width of [320,390,768,1024,1440]){
     }
     if(width<=960){
       await page.goto('/#/quadratics/understand/visual-explanations');
-      await expect(page.getByLabel('Subsection')).toHaveValue('visual-explanations');
-      await page.getByLabel('Subsection').selectOption('worked-examples');
+      await expect(page.locator('#mobile-section')).toHaveValue('visual-explanations');
+      await page.locator('#mobile-section').selectOption('worked-examples');
       await expect(page.getByRole('heading',{name:'Worked examples'})).toBeVisible();
     }
   });
