@@ -16,7 +16,7 @@ test('top-level chapters remain qualification-neutral and fully spelled out',()=
   }
 });
 test('configurable modes hide unsupported chapters without dead tabs',()=>{
-  assert.equal(chaptersFor(TOPICS.sampling).length,5);
+  assert.equal(chaptersFor(TOPICS.sampling).length,6);
   assert.equal(chaptersFor(TOPICS.sampling).some(ch=>ch.id==='modelling'),false);
   assert.equal(chaptersFor(TOPICS.quadratics).length,7);
   for(const chapter of ['fluency','reasoning','problemSolving','modelling']){
@@ -43,11 +43,12 @@ test('practice and game modes only contain the intended activity types',()=>{
       assert.equal(section.pages.length,1);
       assert.ok(section.pages.every(page=>page.type==='reasoning'&&page.tasks.length>=4));
     }
-    for(const mode of ['problemSolving','modelling']){
-      for(const section of sectionsFor(topic,mode)){
-        assert.ok(section.pages.every(page=>page.type==='questions'));
-      }
+    for(const section of sectionsFor(topic,'problemSolving')){
+      assert.ok(section.pages.length>=2);
+      assert.ok(section.pages.every(p=>p.type==='problem-solving'&&p.tasks.length>=2));
     }
+    for(const section of sectionsFor(topic,'modelling'))
+      assert.ok(section.pages.every(page=>page.type==='questions'));
     for(const section of sectionsFor(topic,'games')){
       assert.equal(section.pages.length,1);
       assert.equal(section.pages[0].type,'game');
@@ -58,6 +59,8 @@ test('practice and game modes only contain the intended activity types',()=>{
     assert.deepEqual(sectionsFor(TOPICS.quadratics,mode).map(s=>s.id),
       ['level-1','level-2','level-3','level-4']);
   }
+  assert.deepEqual(sectionsFor(TOPICS.sampling,'problemSolving').map(s=>s.id),
+    ['level-1','level-2','level-3','level-4']);
   assert.deepEqual(sectionsFor(TOPICS.sampling,'games').map(s=>s.id),
     ['sprint','puzzle-quest','sort-discover']);
   assert.deepEqual(sectionsFor(TOPICS.quadratics,'games').map(s=>s.id),
@@ -85,6 +88,8 @@ test('topic switching preserves valid positions and falls back when a mode is un
   assert.equal(topicSwitchHref('sampling','understand','big-idea','representativeness'),
     '#/sampling/understand/big-idea/representativeness');
   assert.equal(topicSwitchHref('sampling','modelling','level-3'),'#/sampling/home');
+  assert.equal(topicSwitchHref('sampling','problemSolving','level-3'),
+    '#/sampling/problemSolving/level-3');
 });
 test('legacy graph and game URLs resolve to their new subsection destinations',()=>{
   assert.equal(resolveRoute('#/quadratics/fluency/graph-lab').canonical,
