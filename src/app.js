@@ -641,7 +641,114 @@ app.addEventListener('click',ev=>{
   const button=ev.target.closest('button[data-action]');
   if(!button)return;
   const action=button.dataset.action,topic=TOPICS[state.route.topicId];
-  if(action==='reasoning-hint'){
+  if(action==='ps-strategies'){
+    const session=problemSession(),current=currentProblem(session);
+    if(!current||session.complete||current.response.rating)return;
+    session.entries[current.task.id]={...current.response,
+      strategiesOpen:!current.response.strategiesOpen};
+    rerender();
+    document.querySelector('button[data-action="ps-strategies"]')?.focus({preventScroll:true});
+    announce('Possible approaches '+(session.entries[current.task.id].strategiesOpen?'shown.':'hidden.'));
+  }else if(action==='ps-choice'){
+    const session=problemSession(),current=currentProblem(session);
+    if(!current||session.complete||current.response.rating)return;
+    const id=button.dataset.choice;
+    if(!current.task.options.some(o=>o.id===id))return;
+    session.entries[current.task.id]={...current.response,strategy:id,
+      strategiesOpen:true,assisted:true};
+    rerender();
+    document.querySelector('button[data-action="ps-choice"][data-choice="'+id+'"]')?.focus({preventScroll:true});
+    announce('Strategy feedback shown. This counts as supported practice.');
+  }else if(action==='ps-hint'){
+    const session=problemSession(),current=currentProblem(session);
+    if(!current||session.complete||current.response.rating||current.response.hintCount>=2)return;
+    session.entries[current.task.id]={...current.response,assisted:true,
+      hintCount:current.response.hintCount+1};
+    rerender();
+    document.querySelector('button[data-action="ps-hint"]')?.focus({preventScroll:true});
+    announce('Problem-solving hint '+session.entries[current.task.id].hintCount+' shown.');
+  }else if(action==='ps-solution'){
+    const session=problemSession(),current=currentProblem(session);
+    if(!current||session.complete||current.response.rating||
+      current.response.solutionStep>=current.task.steps.length)return;
+    const step=current.response.solutionStep+1;
+    session.entries[current.task.id]={...current.response,solutionStep:step,
+      modelFirst:Boolean(current.response.modelFirst||
+        (current.response.solutionStep===0&&!attemptedProblem(current.response))),
+      modelComplete:step===current.task.steps.length};
+    rerender();
+    document.querySelector(step===current.task.steps.length?
+      'input[data-ps-criterion="0"]':'button[data-action="ps-solution"]')?.focus({preventScroll:true});
+    announce('Worked solution step '+step+' of '+current.task.steps.length+' shown.');
+  }else if(action==='ps-rate'){
+    const session=problemSession(),current=currentProblem(session),rating=button.dataset.rating;
+    if(!current||session.complete||current.response.rating||
+      !canRateProblem(current.response,rating))return;
+    try{
+      saveProblemProgress(topic,reviewProblem(problemProgressFor(topic),
+        topic.id,state.route.sectionId,state.route.pageId,current.task.id,current.response,rating));
+    }catch(error){
+      announce(error instanceof Error?error.message:'Could not save your problem review.');
+      return;
+    }
+    session.entries[current.task.id]={...current.response,rating};
+    rerender();
+    document.querySelector('button[data-action="ps-next"]')?.focus({preventScroll:true});
+    announce('Problem self-review saved as '+rating+'. This is not an automatic grade.');
+  }else if(action==='ps-next'){
+    const session=problemSession(),current=currentProblem(session);
+    if(!current||!current.response.rating||session.complete)return;
+    if(session.index===session.ids.length-1){
+      session.complete=true;
+      rerender();
+      announce('All problems on this page have been reviewed.');
+      document.querySelector('button[data-action="ps-repeat"]')?.focus({preventScroll:true});
+    }else{
+      session.index++;
+      rerender();
+      document.querySelector('#ps-plan')?.focus({preventScroll:true});
+      announce('Next problem.');
+    }
+  }else if(action==='ps-selection'){
+    const session=problemSession(),selection=button.dataset.mode;
+    if(!session||!['all','focus'].includes(selection)||selection===session.selection)return;
+    const current=currentProblem(session);
+    if(current&&!current.response.rating&&
+      (current.response.plan.trim()||current.response.working.trim()||
+       current.response.hintCount||current.response.solutionStep)){
+      session.confirmSwitch=true;session.pendingSelection=selection;
+      rerender();
+      document.querySelector('button[data-action="ps-cancel"]')?.focus({preventScroll:true});
+      announce('Confirm replacement of unfinished problem-solving work.');
+    }else{
+      selectProblemSet(selection);
+      rerender();
+      document.querySelector('button[data-action="ps-selection"][data-mode="'+selection+'"]')
+        ?.focus({preventScroll:true});
+      announce('Problem selection changed.');
+    }
+  }else if(action==='ps-confirm'){
+    const session=problemSession();
+    if(!session?.confirmSwitch||!['all','focus'].includes(session.pendingSelection))return;
+    const selection=session.pendingSelection;
+    selectProblemSet(selection);rerender();
+    document.querySelector('button[data-action="ps-selection"][data-mode="'+selection+'"]')
+      ?.focus({preventScroll:true});
+    announce('Previous incomplete attempt replaced.');
+  }else if(action==='ps-cancel'){
+    const session=problemSession();
+    if(!session)return;
+    session.confirmSwitch=false;session.pendingSelection=null;
+    rerender();
+    document.querySelector('#ps-plan')?.focus({preventScroll:true});
+    announce('Unfinished problem-solving work preserved.');
+  }else if(action==='ps-repeat'){
+    const session=problemSession(),selection=button.dataset.mode;
+    if(!session?.complete||!['all','focus'].includes(selection))return;
+    selectProblemSet(selection);rerender();
+    document.querySelector('#ps-plan,button[data-action="ps-selection"]')?.focus({preventScroll:true});
+    announce(selection==='focus'?'Revisiting problems needing support.':'Beginning the problem set again.');
+  }else if(action==='reasoning-hint'){
     const session=reasoningSession(),current=reasoningEntry(session);
     if(!current||session.complete||current.response.rating)return;
     const old=current.response;
