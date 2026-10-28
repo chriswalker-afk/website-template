@@ -161,3 +161,48 @@ test('render Reasoning writing, model, checklist, review and mobile screenshots'
   await page.screenshot({path:'visual-review/35-reasoning-write-mobile-320.png',
     fullPage:true,animations:'disabled'});
 });
+
+
+test('render Problem Solving strategy, hint, solution, review and mobile screenshots',async({page})=>{
+  test.setTimeout(80000);
+  await mkdir('visual-review',{recursive:true});
+  await page.setViewportSize({width:1440,height:960});
+  await page.goto('/#/quadratics/problemSolving/level-1');
+  await expect(page.locator('.ps-case')).toBeVisible();
+  await page.screenshot({path:'visual-review/36-ps-guided-desktop.png',fullPage:true,animations:'disabled'});
+  await page.locator('#ps-plan').fill('I should begin from the known roots and use the given intercept.');
+  await page.locator('#ps-work').fill('Use a(x − 2)(x − 5), substitute x = 0 and calculate a.');
+  await page.getByRole('button',{name:'Compare possible strategies'}).click();
+  await page.locator('[data-action="ps-choice"][data-choice="s1"]').click();
+  await page.screenshot({path:'visual-review/37-ps-strategy-feedback-desktop.png',
+    fullPage:true,animations:'disabled'});
+  await page.getByRole('button',{name:'Get a nudge'}).click();
+  await page.getByRole('button',{name:'Get a stronger hint'}).click();
+  await page.screenshot({path:'visual-review/38-ps-gradual-hints-desktop.png',
+    fullPage:true,animations:'disabled'});
+  await page.goto('/#/sampling/problemSolving/level-4');
+  for(let i=0;i<3;i++)
+    await page.getByRole('button',{name:i?'Reveal next worked step':'Reveal first worked step'}).click();
+  await expect(page.locator('.ps-review')).toBeVisible();
+  await page.screenshot({path:'visual-review/39-ps-challenge-worked-desktop.png',
+    fullPage:true,animations:'disabled'});
+  await page.goto('/#/quadratics/problemSolving/level-3');
+  for(let i=0;i<2;i++){
+    for(let step=0;step<3;step++)
+      await page.getByRole('button',{name:step?'Reveal next worked step':'Reveal first worked step'}).click();
+    await page.getByRole('button',{name:'Retry this problem'}).click();
+    await page.getByRole('button',{name:i===1?'Finish this page':'Next problem'}).click();
+  }
+  await expect(page.locator('.ps-complete')).toBeVisible();
+  await page.screenshot({path:'visual-review/40-ps-page-recap-desktop.png',
+    fullPage:true,animations:'disabled'});
+  await page.setViewportSize({width:390,height:844});
+  await page.goto('/#/sampling/problemSolving/level-2');
+  await page.getByRole('button',{name:'Reveal first worked step'}).click();
+  await page.screenshot({path:'visual-review/41-ps-solution-mobile-390.png',
+    fullPage:true,animations:'disabled'});
+  await page.setViewportSize({width:320,height:740});
+  await page.goto('/#/quadratics/problemSolving/level-4');
+  await page.screenshot({path:'visual-review/42-ps-writing-mobile-320.png',
+    fullPage:true,animations:'disabled'});
+});
