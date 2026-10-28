@@ -14,7 +14,11 @@ const safeStorage={
   put(key,value){try{localStorage.setItem(STORAGE+key,value);}catch{/* private mode */}}
 };
 function getBookmarks(){
-  try {const value=JSON.parse(safeStorage.get('bookmarks')||'[]');return new Set(Array.isArray(value)?value.filter(v=>typeof v==='string'&&v.startsWith('#/')):[]);}
+  try {
+    const value=JSON.parse(safeStorage.get('bookmarks')||'[]');
+    const links=Array.isArray(value)?value.filter(v=>typeof v==='string'&&v.startsWith('#/')):[];
+    return new Set(links.map(href=>resolveRoute(href)).filter(r=>r.chapterId!=='home').map(r=>r.canonical));
+  }
   catch{return new Set();}
 }
 const state={
