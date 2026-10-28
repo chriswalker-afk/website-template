@@ -35,7 +35,7 @@ export const PROBLEM_SOLVING_CHAPTERS=Object.freeze({
           'Why would using 15 gaps give the wrong last position?')
       ),
       page('sample-plan','Check that a correct numerical allocation leads to a valid procedure.',
-        task('boarders-day','There are 90 boarders and 270 day pupils. A representative sample of 36 must preserve these proportions. Another pupil suggests taking 18 volunteers from each group. Find a better allocation and explain a practical selection procedure.',
+        task('boarders-day','There are 90 boarders and 270 day pupils. A stratified sample of 36 is planned to preserve these population proportions. Another pupil suggests taking 18 volunteers from each group. Find a better allocation and explain a practical selection procedure.',
           'What proportion of the population belongs to each group?',
           [['Calculate proportional group allocations and randomly select inside them','This preserves the population shares and avoids selecting only those who volunteer.'],
            ['Keep 18 from each group because both groups will have a voice','Equal representation in the sample is not the same as proportional representation.']],
@@ -127,7 +127,7 @@ export const PROBLEM_SOLVING_CHAPTERS=Object.freeze({
           'What happens if the ordered list is randomly shuffled before systematic selection?')
       ),
       page('design-limits','Recognise when a mathematically correct calculation cannot be implemented honestly.',
-        task('missing-frame','A school has 70 boarders, 130 day pupils in Year 12 and 200 in Year 13. A proportional sample of 40 is planned. Only five boarders appear on the available list. Calculate the intended allocation, then decide whether the existing list can deliver it and suggest a defensible response.',
+        task('missing-frame','A school has 400 pupils in three non-overlapping strata: 70 boarders, 130 Year 12 day pupils and 200 Year 13 day pupils. A proportional sample of 40 is planned. Only five boarders appear on the available list. Calculate the intended allocation, then decide whether the existing list can deliver it and suggest a defensible response.',
           'A calculation and a usable sampling frame are different requirements.',
           [['Find the planned allocation, then assess eligibility and coverage','A mathematically correct allocation does not make unavailable pupils selectable.'],
            ['Move the missing boarder places to the largest group without saying so','This would change the intended proportions and silently alter the sample design.']],
