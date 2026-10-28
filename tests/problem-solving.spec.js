@@ -187,6 +187,17 @@ test('all independently completed problems have a helpful empty focus state',asy
   await page.getByRole('button',{name:'All problems'}).click();
   await expect(page.locator('.ps-prompt')).toHaveText(list[0].prompt);
 });
+test('draft strategy and working survive changing internal book pages',async({page})=>{
+  await open(page,'quadratics','level-1');
+  await page.locator('#ps-plan').fill('Use factorised form because both roots are given.');
+  await page.locator('#ps-work').fill('I begin with y = a(x − 2)(x − 5), then use the y-intercept to find a.');
+  await page.getByRole('link',{name:'Next page'}).click();
+  await expect(page.locator('#ps-plan')).toHaveValue('');
+  await page.getByRole('link',{name:'Previous page'}).click();
+  await expect(page.locator('#ps-plan')).toHaveValue('Use factorised form because both roots are given.');
+  await expect(page.locator('#ps-work')).toContainText('a(x − 2)(x − 5)');
+  await expect(page.locator('.side-tab[aria-current="page"]')).toContainText('Level 1');
+});
 test('progress survives reload, does not retain working and is isolated across topics and pages',async({page})=>{
   await open(page,'sampling','level-1');
   await page.locator('#ps-plan').fill('<script>window.unsafe=true</script> Use the correct fraction.');
