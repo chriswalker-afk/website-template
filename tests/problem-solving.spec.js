@@ -74,6 +74,22 @@ test('guided start, strategy feedback and staged hints preserve planning notes',
   expect(JSON.stringify(stored)).not.toContain(plan);
   expect(JSON.stringify(stored)).not.toContain(working);
 });
+test('opening strategy suggestions alone prevents an independent self-rating',async({page})=>{
+  await open(page,'quadratics','level-1');
+  await inputAttempt(page);
+  await page.getByRole('button',{name:'Compare possible strategies'}).click();
+  await expect(page.locator('.ps-strategy-options')).toBeVisible();
+  await page.getByRole('button',{name:'Hide strategies'}).click();
+  await revealAll(page,tasks('quadratics','level-1','roots-and-intercept')[0]);
+  await checkAll(page);
+  await expect(page.getByRole('button',{name:'Solved independently'})).toBeDisabled();
+  await expect(page.getByRole('button',{name:'Solved with support'})).toBeEnabled();
+  await page.getByRole('button',{name:'Solved with support'}).click();
+  const record=await page.evaluate(()=>JSON.parse(
+    localStorage.getItem('maths-notebook-pass1a:problem-solving:quadratics'))
+    .records['level-1:roots-and-intercept:two-roots-intercept']);
+  expect(record.assisted).toBe(true);
+});
 test('unattempted problem can be revealed and self-rated for retry without false success',async({page})=>{
   await open(page,'quadratics','level-3');
   const first=tasks('quadratics','level-3','constraints')[0];
