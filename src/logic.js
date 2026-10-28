@@ -3,6 +3,8 @@ import {supportsWorksheets} from './worksheet-generator.js';
 import {validateUnderstandContent} from './understand-engine.js';
 import {validateMemoriseContent} from './memorise-engine.js';
 import {validateFluencyChapters,FLUENCY_CHAPTERS} from './fluency-engine.js';
+import {validateReasoningContent} from './reasoning-engine.js';
+import {REASONING_CHAPTERS} from './reasoning-content.js';
 
 export const CHAPTER_BY_ID=Object.fromEntries(CHAPTER_LIBRARY.map(c=>[c.id,c]));
 export const KNOWN_CHAPTER_IDS=CHAPTER_LIBRARY.map(c=>c.id);
@@ -29,7 +31,7 @@ const MODE_PAGE_TYPES={
   understand:new Set(['lesson','graph','sampling-lab','workshop']),
   memorise:new Set(['flashcards','match-up','missing-words','speed-recall','review-all']),
   fluency:new Set(['fluency']),
-  reasoning:new Set(['questions']),
+  reasoning:new Set(['reasoning']),
   problemSolving:new Set(['questions']),
   modelling:new Set(['questions']),
   games:new Set(['game']),
@@ -127,6 +129,8 @@ export function validateTopics(topics=TOPICS){
             issues.push(key+': missing lesson blocks '+page.id);
           if(page.type==='questions'&&(!Array.isArray(page.problems)||!page.problems.length))
             issues.push(key+': missing problems '+page.id);
+          if(page.type==='reasoning'&&(!Array.isArray(page.tasks)||page.tasks.length<4))
+            issues.push(key+': insufficient reasoning tasks '+page.id);
           for(const problem of page.problems||[]){
             if(!problem.id||!problem.prompt||!problem.solution||!Number.isInteger(problem.marks))
               issues.push(key+': incomplete problem '+page.id);
@@ -134,7 +138,7 @@ export function validateTopics(topics=TOPICS){
           if(page.type==='game'&&(!page.gameId||!page.objective||!page.mechanic))
             issues.push(key+': incomplete game '+page.id);
         }
-        if(['memorise','games'].includes(chapter)&&section.pages.length!==1)
+        if(['memorise','games','reasoning'].includes(chapter)&&section.pages.length!==1)
           issues.push(key+': activity subsection must own its internal progression '+section.id);
       }
     }
@@ -145,7 +149,11 @@ export function validateTopics(topics=TOPICS){
     if(topic.chapters?.fluency?.length&&
       JSON.stringify(topic.chapters.fluency)!==JSON.stringify(FLUENCY_CHAPTERS[key]))
       issues.push(key+': invalid Fluency level/page definitions');
+    if(topic.chapters?.reasoning?.length&&
+      JSON.stringify(topic.chapters.reasoning)!==JSON.stringify(REASONING_CHAPTERS[key]))
+      issues.push(key+': invalid Reasoning subsection/task definitions');
   }
   issues.push(...validateFluencyChapters().map(message=>'Fluency: '+message));
+  issues.push(...validateReasoningContent().map(message=>'Reasoning: '+message));
   return issues;
 }
