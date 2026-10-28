@@ -9,6 +9,18 @@ const RESOURCE_SECTIONS=[{
   description:'Choose skills, difficulty and length to create a LaTeX worksheet with matching answers or worked solutions.',
   pages:[{id:'main',type:'worksheet'}]
 }];
+const LEGACY_ROUTES={
+  'sampling/understand/methods':'sampling/understand/how-it-works',
+  'quadratics/understand/forms':'quadratics/understand/how-it-works',
+  'quadratics/fluency/graph-lab':'quadratics/understand/visual-explanations',
+  'quadratics/fluency/practice':'quadratics/fluency/level-1',
+  'quadratics/modelling/model-lab':'quadratics/understand/visual-explanations',
+  'quadratics/problemSolving/strategy':'quadratics/problemSolving/level-1',
+  'sampling/reasoning/choose':'sampling/reasoning/justify',
+  'sampling/reasoning/evaluate':'sampling/reasoning/critique',
+  'sampling/games/arcade':'sampling/games/sprint',
+  'quadratics/games/arcade':'quadratics/games/sprint'
+};
 const isSlug=value=>typeof value==='string'&&/^[a-z][a-z0-9-]*$/.test(value);
 const MODE_PAGE_TYPES={
   understand:new Set(['lesson','graph']),
@@ -34,6 +46,8 @@ export function routeHref(topicId,chapterId='home',sectionId,pageId){
 export function resolveRoute(hash){
   const path=String(hash??'').replace(/^#\/?/,'').split('/').filter(Boolean);
   const [requestedTopic,requestedChapter,requestedSection,requestedPage]=path;
+  const legacy=LEGACY_ROUTES[[requestedTopic,requestedChapter,requestedSection].join('/')];
+  if(legacy)return resolveRoute('#/'+legacy);
   const topic=TOPICS[requestedTopic]||TOPICS[DEFAULT_TOPIC];
   const chapterId=chaptersFor(topic).some(c=>c.id===requestedChapter)||
     (requestedChapter==='resources'&&supportsWorksheets(topic.id))?requestedChapter:'home';
