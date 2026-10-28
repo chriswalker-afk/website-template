@@ -10,8 +10,8 @@ test('both sample Maths topics offer distinct worksheet skill menus',()=>{
   assert.equal(supportsWorksheets('sampling'),true);
   assert.equal(supportsWorksheets('quadratics'),true);
   assert.equal(supportsWorksheets('nonexistent'),false);
-  assert.equal(worksheetSkills('sampling').length,4);
-  assert.equal(worksheetSkills('quadratics').length,4);
+  assert.equal(worksheetSkills('sampling').length,5);
+  assert.equal(worksheetSkills('quadratics').length,5);
 });
 test('deterministic worksheets have distinct question IDs and matching source metadata',()=>{
   for(const topicId of ['sampling','quadratics']){

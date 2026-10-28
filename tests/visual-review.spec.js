@@ -1,7 +1,9 @@
 import {test,expect} from '@playwright/test';
 import {mkdir} from 'node:fs/promises';
+import {buildFluencySet,answerText} from '../src/fluency-engine.js';
 
 test('render representative visual-review images',async({page})=>{
+  test.setTimeout(90000);
   await mkdir('visual-review',{recursive:true});
   await page.setViewportSize({width:1440,height:1000});
   await page.goto('/#/sampling/home');
@@ -81,4 +83,36 @@ test('render representative visual-review images',async({page})=>{
   await page.setViewportSize({width:320,height:740});
   await page.goto('/#/sampling/memorise/flashcards');
   await page.screenshot({path:'visual-review/21-memorise-flashcards-mobile-320.png',fullPage:true,animations:'disabled'});
+  await page.setViewportSize({width:1440,height:960});
+  await page.goto('/#/sampling/fluency/level-1');
+  await expect(page.locator('.fluency-question')).toBeVisible();
+  await page.screenshot({path:'visual-review/22-fluency-foundations-desktop.png',fullPage:true,animations:'disabled'});
+  await page.goto('/#/quadratics/fluency/level-2');
+  await page.locator('#fluency-answer').fill('99999');
+  await page.locator('#fluency-answer').press('Enter');
+  await page.getByRole('button',{name:'Show hint'}).click();
+  await page.screenshot({path:'visual-review/23-fluency-feedback-desktop.png',fullPage:true,animations:'disabled'});
+  await page.goto('/#/quadratics/fluency/level-4');
+  await page.getByRole('button',{name:'Show full solution'}).click();
+  await page.screenshot({path:'visual-review/24-fluency-advanced-worked-solution.png',fullPage:true,animations:'disabled'});
+  await page.goto('/#/sampling/fluency/level-1');
+  const seed=Number((await page.locator('.fluency-seed').textContent()).replace('Set #','').trim());
+  const set=buildFluencySet({topicId:'sampling',levelId:'level-1',pageId:'counts',seed,count:6});
+  for(let i=0;i<set.questions.length;i++){
+    await page.locator('#fluency-answer').fill(answerText(set.questions[i].answer));
+    await page.locator('#fluency-answer').press('Enter');
+    await page.getByRole('button',{name:i===set.questions.length-1?'Finish practice':'Next question'}).click();
+  }
+  await expect(page.locator('.fluency-complete')).toBeVisible();
+  await page.screenshot({path:'visual-review/25-fluency-completion-desktop.png',fullPage:true,animations:'disabled'});
+  await page.setViewportSize({width:390,height:844});
+  await page.goto('/#/quadratics/fluency/level-4');
+  // This page was visited earlier in the sweep; reload resets its in-session
+  // revealed-answer state before capturing a fresh mobile worked example.
+  await page.reload();
+  await page.getByRole('button',{name:'Show full solution'}).click();
+  await page.screenshot({path:'visual-review/26-fluency-worked-solution-mobile-390.png',fullPage:true,animations:'disabled'});
+  await page.setViewportSize({width:320,height:740});
+  await page.goto('/#/sampling/fluency/level-1');
+  await page.screenshot({path:'visual-review/27-fluency-workspace-mobile-320.png',fullPage:true,animations:'disabled'});
 });

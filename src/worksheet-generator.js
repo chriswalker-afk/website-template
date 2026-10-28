@@ -1,6 +1,7 @@
 // Pass 1A worksheet prototype: original, deterministic question families.
 // This module has no DOM, network, AI or LaTeX compiler dependencies.
 import {TOPICS} from './topics.js';
+import {FLUENCY_CHAPTERS,makeFluencyQuestion,answerText,validateFluencyQuestion} from './fluency-engine.js';
 
 export const WORKSHEET_VERSION = 1;
 const SKILLS = Object.freeze({
@@ -8,13 +9,15 @@ const SKILLS = Object.freeze({
     {id:'terms',label:'Terminology'},
     {id:'methods',label:'Identify methods'},
     {id:'allocation',label:'Stratified calculations'},
-    {id:'evaluation',label:'Evaluate sampling'}
+    {id:'evaluation',label:'Evaluate sampling'},
+    {id:'fluency',label:'Generated Fluency practice'}
   ],
   quadratics: [
     {id:'vertex',label:'Turning points'},
     {id:'roots',label:'Factorised equations'},
     {id:'expanded',label:'Expanded equations'},
-    {id:'discriminant',label:'Discriminant'}
+    {id:'discriminant',label:'Discriminant'},
+    {id:'fluency',label:'Generated Fluency practice'}
   ]
 });
 export function worksheetSkills(topicId){return SKILLS[topicId]||[];}
@@ -224,7 +227,47 @@ const QUADRATIC_FAMILIES=[
       hintTex:'Calculate '+math('\\Delta=b^2-4ac')+' before deciding the number of distinct real roots.'};
   }}
 ];
-const FAMILIES={sampling:SAMPLING_FAMILIES,quadratics:QUADRATIC_FAMILIES};
+// Share generated Fluency practice and the LaTeX Worksheet Generator.
+function fluencyTextTex(text){
+  const symbols={
+    '²':'\\textsuperscript{2}','−':'\\( - \\)','×':'\\(\\times\\)',
+    '÷':'\\(\\div\\)','±':'\\(\\pm\\)','≈':'\\(\\approx\\)'
+  };
+  const parts=String(text).match(/√\([^()]*\)|√(?:\d+|[A-Za-z])|./gu)||[];
+  return parts.map(part=>{
+    if(part.startsWith('√')){
+      const token=part.slice(1).replace(/^\((.*)\)$/u,'$1')
+        .replaceAll('²','^{2}').replaceAll('−','-');
+      return '\\(\\sqrt{'+token+'}\\)';
+    }
+    return symbols[part]||escapeLatexText(part);
+  }).join('');
+}
+function toWorksheetFluencyQuestion(q){
+  const list='\\begin{enumerate}[label=(\\alph*),leftmargin=*,itemsep=3pt]'+
+    q.steps.map(step=>'\\item '+fluencyTextTex(step)).join('')+'\\end{enumerate}';
+  return {
+    signature:q.signature,marks:q.marks,spaceMm:Math.max(24,q.steps.length*12),
+    prompt:q.prompt,questionTex:fluencyTextTex(q.prompt),
+    answerTex:fluencyTextTex(answerText(q.answer)),
+    solutionTex:list,hintTex:fluencyTextTex(q.hint)
+  };
+}
+function fluencyFamily(topicId){
+  return {id:'fluency-generated',skill:'fluency',create(rng,difficulty){
+    const levels=difficulty==='developing'?[1]:difficulty==='stretch'?[3,4]:[2,3];
+    const section=FLUENCY_CHAPTERS[topicId][pick(rng,levels)-1];
+    const page=pick(rng,section.pages);
+    const familyId=pick(rng,page.families);
+    const q=makeFluencyQuestion(topicId,familyId,rng);
+    const result=toWorksheetFluencyQuestion(q);
+    return {...result,signature:section.id+':'+q.signature};
+  }};
+}
+const FAMILIES={
+  sampling:[...SAMPLING_FAMILIES,fluencyFamily('sampling')],
+  quadratics:[...QUADRATIC_FAMILIES,fluencyFamily('quadratics')]
+};
 function settings(options){
   const topicId=options.topicId;
   if(!supportsWorksheets(topicId))throw Error('No worksheet question families exist for this topic.');
@@ -317,4 +360,22 @@ export function generateWorksheet(options){
   const solutionsTex=renderDocument(topic,opts,questions,true);
   return {options:opts,questions,studentTex,solutionsTex,
     solutionsFilename:opts.solutions==='worked'?'worked-solutions.tex':'answers.tex'};
+}
+
+// Export precisely the current interactive set as an editable LaTeX worksheet.
+export function generateWorksheetFromFluencySet(set){
+  if(!set||!supportsWorksheets(set.topicId)||!Number.isSafeInteger(set.seed)||
+     !Array.isArray(set.questions)||set.questions.length<1||set.questions.length>16||
+     set.questions.some(q=>validateFluencyQuestion(q)))throw Error('Invalid Fluency practice set.');
+  const topic=TOPICS[set.topicId];
+  const levelNumber=Number(set.levelId?.replace('level-',''))||1;
+  const options={topicId:topic.id,seed:set.seed,count:set.questions.length,
+    difficulty:levelNumber===1?'developing':levelNumber===4?'stretch':'secure',
+    style:'independent',solutions:'worked',skills:['fluency'],
+    title:topic.title+' Fluency Practice'};
+  const questions=set.questions.map(q=>({...toWorksheetFluencyQuestion(q),
+    familyId:'fluency-generated',skill:'fluency',key:q.signature}));
+  return {options,questions,studentTex:renderDocument(topic,options,questions,false),
+    solutionsTex:renderDocument(topic,options,questions,true),
+    solutionsFilename:'worked-solutions.tex'};
 }

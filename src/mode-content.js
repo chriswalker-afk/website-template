@@ -1,4 +1,5 @@
 import {UNDERSTAND_CONTENT} from './understand-content.js';
+import {FLUENCY_CHAPTERS} from './fluency-engine.js';
 
 // Demonstration *content*, not a second navigation system.
 // Modes → subsections (right tabs) → pages (bottom controls).
@@ -20,30 +21,7 @@ export const DEMO_CHAPTERS = Object.freeze({
       section('speed-recall','Speed Recall','Type the term that matches each definition.',one('speed-recall')),
       section('review-all','Review All','Browse the full vocabulary deck and its definitions.',one('review-all'))
     ],
-    fluency:[
-      level(1,'Foundations','Practise basic terminology and sampling calculations.',
-        practice('counts',
-          q('A population contains 200 pupils. A sample contains 40. What percentage of the population was sampled?','40 ÷ 200 × 100 = 20%.','Divide the sample size by the population size.',2),
-          q('In a school of 400 students, a sample of 50 is selected. What fraction of the population is sampled, in simplest form?','50/400 = 1/8.','Simplify the fraction.',2)
-        ),practice('intervals',
-          q('A list of 120 people is used to take a systematic sample of 20. What is the interval?','120 ÷ 20 = 6.','Divide population by sample size.',2)
-        )),
-      level(2,'Standard','Calculate intervals and proportional stratified allocations.',
-        practice('allocation',
-          q('Year groups contain 120 and 180 students. Allocate a proportional sample of 50.','Total = 300. First group: 120/300 × 50 = 20; second: 180/300 × 50 = 30.','Multiply the required sample size by each population proportion.',3),
-          q('A list of 360 people is used to select 45 systematically. Find the interval and the possible starting positions.','Interval = 360/45 = 8; randomly choose a starting position from 1 through 8.','Sample size × interval = list length.',3)
-        )),
-      level(3,'Mixed','Select and carry out several familiar sampling techniques.',
-        practice('mixed',
-          q('A school has 160 boarders and 240 day students. A stratified sample of 60 is needed. How many from each group?','Total 400. Boarders: 160/400 × 60 = 24. Day students: 240/400 × 60 = 36.','Use proportional allocation.',3),
-          q('Every 12th patient is selected after a random start between 1 and 12. Name the method and explain the role of the starting number.','Systematic sampling; the random start reduces the bias associated with always selecting the same initial position.','Identify the selection rule.',2)
-        )),
-      level(4,'Advanced','Combine calculations and interpretation of sampling conditions.',
-        practice('advanced',
-          q('Three strata contain 90, 150 and 210 people. A proportional sample of 45 is taken. Calculate the allocations.','Total = 450. Allocations: 9, 15 and 21 people. Check: 9 + 15 + 21 = 45.','All strata must use the same sampling fraction.',4),
-          q('A systematic sample uses interval 9 from a list of 315 entries. Determine the sample size.','315 ÷ 9 = 35 people.','Reverse the interval calculation.',2)
-        ))
-    ],
+    fluency:FLUENCY_CHAPTERS.sampling,
     reasoning:[
       section('explain','Explain','Explain why a selection method works, using accurate mathematical language.',
         [practice('methods',
@@ -80,30 +58,7 @@ export const DEMO_CHAPTERS = Object.freeze({
       section('speed-recall','Speed Recall','Type the term that matches each definition.',one('speed-recall')),
       section('review-all','Review All','Browse the full vocabulary deck and its definitions.',one('review-all'))
     ],
-    fluency:[
-      level(1,'Foundations','Practise standard calculations and identify basic graph features.',
-        practice('values',
-          q('For f(x) = x² − 3x + 2, calculate f(4).','f(4) = 16 − 12 + 2 = 6.','Substitute x = 4.',2),
-          q('State the turning point of y = (x − 2)² + 3.','(2, 3).','Compare with (x − h)² + k.',2)
-        ),practice('roots',
-          q('Solve (x − 1)(x − 5) = 0.','x = 1 or x = 5.','Use the zero-product rule.',2)
-        )),
-      level(2,'Standard','Apply familiar methods without additional scaffolding.',
-        [practice('factorise',
-          q('Solve x² − 7x + 12 = 0.','(x − 3)(x − 4) = 0, giving x = 3 or x = 4.','Find two numbers with product 12 and sum −7.',3),
-          q('Find the y-intercept of y = 3x² − 5x + 7.','When x = 0, y = 7. The y-intercept is (0, 7).','Set x = 0.',2)
-        )][0]),
-      level(3,'Mixed','Switch accurately between different familiar quadratic methods.',
-        practice('mixed',
-          q('Solve x² − 9 = 0 and state the axis of symmetry.','(x − 3)(x + 3) = 0, so roots are ±3. The axis is x = 0.','Use difference of two squares.',3),
-          q('For y = −2(x − 3)² + 8, give the turning point and solve y = 0.','Turning point (3, 8). 2(x − 3)² = 8, so x − 3 = ±2 and x = 1 or 5.','Solve the squared expression.',4)
-        )),
-      level(4,'Advanced','Complete more demanding but familiar quadratic techniques.',
-        practice('advanced',
-          q('For 2x² − 6x − 5 = 0, calculate the discriminant and state the number of real roots.','D = (−6)² − 4(2)(−5) = 76 > 0, so there are two distinct real roots.','D = b² − 4ac.',3),
-          q('Complete the square: 2x² + 8x + 3.','2[(x + 2)² − 4] + 3 = 2(x + 2)² − 5.','Factor out 2 from the x² and x terms first.',4)
-        ))
-    ],
+    fluency:FLUENCY_CHAPTERS.quadratics,
     reasoning:[
       section('explain','Explain','Explain how graph features follow from a quadratic expression.',
         [practice('features',

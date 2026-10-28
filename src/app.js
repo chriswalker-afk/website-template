@@ -1,10 +1,13 @@
 import {CHAPTER_LIBRARY,TOPICS} from './topics.js';
+import {buildFluencySet,checkFluencyAnswer,PRACTICE_LENGTHS} from './fluency-engine.js';
+import {emptyFluencyProgress,hydrateFluencyProgress,saveFluencyRound} from './fluency-progress.js';
+import {renderFluencyPage,roundScores} from './fluency-ui.js';
 import {emptyMemory,hydrateMemory,gradeCard,toggleCardFlag,deckQueue,matchRoundCards,
   assessTerm,recordFor} from './memorise-engine.js';
 import {renderFlashcards as memoryFlashcards,renderMatch as memoryMatch,
   renderCloze as memoryCloze,renderSpeedRecall as memorySpeedRecall,
   renderReviewAll as memoryReviewAll,renderReviewList} from './memorise-ui.js';
-import {generateWorksheet,supportsWorksheets,worksheetSkills} from './worksheet-generator.js';
+import {generateWorksheet,generateWorksheetFromFluencySet,supportsWorksheets,worksheetSkills} from './worksheet-generator.js';
 import {GRAPH_DEFAULTS,quadraticProperties,quadraticValue,quadraticEquation} from './understand-engine.js';
 import {understandKey,renderSteps,renderConceptCheck,renderWalkthrough,renderSamplingLab,renderWorkshop} from './understand-ui.js';
 import {chaptersFor,sectionsFor,pagesFor,chapterFor,routeHref,resolveRoute,topicSwitchHref,escapeHTML as e,normaliseAnswer,cardForIndex,sampleMatchCards,validateTopics} from './logic.js';
@@ -35,7 +38,8 @@ const state={
   flash:null,match:null,cloze:null,recall:null,review:null,
   understand:{steppers:{},checks:{},workshops:{},labs:{},graphs:{}},
   revealed:{},
-  worksheets:{}
+  worksheets:{},
+  fluencySessions:{},fluencyProgress:{}
 };
 let lastTopic=null;
 
@@ -69,6 +73,42 @@ function resetMemoriseSessions(topic){
   state.recall=recallSession(topic);
   state.review={query:'',filter:'all',showDefinitions:true,confirmReset:false};
 }
+function fluencyProgressFor(topic){
+  if(!state.fluencyProgress[topic.id])
+    state.fluencyProgress[topic.id]=hydrateFluencyProgress(safeStorage.get('fluency:'+topic.id));
+  return state.fluencyProgress[topic.id];
+}
+function saveFluencyProgress(topic,progress){
+  state.fluencyProgress[topic.id]=progress;
+  safeStorage.put('fluency:'+topic.id,JSON.stringify(progress));
+}
+const fluencyRouteKey=route=>[route.topicId,route.sectionId,route.pageId].join(':');
+function freshFluencySet(route,seed,count=6){
+  return {set:buildFluencySet({topicId:route.topicId,levelId:route.sectionId,
+    pageId:route.pageId,seed,count}),configCount:count,index:0,answers:{},
+    complete:false,confirmFresh:false,pendingCount:null};
+}
+function fluencySession(route=state.route){
+  if(route?.chapterId!=='fluency')return null;
+  const key=fluencyRouteKey(route);
+  if(!state.fluencySessions[key]){
+    let hashed=0;
+    for(const ch of key)hashed=(Math.imul(hashed,31)+ch.charCodeAt(0))>>>0;
+    const seed=1+((Date.now()+hashed)%999999998);
+    state.fluencySessions[key]=freshFluencySet(route,seed);
+  }
+  return state.fluencySessions[key];
+}
+function fluencyAnswer(session){
+  const question=session?.set.questions[session.index];
+  return question?{question,response:session.answers[question.id]||{draft:'',working:'',tries:0}}:null;
+}
+function fluencyNewSet(route,count){
+  const session=fluencySession(route);
+  const nextSeed=1+((session.set.seed*1664525+1013904223)%999999998);
+  state.fluencySessions[fluencyRouteKey(route)]=freshFluencySet(route,nextSeed,count);
+}
+
 function currentFlashCard(topic){
   return topic.cards.find(c=>c.id===state.flash?.ids?.[state.flash.index]);
 }
@@ -379,6 +419,7 @@ function renderPageContent(route,topic){
   const renderers={
     lesson:()=>renderLessonPage(page,topic,route),
     questions:()=>renderQuestionPage(page,route),
+    fluency:()=>renderFluencyPage(page,topic,route,fluencySession(route),fluencyProgressFor(topic)),
     graph:()=>renderGraphLab(page,route),
     'sampling-lab':()=>renderSamplingLab(page,route,state.understand.labs),
     workshop:()=>renderWorkshop(page,route,state.understand.steppers,state.understand.workshops),
@@ -520,7 +561,97 @@ app.addEventListener('click',ev=>{
   const button=ev.target.closest('button[data-action]');
   if(!button)return;
   const action=button.dataset.action,topic=TOPICS[state.route.topicId];
-  if(action==='bookmark'){
+  if(action==='fluency-hint'){
+    const session=fluencySession(),current=fluencyAnswer(session);
+    if(!current||session.complete)return;
+    const a=current.response;
+    session.answers[current.question.id]={...a,hint:!a.hint,usedHint:Boolean(a.usedHint||!a.hint)};
+    rerender();
+    document.querySelector('button[data-action="fluency-hint"]')?.focus({preventScroll:true});
+    announce(session.answers[current.question.id].hint?'Hint displayed.':'Hint hidden.');
+  }else if(action==='fluency-working'){
+    const session=fluencySession(),current=fluencyAnswer(session);
+    if(!current||!(current.response.correct||current.response.revealed))return;
+    const a=current.response;
+    session.answers[current.question.id]={...a,showWorking:!a.showWorking};
+    rerender();
+    document.querySelector('button[data-action="fluency-working"]')?.focus({preventScroll:true});
+    announce('Worked solution '+(session.answers[current.question.id].showWorking?'shown.':'hidden.'));
+  }else if(action==='fluency-reveal'){
+    const session=fluencySession(),current=fluencyAnswer(session);
+    if(!current||session.complete||current.response.correct||current.response.revealed)return;
+    session.answers[current.question.id]={...current.response,correct:false,revealed:true,
+      showWorking:true,feedback:'Full solution revealed for self-review. This does not count as a correct answer.'};
+    rerender();
+    document.querySelector('button[data-action="fluency-next"]')?.focus({preventScroll:true});
+    announce('Full worked solution displayed. This question needs further practice.');
+  }else if(action==='fluency-next'){
+    const session=fluencySession(),current=fluencyAnswer(session);
+    if(!current||session.complete||!(current.response.correct||current.response.revealed))return;
+    if(session.index<session.set.questions.length-1){
+      session.index++;
+      rerender();announce('Next Fluency question.');
+      document.querySelector('#fluency-answer')?.focus({preventScroll:true});
+    }else{
+      const summary=roundScores(session),topic=TOPICS[state.route.topicId];
+      session.complete=true;
+      saveFluencyProgress(topic,saveFluencyRound(fluencyProgressFor(topic),
+        state.route.sectionId,summary));
+      rerender();announce('Fluency round complete; practice totals saved locally.');
+      document.querySelector('.fluency-complete__lead')?.focus?.({preventScroll:true});
+    }
+  }else if(action==='fluency-worksheet'){
+    const session=fluencySession();
+    if(!session?.complete)return;
+    try{
+      const worksheet=worksheetState(topic);
+      const output=generateWorksheetFromFluencySet(session.set);
+      worksheet.options=output.options;
+      worksheet.result=output;worksheet.error='';
+      announce('Matching LaTeX worksheet and worked solutions prepared.');
+      location.hash=routeHref(topic.id,'resources','worksheet-generator');
+    }catch(error){
+      announce(error instanceof Error?error.message:'Unable to export Fluency worksheet.');
+    }
+  }else if(action==='fluency-retry'){
+    const session=fluencySession();
+    if(!session?.complete)return;
+    const missed=session.set.questions.filter(q=>{
+      const a=session.answers[q.id];
+      return a?.revealed||(a?.correct&&(a.tries>1||a.usedHint));
+    });
+    if(!missed.length)return;
+    state.fluencySessions[fluencyRouteKey(state.route)]={
+      set:{...session.set,questions:missed,count:missed.length},configCount:session.configCount,
+      index:0,answers:{},complete:false,confirmFresh:false,pendingCount:null
+    };
+    rerender();announce('Review practice started with '+missed.length+' questions.');
+    document.querySelector('#fluency-answer')?.focus({preventScroll:true});
+  }else if(action==='fluency-new'){
+    const session=fluencySession();
+    if(!session)return;
+    if(!session.complete&&Object.values(session.answers).some(a=>a.tries||a.revealed||a.draft?.trim()||a.working?.trim())){
+      session.confirmFresh=true;session.pendingCount=session.configCount;rerender();
+      document.querySelector('button[data-action="fluency-cancel-new"]')?.focus({preventScroll:true});
+      announce('Confirm replacing your unfinished Fluency set.');
+    }else{
+      fluencyNewSet(state.route,session.configCount);rerender();
+      document.querySelector('#fluency-answer')?.focus({preventScroll:true});
+      announce('New Fluency questions generated.');
+    }
+  }else if(action==='fluency-confirm-new'){
+    const session=fluencySession();
+    if(!session?.confirmFresh)return;
+    fluencyNewSet(state.route,session.pendingCount||session.configCount);
+    rerender();announce('Replacement Fluency set created.');
+    document.querySelector('#fluency-answer')?.focus({preventScroll:true});
+  }else if(action==='fluency-cancel-new'){
+    const session=fluencySession();
+    if(!session)return;
+    session.confirmFresh=false;session.pendingCount=null;
+    rerender();announce('Unfinished practice kept.');
+    document.querySelector('button[data-action="fluency-new"]')?.focus({preventScroll:true});
+  }else if(action==='bookmark'){
     if(state.bookmarks.has(state.route.canonical))state.bookmarks.delete(state.route.canonical);
     else state.bookmarks.add(state.route.canonical);
     safeStorage.put('bookmarks',JSON.stringify([...state.bookmarks]));
@@ -789,6 +920,21 @@ app.addEventListener('click',ev=>{
   }
 });
 app.addEventListener('change',ev=>{
+  if(ev.target.id==='fluency-count'){
+    const count=Number(ev.target.value),session=fluencySession();
+    if(!session||!PRACTICE_LENGTHS.includes(count))return;
+    if(session.complete||!Object.values(session.answers).some(a=>
+      a.tries||a.revealed||a.draft?.trim()||a.working?.trim())){
+      fluencyNewSet(state.route,count);rerender();
+      announce('Fluency practice set changed to '+count+' questions.');
+      document.querySelector('#fluency-count')?.focus({preventScroll:true});
+    }else{
+      session.confirmFresh=true;session.pendingCount=count;rerender();
+      announce('Confirm replacing your unfinished Fluency set with '+count+' questions.');
+      document.querySelector('button[data-action="fluency-cancel-new"]')?.focus({preventScroll:true});
+    }
+    return;
+  }
   if(ev.target.id==='review-filter'){
     const filter=ev.target.value;
     if(!['all','new','focus','due','flagged'].includes(filter))return;
@@ -808,6 +954,13 @@ app.addEventListener('change',ev=>{
 });
 app.addEventListener('input',ev=>{
   const target=ev.target;
+  if((target.id==='fluency-answer'||target.id==='fluency-working')&&state.route?.chapterId==='fluency'){
+    const session=fluencySession(),current=fluencyAnswer(session);
+    if(current&&!session.complete){
+      const part=target.id==='fluency-answer'?'draft':'working';
+      session.answers[current.question.id]={...current.response,[part]:target.value};
+    }
+  }
   if(target.id==='cloze-answer'){state.cloze.value=target.value;state.cloze.checked=false;}
   if(target.id==='recall-answer'){state.recall.value=target.value;state.recall.checked=false;}
   if(target.id==='review-search'){
@@ -833,6 +986,26 @@ app.addEventListener('input',ev=>{
   }
 });
 app.addEventListener('submit',ev=>{
+  if(ev.target.id==='fluency-answer-form'){
+    ev.preventDefault();
+    const session=fluencySession(),current=fluencyAnswer(session);
+    if(!current||session.complete||current.response.correct||current.response.revealed)return;
+    const draft=document.querySelector('#fluency-answer')?.value||'';
+    const verdict=checkFluencyAnswer(draft,current.question);
+    const attempts=(current.response.tries||0)+(verdict.kind==='format'?0:1);
+    session.answers[current.question.id]={
+      ...current.response,draft,tries:attempts,
+      correct:verdict.correct,revealed:false,
+      feedback:verdict.correct?
+        'Correct. Compare your method with the worked solution if you wish.':
+        verdict.message+(verdict.kind==='format'?'':' Try again or use a hint.')
+    };
+    rerender();
+    announce(verdict.correct?'Correct answer.':'Answer needs review. '+verdict.message);
+    document.querySelector(verdict.correct?'button[data-action="fluency-next"]':'#fluency-answer')
+      ?.focus({preventScroll:true});
+    return;
+  }
   if(ev.target.id==='recall-form'){
     ev.preventDefault();
     if(state.recall.checked||state.recall.complete)return;

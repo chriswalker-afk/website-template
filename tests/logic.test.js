@@ -35,7 +35,11 @@ test('Understand includes four real subsections, some with multiple pages',()=>{
 });
 test('practice and game modes only contain the intended activity types',()=>{
   for(const topic of Object.values(TOPICS)){
-    for(const mode of ['fluency','reasoning','problemSolving','modelling']){
+    for(const section of sectionsFor(topic,'fluency')){
+      assert.ok(section.pages.every(page=>page.type==='fluency'));
+      assert.ok(section.pages.every(page=>Array.isArray(page.families)&&page.families.length>0));
+    }
+    for(const mode of ['reasoning','problemSolving','modelling']){
       for(const section of sectionsFor(topic,mode)){
         assert.ok(section.pages.every(page=>page.type==='questions'));
       }
