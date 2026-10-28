@@ -788,6 +788,14 @@ app.addEventListener('click',ev=>{
   }
 });
 app.addEventListener('change',ev=>{
+  if(ev.target.id==='review-filter'){
+    const filter=ev.target.value;
+    if(!['all','new','focus','due','flagged'].includes(filter))return;
+    state.review.filter=filter;rerender();
+    document.querySelector('#review-filter')?.focus({preventScroll:true});
+    announce('Review filter changed to '+filter+'.');
+    return;
+  }
   const select=ev.target.closest('select[data-role]');
   if(!select)return;
   const route=state.route,topic=TOPICS[route.topicId];
@@ -801,6 +809,12 @@ app.addEventListener('input',ev=>{
   const target=ev.target;
   if(target.id==='cloze-answer'){state.cloze.value=target.value;state.cloze.checked=false;}
   if(target.id==='recall-answer'){state.recall.value=target.value;state.recall.checked=false;}
+  if(target.id==='review-search'){
+    state.review.query=target.value;
+    const results=document.getElementById('review-results');
+    if(results)results.innerHTML=renderReviewList(TOPICS[state.route.topicId],
+      memoryFor(TOPICS[state.route.topicId]),state.review);
+  }
   if(target.matches('textarea[data-understand-response]')){
     const key=target.dataset.understandResponse;
     if(key!==understandKey(state.route,'workshop'))return;
@@ -820,13 +834,21 @@ app.addEventListener('input',ev=>{
 app.addEventListener('submit',ev=>{
   if(ev.target.id==='recall-form'){
     ev.preventDefault();
-    const card=cardForIndex(TOPICS[state.route.topicId],state.recall.index);
-    state.recall.value=document.querySelector('#recall-answer').value;
-    state.recall.checked=true;
-    state.recall.correct=normaliseAnswer(state.recall.value)===normaliseAnswer(card.term);
+    if(state.recall.checked||state.recall.complete)return;
+    const topic=TOPICS[state.route.topicId];
+    const card=topic.cards.find(c=>c.id===state.recall.ids[state.recall.index]);
+    if(!card)return;
+    const input=document.querySelector('#recall-answer')?.value||'';
+    const others=topic.cards.filter(c=>c.id!==card.id)
+      .flatMap(c=>[c.term,...(c.aliases||[])]);
+    const verdict=assessTerm(input,card.term,card.aliases||[],others);
+    saveMemory(topic,gradeCard(memoryFor(topic),topic,card.id,verdict.grade,'speed-recall',
+      Date.now(),verdict.correct));
+    Object.assign(state.recall,{value:input,checked:true,correct:verdict.correct,
+      resultKind:verdict.kind,correctCount:state.recall.correctCount+(verdict.correct?1:0)});
     rerender();
-    announce(state.recall.correct?'Correct recall':'Answer revealed: '+card.term);
-    document.querySelector('#recall-answer')?.focus({preventScroll:true});
+    announce(verdict.correct?'Term recalled correctly.':'Review the term: '+card.term);
+    document.querySelector('button[data-action="recall-next"]')?.focus({preventScroll:true});
     return;
   }
   if(ev.target.id==='worksheet-form'){
@@ -859,11 +881,21 @@ app.addEventListener('submit',ev=>{
   }
   if(ev.target.id!=='cloze-form')return;
   ev.preventDefault();
-  state.cloze.value=document.querySelector('#cloze-answer').value;
-  state.cloze.checked=true;
-  state.cloze.correct=normaliseAnswer(state.cloze.value)===normaliseAnswer(TOPICS[state.route.topicId].cloze.answer);
-  rerender();announce(state.cloze.correct?'Correct missing words':'Not yet; try again');
-  document.querySelector('#cloze-answer')?.focus({preventScroll:true});
+  const topic=TOPICS[state.route.topicId];
+  if(state.cloze.checked||state.cloze.complete)return;
+  const item=topic.clozes.find(c=>c.id===state.cloze.ids[state.cloze.index]);
+  if(!item)return;
+  const input=document.querySelector('#cloze-answer')?.value||'';
+  const others=topic.clozes.filter(c=>c.id!==item.id).map(c=>c.answer);
+  const verdict=assessTerm(input,item.answer,item.aliases||[],others);
+  const grade=!verdict.correct?'again':state.cloze.hint?'nearly':verdict.grade;
+  saveMemory(topic,gradeCard(memoryFor(topic),topic,item.cardId,grade,'missing-words',
+    Date.now(),verdict.correct));
+  Object.assign(state.cloze,{value:input,checked:true,correct:verdict.correct,
+    resultKind:verdict.kind,correctCount:state.cloze.correctCount+(verdict.correct?1:0)});
+  rerender();
+  announce(verdict.correct?'Correct missing words.':'Review the missing term: '+item.answer);
+  document.querySelector('button[data-action="cloze-next"]')?.focus({preventScroll:true});
 });
 
 document.querySelector('#skip-page').addEventListener('click',()=>{
