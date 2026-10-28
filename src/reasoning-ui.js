@@ -51,10 +51,11 @@ function reviewPanel(task,entry){
     '<div class="reasoning-model-head"><span>Worked argument</span>'+
       '<small>One possible mathematically sound explanation</small></div>'+
     '<ol class="reasoning-model-steps">'+task.model.map(step=>'<li>'+e(step)+'</li>').join('')+'</ol>'+
-    (!canWrite?'<p class="reasoning-note">You have viewed the model without writing a full response. '+
-      'You can mark this prompt for review, or write your own argument before choosing a stronger self-rating.</p>':'')+
-    (entry.modelFirst?'<p class="reasoning-note">The model was opened before an independent written attempt. '+
-      'Use this as a supported example, not evidence of unaided recall.</p>':'')+
+    (entry.modelFirst?'<p class="reasoning-note">'+
+      (canWrite?
+        'The model was opened before an independent written attempt. Treat your later writing as supported practice rather than unaided recall.':
+        'The model was opened before an independent written attempt. Use this as a supported example; you can mark the prompt for review or write your own argument before choosing a stronger self-rating.')+
+      '</p>':'')+
     '<div class="reasoning-check-heading"><strong>Check your own argument</strong>'+
       '<span>'+checked+' of '+task.criteria.length+' criteria selected</span></div>'+
     '<div class="reasoning-criteria">'+criteria+'</div>'+advice+
