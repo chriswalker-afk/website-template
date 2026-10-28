@@ -231,7 +231,7 @@ export function renderReviewAll(topic,memory,review,now=Date.now()){
   return memoryPulse(topic,memory,now)+
     '<div class="review-summary" aria-label="Revision overview">'+
       '<div><strong>'+summary.attempts+'</strong><span>Total review actions</span></div>'+
-      '<div><strong>'+summary.total-summary.new+'</strong><span>Cards practised</span></div>'+
+      '<div><strong>'+(summary.total-summary.new)+'</strong><span>Cards practised</span></div>'+
       '<div><strong>'+summary.confident+'</strong><span>Repeated confident recalls</span></div>'+
       '<div><strong>'+summary.due+'</strong><span>Due for another review</span></div>'+
     '</div>'+
