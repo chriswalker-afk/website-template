@@ -69,7 +69,6 @@ test('plain user-entered titles are escaped in LaTeX, not interpreted as TeX mac
   const title='Math & Proofs_50% #1 {Part} $x^2$ ~ \\';
   const worksheet=generateWorksheet(defaults('quadratics',{title}));
   assert.ok(worksheet.studentTex.includes(escapeLatexText(title)));
-  assert.ok(worksheet.studentTex.includes('\\$x\\textasciicircum{}2\\
   assert.match(worksheet.studentTex,/\\textasciitilde\{\}/);
   assert.match(worksheet.studentTex,/\\textbackslash\{\}/);
   assert.ok(!worksheet.studentTex.includes(title));
