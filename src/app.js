@@ -907,6 +907,21 @@ app.addEventListener('click',ev=>{
   }
 });
 app.addEventListener('change',ev=>{
+  if(ev.target.id==='fluency-count'){
+    const count=Number(ev.target.value),session=fluencySession();
+    if(!session||!PRACTICE_LENGTHS.includes(count))return;
+    if(session.complete||!Object.values(session.answers).some(a=>
+      a.tries||a.revealed||a.draft?.trim()||a.working?.trim())){
+      fluencyNewSet(state.route,count);rerender();
+      announce('Fluency practice set changed to '+count+' questions.');
+      document.querySelector('#fluency-count')?.focus({preventScroll:true});
+    }else{
+      session.confirmFresh=true;session.pendingCount=count;rerender();
+      announce('Confirm replacing your unfinished Fluency set with '+count+' questions.');
+      document.querySelector('button[data-action="fluency-cancel-new"]')?.focus({preventScroll:true});
+    }
+    return;
+  }
   if(ev.target.id==='review-filter'){
     const filter=ev.target.value;
     if(!['all','new','focus','due','flagged'].includes(filter))return;
@@ -926,6 +941,13 @@ app.addEventListener('change',ev=>{
 });
 app.addEventListener('input',ev=>{
   const target=ev.target;
+  if((target.id==='fluency-answer'||target.id==='fluency-working')&&state.route?.chapterId==='fluency'){
+    const session=fluencySession(),current=fluencyAnswer(session);
+    if(current&&!session.complete){
+      const part=target.id==='fluency-answer'?'draft':'working';
+      session.answers[current.question.id]={...current.response,[part]:target.value};
+    }
+  }
   if(target.id==='cloze-answer'){state.cloze.value=target.value;state.cloze.checked=false;}
   if(target.id==='recall-answer'){state.recall.value=target.value;state.recall.checked=false;}
   if(target.id==='review-search'){
@@ -951,6 +973,26 @@ app.addEventListener('input',ev=>{
   }
 });
 app.addEventListener('submit',ev=>{
+  if(ev.target.id==='fluency-answer-form'){
+    ev.preventDefault();
+    const session=fluencySession(),current=fluencyAnswer(session);
+    if(!current||session.complete||current.response.correct||current.response.revealed)return;
+    const draft=document.querySelector('#fluency-answer')?.value||'';
+    const verdict=checkFluencyAnswer(draft,current.question);
+    const attempts=(current.response.tries||0)+(verdict.kind==='format'?0:1);
+    session.answers[current.question.id]={
+      ...current.response,draft,tries:attempts,
+      correct:verdict.correct,revealed:false,
+      feedback:verdict.correct?
+        'Correct. Compare your method with the worked solution if you wish.':
+        verdict.message+(verdict.kind==='format'?'':' Try again or use a hint.')
+    };
+    rerender();
+    announce(verdict.correct?'Correct answer.':'Answer needs review. '+verdict.message);
+    document.querySelector(verdict.correct?'button[data-action="fluency-next"]':'#fluency-answer')
+      ?.focus({preventScroll:true});
+    return;
+  }
   if(ev.target.id==='recall-form'){
     ev.preventDefault();
     if(state.recall.checked||state.recall.complete)return;
