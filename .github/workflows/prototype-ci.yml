@@ -18,10 +18,19 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Validate configuration and JavaScript
         run: npm run check
+      - name: Generate reproducible worksheet LaTeX samples
+        run: npm run test:latex
       - name: Install browser
         run: npx playwright install --with-deps chromium
       - name: Run responsive interaction tests
         run: npm run test:browser
+      - name: Attach worksheet LaTeX samples
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: notebook-worksheet-latex
+          path: test-artifacts/latex/
+          if-no-files-found: ignore
       - name: Attach visual review images
         if: always()
         uses: actions/upload-artifact@v4
