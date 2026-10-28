@@ -4,7 +4,7 @@ import {TOPICS} from '../src/topics.js';
 test('Contents, top modes and right-hand subsections are separate navigation levels',async({page})=>{
   await page.goto('/#/sampling/home');
   await expect(page.getByRole('heading',{name:'Contents'})).toBeVisible();
-  await expect(page.locator('.chapter-tab')).toHaveCount(5);
+  await expect(page.locator('.chapter-tab')).toHaveCount(6);
   await expect(page.locator('.side-tabs')).toHaveCount(0);
   await page.locator('.chapter-tabs').getByRole('link',{name:'Understand'}).click();
   await expect(page.getByRole('heading',{name:'The big idea'})).toBeVisible();
@@ -35,7 +35,7 @@ test('topic selector reflects available modes and uses full Problem Solving name
   await expect(page.getByRole('heading',{name:'Level 1: Guided'})).toBeVisible();
   await expect(page.locator('.side-tab')).toHaveCount(4);
   await page.locator('#topic-switcher').selectOption('sampling');
-  await expect(page).toHaveURL(/#\/sampling\/home/);
+  await expect(page).toHaveURL(/#\/sampling\/problemSolving\/level-1/);
 });
 
 test('flashcards preserve internal card progression without extra book pages',async({page})=>{
@@ -125,16 +125,22 @@ test('Fluency, Problem Solving and Modelling stay educationally distinct',async(
   await expect(page.locator('.fluency-answer-form')).toBeVisible();
   await page.getByRole('button',{name:'Show full solution'}).click();
   await expect(page.locator('.fluency-solution__steps li').first()).toBeVisible();
-  for(const mode of ['problemSolving','modelling']){
-    await page.goto('/#/quadratics/'+mode+'/level-1');
-    await expect(page.locator('.side-tab')).toHaveCount(4);
-    await expect(page.locator('.practice-question').first()).toBeVisible();
-    await expect(page.locator('.fluency-question')).toHaveCount(0);
-    await page.locator('.side-tabs a[href$="level-4"]').click();
-    await expect(page.getByRole('heading',{name:/Level 4:/})).toBeVisible();
-    await page.locator('.practice-question').first().getByRole('button',{name:'Show solution'}).click();
-    await expect(page.locator('.practice-question .reveal-answer').first()).toBeVisible();
-  }
+  await page.goto('/#/quadratics/problemSolving/level-1');
+  await expect(page.locator('.side-tab')).toHaveCount(4);
+  await expect(page.locator('.ps-case')).toBeVisible();
+  await expect(page.locator('.practice-question')).toHaveCount(0);
+  await expect(page.locator('.fluency-question')).toHaveCount(0);
+  await expect(page.locator('#graph-svg')).toHaveCount(0);
+  await page.locator('.side-tabs a[href$="level-4"]').click();
+  await expect(page.getByRole('heading',{name:/Level 4:/})).toBeVisible();
+  await expect(page.locator('.ps-writing-grid')).toBeVisible();
+  await page.goto('/#/quadratics/modelling/level-1');
+  await expect(page.locator('.side-tab')).toHaveCount(4);
+  await expect(page.locator('.practice-question').first()).toBeVisible();
+  await page.locator('.side-tabs a[href$="level-4"]').click();
+  await expect(page.getByRole('heading',{name:/Level 4:/})).toBeVisible();
+  await page.locator('.practice-question').first().getByRole('button',{name:'Show solution'}).click();
+  await expect(page.locator('.practice-question .reveal-answer').first()).toBeVisible();
 });
 test('a level can contain multiple pages without changing its right tab',async({page})=>{
   await page.goto('/#/quadratics/problemSolving/level-1');
@@ -142,7 +148,7 @@ test('a level can contain multiple pages without changing its right tab',async({
   await page.getByRole('link',{name:'Next page'}).click();
   await expect(page.locator('.page-navigation__count')).toHaveText('Page 2 of 2');
   await expect(page.locator('.side-tab[aria-current="page"]')).toContainText('Level 1: Guided');
-  await expect(page).toHaveURL(/#\/quadratics\/problemSolving\/level-1\/unknown-coefficient/);
+  await expect(page).toHaveURL(/#\/quadratics\/problemSolving\/level-1\/hidden-information/);
   await page.getByRole('link',{name:'Previous page'}).click();
   await expect(page).toHaveURL(/#\/quadratics\/problemSolving\/level-1$/);
 });
