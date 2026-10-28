@@ -584,6 +584,21 @@ app.addEventListener('click',ev=>{
         ()=>announce('Copy failed. Open View LaTeX source to copy it manually.')
       );
     }
+  }else if(action==='reveal-problem'){
+    const key=button.dataset.key,part=button.dataset.part;
+    if(!['hint','solution'].includes(part))return;
+    const parts=state.revealed[key]||{};
+    state.revealed[key]={...parts,[part]:!parts[part]};
+    rerender();
+    document.querySelector('button[data-action="reveal-problem"][data-key="'+key+'"][data-part="'+part+'"]')
+      ?.focus({preventScroll:true});
+  }else if(action==='recall-next'){
+    state.recall={
+      index:(state.recall.index+1)%topic.cards.length,
+      value:'',checked:false,correct:false
+    };
+    rerender();
+    document.querySelector('#recall-answer')?.focus({preventScroll:true});
   }else if(action==='reveal'){
     const key=button.dataset.key;
     state.revealed[key]=!state.revealed[key];
@@ -604,12 +619,24 @@ app.addEventListener('change',ev=>{
 app.addEventListener('input',ev=>{
   const target=ev.target;
   if(target.id==='cloze-answer'){state.cloze.value=target.value;state.cloze.checked=false;}
+  if(target.id==='recall-answer'){state.recall.value=target.value;state.recall.checked=false;}
   if(target.matches('input[data-graph]')){
     const key=target.dataset.graph;
     if(['magnitude','h','k'].includes(key)){state.graph[key]=Number(target.value);updateGraph();}
   }
 });
 app.addEventListener('submit',ev=>{
+  if(ev.target.id==='recall-form'){
+    ev.preventDefault();
+    const card=cardForIndex(TOPICS[state.route.topicId],state.recall.index);
+    state.recall.value=document.querySelector('#recall-answer').value;
+    state.recall.checked=true;
+    state.recall.correct=normaliseAnswer(state.recall.value)===normaliseAnswer(card.term);
+    rerender();
+    announce(state.recall.correct?'Correct recall':'Answer revealed: '+card.term);
+    document.querySelector('#recall-answer')?.focus({preventScroll:true});
+    return;
+  }
   if(ev.target.id==='worksheet-form'){
     ev.preventDefault();
     const data=new FormData(ev.target);
