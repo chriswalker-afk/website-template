@@ -208,6 +208,11 @@ for(const width of [320,390,768,1024,1440]){
       for(let i=1;i<=4;i++){
         await open(page,topic,'level-'+i);
         await expect(page.locator('.mdl-case')).toBeVisible();
+        if(width<=390){
+          const columns=await page.locator('.mdl-phases').evaluate(el=>
+            getComputedStyle(el).gridTemplateColumns.split(' ').length);
+          expect(columns,topic+' '+i+' @ '+width+' px should show two legible stage columns').toBe(2);
+        }
         let d=await page.evaluate(()=>({w:innerWidth,scroll:document.documentElement.scrollWidth}));
         expect(d.scroll,topic+' level '+i+' '+width).toBeLessThanOrEqual(d.w+1);
       }
