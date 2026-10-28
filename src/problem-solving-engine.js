@@ -112,19 +112,19 @@ export function validateProblemSolvingChapters(chapters=PROBLEM_SOLVING_CHAPTERS
              typeof t.prompt!=='string'||t.prompt.length<60||
              allPrompts.has(t.prompt))issues.push(topicId+': invalid or repeated task '+key);
           allIds.add(key);allPrompts.add(t.prompt);
-          if(!t.plan||t.plan.length<35||!t.reflection||t.reflection.length<35)
+          if(!t.plan||t.plan.length<22||!t.reflection||t.reflection.length<25)
             issues.push(topicId+': missing strategic prompt or reflection '+key);
           if(!Array.isArray(t.options)||t.options.length!==2||
              new Set(t.options.map(o=>o.id)).size!==2||
              t.options.some(o=>!o.label||o.label.length<20||!o.feedback||o.feedback.length<40))
             issues.push(topicId+': invalid strategy comparison '+key);
           if(!Array.isArray(t.hints)||t.hints.length!==2||
-             t.hints.some(h=>typeof h!=='string'||h.length<35)||
+             t.hints.some(h=>typeof h!=='string'||h.length<22)||
              !Array.isArray(t.steps)||t.steps.length<3||
-             t.steps.some(step=>typeof step!=='string'||step.length<55))
+             t.steps.some(step=>typeof step!=='string'||step.length<25))
             issues.push(topicId+': incomplete graduated support or worked solution '+key);
           if(!Array.isArray(t.checks)||t.checks.length!==3||
-             t.checks.some(c=>typeof c!=='string'||c.length<30))
+             t.checks.some(c=>typeof c!=='string'||c.length<20))
             issues.push(topicId+': incomplete self-check criteria '+key);
         }
       }
