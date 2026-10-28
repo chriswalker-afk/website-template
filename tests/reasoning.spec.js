@@ -79,8 +79,8 @@ test('student writes, gets optional nudge, compares mathematical argument, then 
 test('students can view a model without an attempt but cannot claim independent readiness',async({page})=>{
   await open(page,'quadratics','justify');
   await compare(page);
-  await expect(page.locator('.reasoning-note')).toContainText('without writing a full response');
-  await expect(page.locator('.reasoning-note')).toContainText('opened before an independent');
+  await expect(page.locator('.reasoning-note').first()).toContainText('without writing a full response');
+  await expect(page.locator('.reasoning-note').nth(1)).toContainText('opened before an independent');
   await expect(page.getByRole('button',{name:'Ready to move on'})).toBeDisabled();
   await expect(page.getByRole('button',{name:'Still developing'})).toBeDisabled();
   await page.getByRole('button',{name:'Review again'}).click();
