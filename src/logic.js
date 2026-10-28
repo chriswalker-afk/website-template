@@ -1,6 +1,7 @@
 import {CHAPTER_LIBRARY,TOPICS,DEFAULT_TOPIC} from './topics.js';
 import {supportsWorksheets} from './worksheet-generator.js';
 import {validateUnderstandContent} from './understand-engine.js';
+import {validateMemoriseContent} from './memorise-engine.js';
 
 export const CHAPTER_BY_ID=Object.fromEntries(CHAPTER_LIBRARY.map(c=>[c.id,c]));
 export const KNOWN_CHAPTER_IDS=CHAPTER_LIBRARY.map(c=>c.id);
@@ -138,7 +139,8 @@ export function validateTopics(topics=TOPICS){
     }
     if(topic.chapters?.understand?.length)
       issues.push(...validateUnderstandContent(topic.chapters.understand).map(message=>key+': '+message));
-    if(topic.chapters?.memorise?.length&&!topic.cloze?.answer)issues.push(key+': no cloze answer');
+    if(topic.chapters?.memorise?.length)
+      issues.push(...validateMemoriseContent(topic).map(message=>key+': '+message));
   }
   return issues;
 }
