@@ -25,7 +25,7 @@ test('deterministic worksheets have distinct question IDs and matching source me
     assert.match(a.studentTex,/\\documentclass\[11pt,a4paper\]\{article\}/);
     assert.match(a.studentTex,/\\begin\{enumerate\}/);
     assert.match(a.studentTex,/\\mbox\{\\textit\{\[/);
-    assert.ok(!a.studentTex.includes('\\end{center}\\n'+(topicId==='sampling'?'Sampling Methods':'Quadratic Functions')+'\\n'));
+    assert.ok(!a.studentTex.split('\n').includes(topicId==='sampling'?'Sampling Methods':'Quadratic Functions'));
     assert.match(a.solutionsTex,/\\end\{document\}/);
     assert.match(a.studentTex,/Seed: 123456/);
     assert.match(a.solutionsTex,/Seed: 123456/);
