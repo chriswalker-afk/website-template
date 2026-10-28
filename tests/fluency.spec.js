@@ -39,7 +39,7 @@ test('generated questions have repeatable answer checking and full worked soluti
   await enterAnswer(page,'invalid formula');
   await expect(page.locator('#fluency-feedback')).toContainText('Use the requested numerical answer format');
   await expect(page.locator('.fluency-question__meta')).toContainText('Question 1 of 6');
-  await enterAnswer(page,String(q.answer.values[0]+999));
+  await enterAnswer(page,q.answer.values.map((n,i)=>String(n+(i===0?999:0))).join(', '));
   await expect(page.locator('#fluency-feedback')).toContainText('Not quite');
   await expect(page.locator('.fluency-next')).toHaveCount(0);
   await page.locator('#fluency-working').fill('I substitute the chosen x value.');
