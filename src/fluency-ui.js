@@ -105,8 +105,8 @@ function recap(session){
       (missed.length?'<button class="action-button" type="button" data-action="fluency-retry">'+
         'Retry '+missed.length+' review '+(missed.length===1?'question':'questions')+'</button>':'')+
       '<button class="quiet-button" type="button" data-action="fluency-new">Generate another set</button>'+
-      '<a class="quiet-button fluency-print-link" href="#/'+e(session.set.topicId)+
-        '/resources/worksheet-generator">Create a printable worksheet</a>'+
+      '<button class="quiet-button fluency-print-link" type="button" data-action="fluency-worksheet">'+
+        'Create a matching LaTeX worksheet</button>'+
     '</div>'+
     '<details class="fluency-review-details"><summary>Review questions and worked solutions</summary>'+
       '<ol>'+session.set.questions.map(q=>{
