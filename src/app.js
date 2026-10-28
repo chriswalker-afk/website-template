@@ -1,4 +1,7 @@
 import {CHAPTER_LIBRARY,TOPICS} from './topics.js';
+import {buildFluencySet,checkFluencyAnswer,PRACTICE_LENGTHS} from './fluency-engine.js';
+import {emptyFluencyProgress,hydrateFluencyProgress,saveFluencyRound} from './fluency-progress.js';
+import {renderFluencyPage,roundScores} from './fluency-ui.js';
 import {emptyMemory,hydrateMemory,gradeCard,toggleCardFlag,deckQueue,matchRoundCards,
   assessTerm,recordFor} from './memorise-engine.js';
 import {renderFlashcards as memoryFlashcards,renderMatch as memoryMatch,
@@ -35,7 +38,8 @@ const state={
   flash:null,match:null,cloze:null,recall:null,review:null,
   understand:{steppers:{},checks:{},workshops:{},labs:{},graphs:{}},
   revealed:{},
-  worksheets:{}
+  worksheets:{},
+  fluencySessions:{},fluencyProgress:{}
 };
 let lastTopic=null;
 
@@ -69,6 +73,42 @@ function resetMemoriseSessions(topic){
   state.recall=recallSession(topic);
   state.review={query:'',filter:'all',showDefinitions:true,confirmReset:false};
 }
+function fluencyProgressFor(topic){
+  if(!state.fluencyProgress[topic.id])
+    state.fluencyProgress[topic.id]=hydrateFluencyProgress(safeStorage.get('fluency:'+topic.id));
+  return state.fluencyProgress[topic.id];
+}
+function saveFluencyProgress(topic,progress){
+  state.fluencyProgress[topic.id]=progress;
+  safeStorage.put('fluency:'+topic.id,JSON.stringify(progress));
+}
+const fluencyRouteKey=route=>[route.topicId,route.sectionId,route.pageId].join(':');
+function freshFluencySet(route,seed,count=6){
+  return {set:buildFluencySet({topicId:route.topicId,levelId:route.sectionId,
+    pageId:route.pageId,seed,count}),configCount:count,index:0,answers:{},
+    complete:false,confirmFresh:false,pendingCount:null};
+}
+function fluencySession(route=state.route){
+  if(route?.chapterId!=='fluency')return null;
+  const key=fluencyRouteKey(route);
+  if(!state.fluencySessions[key]){
+    let hashed=0;
+    for(const ch of key)hashed=(Math.imul(hashed,31)+ch.charCodeAt(0))>>>0;
+    const seed=1+((Date.now()+hashed)%999999998);
+    state.fluencySessions[key]=freshFluencySet(route,seed);
+  }
+  return state.fluencySessions[key];
+}
+function fluencyAnswer(session){
+  const question=session?.set.questions[session.index];
+  return question?{question,response:session.answers[question.id]||{draft:'',working:'',tries:0}}:null;
+}
+function fluencyNewSet(route,count){
+  const session=fluencySession(route);
+  const nextSeed=1+((session.set.seed*1664525+1013904223)%999999998);
+  state.fluencySessions[fluencyRouteKey(route)]=freshFluencySet(route,nextSeed,count);
+}
+
 function currentFlashCard(topic){
   return topic.cards.find(c=>c.id===state.flash?.ids?.[state.flash.index]);
 }
@@ -379,6 +419,7 @@ function renderPageContent(route,topic){
   const renderers={
     lesson:()=>renderLessonPage(page,topic,route),
     questions:()=>renderQuestionPage(page,route),
+    fluency:()=>renderFluencyPage(page,topic,route,fluencySession(route),fluencyProgressFor(topic)),
     graph:()=>renderGraphLab(page,route),
     'sampling-lab':()=>renderSamplingLab(page,route,state.understand.labs),
     workshop:()=>renderWorkshop(page,route,state.understand.steppers,state.understand.workshops),
