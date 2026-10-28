@@ -68,7 +68,61 @@ test('invalid settings give useful errors rather than duplicates or silent defau
 test('plain user-entered titles are escaped in LaTeX, not interpreted as TeX macros',()=>{
   const title='Math & Proofs_50% #1 {Part} $x^2$ ~ \\';
   const worksheet=generateWorksheet(defaults('quadratics',{title}));
-  assert.match(worksheet.studentTex,/Math \\& Proofs\\_50\\% \\#1 \\{Part\\} \\$x\\textasciicircum\{\}2\\$/);
+  assert.ok(worksheet.studentTex.includes(escapeLatexText(title)));
+  assert.ok(worksheet.studentTex.includes('\\$x\\textasciicircum{}2\\
+  assert.match(worksheet.studentTex,/\\textasciitilde\{\}/);
+  assert.match(worksheet.studentTex,/\\textbackslash\{\}/);
+  assert.ok(!worksheet.studentTex.includes(title));
+  assert.equal(WORKSHEET_VERSION,1);
+  assert.equal(escapeLatexText('A&B'),'A\\&B');
+});
+test('stratified allocations always sum to the specified sample size',()=>{
+  for(let seed=1;seed<=35;seed++){
+    const w=generateWorksheet(defaults('sampling',{seed,count:16,skills:['allocation']}));
+    for(const q of w.questions){
+      const m=q.signature.match(/^alloc:(\d+):(\d+):(\d+):(\d+)$/);
+      assert.ok(m);
+      const [a,b,c,divisor]=m.slice(1).map(Number);
+      const n=(a+b+c)/divisor;
+      assert.ok(Number.isInteger(n));
+      for(const x of [a,b,c])assert.ok(Number.isInteger(x/divisor));
+      assert.equal(a/divisor+b/divisor+c/divisor,n);
+      assert.match(q.solutionTex,new RegExp(String(n)+'\\\\times'));
+    }
+  }
+});
+test('factorised and expanded quadratic questions preserve the exact roots',()=>{
+  for(let seed=1;seed<=35;seed++){
+    const w=generateWorksheet(defaults('quadratics',{seed,count:16,skills:['roots','expanded']}));
+    for(const q of w.questions){
+      const m=q.signature.match(/^(?:roots|expanded):(-?\d+):(-?\d+)$/);
+      assert.ok(m);
+      const [p,r]=m.slice(1).map(Number);
+      assert.notEqual(p,r);
+      assert.ok(q.answerTex.includes('x='+p));
+      assert.ok(q.answerTex.includes('x='+r));
+      if(q.skill==='expanded'){
+        assert.ok(q.solutionTex.includes(String(p*r)));
+        assert.ok(q.hintTex.includes(String(p+r)));
+      }
+    }
+  }
+});
+test('discriminants are calculated and classified consistently',()=>{
+  for(let seed=1;seed<=30;seed++){
+    const w=generateWorksheet(defaults('quadratics',{seed,count:16,skills:['discriminant']}));
+    for(const q of w.questions){
+      const m=q.signature.match(/^disc:(-?\d+):(-?\d+):(-?\d+)$/);
+      assert.ok(m);
+      const [a,b,c]=m.slice(1).map(Number),D=b*b-4*a*c;
+      const n=D>0?2:D===0?1:0;
+      assert.ok(q.answerTex.includes('\\Delta='+D));
+      assert.ok(q.answerTex.includes(n+' distinct real'));
+      assert.ok(q.solutionTex.includes('='+D+'.'));
+    }
+  }
+});
+));
   assert.match(worksheet.studentTex,/\\textasciitilde\{\}/);
   assert.match(worksheet.studentTex,/\\textbackslash\{\}/);
   assert.ok(!worksheet.studentTex.includes(title));
