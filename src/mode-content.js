@@ -1,5 +1,6 @@
 import {UNDERSTAND_CONTENT} from './understand-content.js';
 import {FLUENCY_CHAPTERS} from './fluency-engine.js';
+import {REASONING_CHAPTERS} from './reasoning-content.js';
 
 // Demonstration *content*, not a second navigation system.
 // Modes → subsections (right tabs) → pages (bottom controls).
@@ -22,24 +23,7 @@ export const DEMO_CHAPTERS = Object.freeze({
       section('review-all','Review All','Browse the full vocabulary deck and its definitions.',one('review-all'))
     ],
     fluency:FLUENCY_CHAPTERS.sampling,
-    reasoning:[
-      section('explain','Explain','Explain why a selection method works, using accurate mathematical language.',
-        [practice('methods',
-          q('Explain why a sample chosen entirely from a school library may not represent the whole school.','Students who use the library may have different characteristics from other students; the selection frame excludes non-users.','Consider who cannot be selected.',3)
-        )]),
-      section('justify','Justify','Give evidence for why one sampling approach is appropriate.',
-        [practice('choice',
-          q('A school has very different year-group sizes. Justify using proportional stratified sampling rather than equal numbers from each year.','Proportional sampling preserves each group’s population share, avoiding overrepresentation of smaller groups.','Compare group proportions.',3)
-        )]),
-      section('critique','Critique','Identify flawed claims and improve the reasoning.',
-        [practice('claims',
-          q('A student says, “A sample of 500 is always better than a sample of 100.” Critique the statement.','Not necessarily: a large biased sample can be less representative than a smaller well-selected sample. Selection method and sampling frame matter.','Consider bias as well as size.',4)
-        )]),
-      section('generalise','Generalise','Identify principles that hold across different sampling situations.',
-        [practice('principles',
-          q('For any population with stratum sizes N₁, N₂ and total N, give the general formula for allocating a sample of size n to stratum 1.','n₁ = n × N₁/N. Equivalent proportions are used for other strata; allocations may need careful rounding.','Sample size × population proportion.',3)
-        )])
-    ],
+    reasoning:REASONING_CHAPTERS.sampling,
     games:[
       section('sprint','Sprint','Answer a sequence of short questions against the clock, or play untimed.',
         game('sprint','Complete as many correct questions as possible in one round.','Rounds, scores and optional timers are planned for the Games pass.')),
@@ -59,24 +43,7 @@ export const DEMO_CHAPTERS = Object.freeze({
       section('review-all','Review All','Browse the full vocabulary deck and its definitions.',one('review-all'))
     ],
     fluency:FLUENCY_CHAPTERS.quadratics,
-    reasoning:[
-      section('explain','Explain','Explain how graph features follow from a quadratic expression.',
-        [practice('features',
-          q('Explain why y = −3(x − 2)² + 4 has a maximum at (2, 4).','The squared term is nonnegative, and multiplying it by −3 gives a nonpositive contribution. The maximum y-value occurs when x = 2, giving y = 4.','Use the sign of the squared term.',4)
-        )]),
-      section('justify','Justify','Support a mathematical conclusion with a clear argument.',
-        [practice('roots',
-          q('Justify why x² + 4x + 7 = 0 has no real solutions.','The discriminant is 4² − 4(1)(7) = −12 < 0; therefore there are no real roots.','Calculate the discriminant.',3)
-        )]),
-      section('critique','Critique','Identify mistakes in a solution or a mathematical claim.',
-        [practice('wrong-vertex',
-          q('A student claims that the turning point of y = (x + 3)² − 2 is (3, −2). Explain the error.','The bracket is x − (−3), so h = −3. The turning point is (−3, −2), not (3, −2).','Be careful with the sign inside the bracket.',3)
-        )]),
-      section('generalise','Generalise','Derive rules that work for whole families of quadratics.',
-        [practice('family',
-          q('For y = a(x − h)² + k with a ≠ 0, state the axis of symmetry and explain how the sign of a determines the turning point type.','The axis is x = h. For a > 0 the squared term is nonnegative and the point (h, k) is a minimum; for a < 0 it is a maximum.','Use the fact that squares are never negative.',4)
-        )])
-    ],
+    reasoning:REASONING_CHAPTERS.quadratics,
     problemSolving:[
       level(1,'Guided','Solve unfamiliar problems with prompts that help you choose a strategy.',
         practice('two-conditions',

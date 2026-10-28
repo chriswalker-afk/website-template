@@ -2,6 +2,9 @@ import {CHAPTER_LIBRARY,TOPICS} from './topics.js';
 import {buildFluencySet,checkFluencyAnswer,PRACTICE_LENGTHS} from './fluency-engine.js';
 import {emptyFluencyProgress,hydrateFluencyProgress,saveFluencyRound} from './fluency-progress.js';
 import {renderFluencyPage,roundScores} from './fluency-ui.js';
+import {renderReasoningPage} from './reasoning-ui.js';
+import {emptyReasoningProgress,hydrateReasoningProgress,queueReasoning,taskFor,
+  reviewReasoning,REASONING_RATINGS} from './reasoning-engine.js';
 import {emptyMemory,hydrateMemory,gradeCard,toggleCardFlag,deckQueue,matchRoundCards,
   assessTerm,recordFor} from './memorise-engine.js';
 import {renderFlashcards as memoryFlashcards,renderMatch as memoryMatch,
@@ -39,7 +42,8 @@ const state={
   understand:{steppers:{},checks:{},workshops:{},labs:{},graphs:{}},
   revealed:{},
   worksheets:{},
-  fluencySessions:{},fluencyProgress:{}
+  fluencySessions:{},fluencyProgress:{},
+  reasoningSessions:{},reasoningProgress:{}
 };
 let lastTopic=null;
 
@@ -107,6 +111,41 @@ function fluencyNewSet(route,count){
   const session=fluencySession(route);
   const nextSeed=1+((session.set.seed*1664525+1013904223)%999999998);
   state.fluencySessions[fluencyRouteKey(route)]=freshFluencySet(route,nextSeed,count);
+}
+
+function reasoningProgressFor(topic){
+  if(!state.reasoningProgress[topic.id])
+    state.reasoningProgress[topic.id]=hydrateReasoningProgress(
+      safeStorage.get('reasoning:'+topic.id),topic.id);
+  return state.reasoningProgress[topic.id];
+}
+function saveReasoningProgress(topic,value){
+  state.reasoningProgress[topic.id]=value;
+  safeStorage.put('reasoning:'+topic.id,JSON.stringify(value));
+}
+const reasoningRouteKey=route=>[route.topicId,route.sectionId].join(':');
+function freshReasoningSession(route,selection='all'){
+  return {selection,ids:queueReasoning(route.topicId,route.sectionId,
+    reasoningProgressFor(TOPICS[route.topicId]),selection),
+    index:0,entries:{},complete:false,confirmSwitch:false,pendingSelection:null};
+}
+function reasoningSession(route=state.route){
+  if(route?.chapterId!=='reasoning')return null;
+  const key=reasoningRouteKey(route);
+  if(!state.reasoningSessions[key])
+    state.reasoningSessions[key]=freshReasoningSession(route);
+  return state.reasoningSessions[key];
+}
+function reasoningEntry(session){
+  const task=taskFor(state.route.topicId,state.route.sectionId,session?.ids?.[session.index]);
+  if(!task)return null;
+  return {task,response:session.entries[task.id]||{
+    draft:'',hint:false,usedHint:false,model:false,modelFirst:false,
+    checks:[false,false,false],rating:null}};
+}
+function reasoningSelect(selection){
+  state.reasoningSessions[reasoningRouteKey(state.route)]=
+    freshReasoningSession(state.route,selection);
 }
 
 function currentFlashCard(topic){
@@ -420,6 +459,7 @@ function renderPageContent(route,topic){
     lesson:()=>renderLessonPage(page,topic,route),
     questions:()=>renderQuestionPage(page,route),
     fluency:()=>renderFluencyPage(page,topic,route,fluencySession(route),fluencyProgressFor(topic)),
+    reasoning:()=>renderReasoningPage(page,topic,route,reasoningSession(route),reasoningProgressFor(topic)),
     graph:()=>renderGraphLab(page,route),
     'sampling-lab':()=>renderSamplingLab(page,route,state.understand.labs),
     workshop:()=>renderWorkshop(page,route,state.understand.steppers,state.understand.workshops),
@@ -561,7 +601,98 @@ app.addEventListener('click',ev=>{
   const button=ev.target.closest('button[data-action]');
   if(!button)return;
   const action=button.dataset.action,topic=TOPICS[state.route.topicId];
-  if(action==='fluency-hint'){
+  if(action==='reasoning-hint'){
+    const session=reasoningSession(),current=reasoningEntry(session);
+    if(!current||session.complete||current.response.rating)return;
+    const old=current.response;
+    session.entries[current.task.id]={...old,hint:!old.hint,usedHint:Boolean(old.usedHint||!old.hint)};
+    rerender();
+    document.querySelector('button[data-action="reasoning-hint"]')?.focus({preventScroll:true});
+    announce(session.entries[current.task.id].hint?'A helpful reasoning prompt is shown.':'Nudge hidden.');
+  }else if(action==='reasoning-model'){
+    const session=reasoningSession(),current=reasoningEntry(session);
+    if(!current||session.complete||current.response.rating)return;
+    const old=current.response,show=!old.model;
+    session.entries[current.task.id]={...old,model:show,
+      modelFirst:Boolean(old.modelFirst||(show&&old.draft.trim().length<20))};
+    rerender();
+    document.querySelector('button[data-action="reasoning-model"]')?.focus({preventScroll:true});
+    announce(show?'Model argument and self-review criteria shown.':'Model argument hidden.');
+  }else if(action==='reasoning-rate'){
+    const session=reasoningSession(),current=reasoningEntry(session),
+      rating=button.dataset.rating;
+    if(!current||session.complete||current.response.rating||!current.response.model||
+      !REASONING_RATINGS.includes(rating))return;
+    const entry=current.response,review={
+      rating,checked:entry.checks.filter(Boolean).length,
+      attempted:entry.draft.trim().length>=20,
+      assisted:Boolean(entry.usedHint||entry.modelFirst),
+      modelFirst:Boolean(entry.modelFirst)
+    };
+    try{
+      saveReasoningProgress(topic,reviewReasoning(reasoningProgressFor(topic),
+        topic.id,state.route.sectionId,current.task.id,review));
+    }catch(error){
+      announce(error instanceof Error?error.message:'Cannot save this self-review.');
+      return;
+    }
+    session.entries[current.task.id]={...entry,rating};
+    rerender();
+    document.querySelector('button[data-action="reasoning-next"]')?.focus({preventScroll:true});
+    announce('Self-review saved as '+rating+'. This is not an automatic grade.');
+  }else if(action==='reasoning-next'){
+    const session=reasoningSession(),current=reasoningEntry(session);
+    if(!current||!current.response.rating||session.complete)return;
+    if(session.index===session.ids.length-1){
+      session.complete=true;
+      rerender();
+      announce('You have completed the '+state.route.sectionId+' review set.');
+      document.querySelector('.reasoning-complete__lead')?.focus({preventScroll:true});
+    }else{
+      session.index++;
+      rerender();
+      document.querySelector('#reasoning-answer')?.focus({preventScroll:true});
+      announce('Next reasoning prompt.');
+    }
+  }else if(action==='reasoning-mode'){
+    const session=reasoningSession(),selection=button.dataset.mode;
+    if(!session||!['all','focus'].includes(selection)||session.selection===selection)return;
+    const current=reasoningEntry(session);
+    if(current&&!current.response.rating&&
+      (current.response.draft.trim()||current.response.model)){
+      session.confirmSwitch=true;
+      session.pendingSelection=selection;
+      rerender();
+      document.querySelector('button[data-action="reasoning-cancel-switch"]')?.focus({preventScroll:true});
+      announce('Confirm replacing your unfinished reasoning prompt.');
+    }else{
+      reasoningSelect(selection);rerender();
+      document.querySelector('button[data-action="reasoning-mode"][data-mode="'+selection+'"]')
+        ?.focus({preventScroll:true});
+      announce('Reasoning prompts changed to '+(selection==='focus'?'needs another look':'all')+'.');
+    }
+  }else if(action==='reasoning-cancel-switch'){
+    const session=reasoningSession();
+    if(!session)return;
+    session.confirmSwitch=false;session.pendingSelection=null;
+    rerender();announce('Your unfinished argument was preserved.');
+    document.querySelector('#reasoning-answer')?.focus({preventScroll:true});
+  }else if(action==='reasoning-confirm-switch'){
+    const session=reasoningSession();
+    if(!session?.confirmSwitch||!['all','focus'].includes(session.pendingSelection))return;
+    const choice=session.pendingSelection;
+    reasoningSelect(choice);rerender();
+    announce('Reasoning selection changed.');
+    document.querySelector('button[data-action="reasoning-mode"][data-mode="'+choice+'"]')
+      ?.focus({preventScroll:true});
+  }else if(action==='reasoning-repeat'){
+    const session=reasoningSession(),selection=button.dataset.mode;
+    if(!session?.complete||!['all','focus'].includes(selection))return;
+    reasoningSelect(selection);rerender();
+    announce(selection==='focus'?'Reviewing selected weaker arguments.':'Starting the full argument set again.');
+    document.querySelector('#reasoning-answer,button[data-action="reasoning-mode"]')
+      ?.focus({preventScroll:true});
+  }else if(action==='fluency-hint'){
     const session=fluencySession(),current=fluencyAnswer(session);
     if(!current||session.complete)return;
     const a=current.response;
@@ -920,6 +1051,19 @@ app.addEventListener('click',ev=>{
   }
 });
 app.addEventListener('change',ev=>{
+  if(ev.target.matches('input[data-reasoning-criterion]')&&state.route?.chapterId==='reasoning'){
+    const session=reasoningSession(),current=reasoningEntry(session);
+    if(!current||!current.response.model||current.response.rating)return;
+    const index=Number(ev.target.dataset.reasoningCriterion);
+    if(!Number.isInteger(index)||index<0||index>=current.task.criteria.length)return;
+    const checks=[...current.response.checks];
+    checks[index]=ev.target.checked;
+    session.entries[current.task.id]={...current.response,checks};
+    rerender();
+    document.querySelector('input[data-reasoning-criterion="'+index+'"]')?.focus({preventScroll:true});
+    announce((checks[index]?'Criterion selected: ':'Criterion cleared: ')+current.task.criteria[index].label);
+    return;
+  }
   if(ev.target.id==='fluency-count'){
     const count=Number(ev.target.value),session=fluencySession();
     if(!session||!PRACTICE_LENGTHS.includes(count))return;
@@ -954,6 +1098,12 @@ app.addEventListener('change',ev=>{
 });
 app.addEventListener('input',ev=>{
   const target=ev.target;
+  if(target.id==='reasoning-answer'&&state.route?.chapterId==='reasoning'){
+    const session=reasoningSession(),current=reasoningEntry(session);
+    if(current&&!current.response.rating&&!session.complete)
+      session.entries[current.task.id]={...current.response,draft:target.value};
+    return;
+  }
   if((target.id==='fluency-answer'||target.id==='fluency-working')&&state.route?.chapterId==='fluency'){
     const session=fluencySession(),current=fluencyAnswer(session);
     if(current&&!session.complete){

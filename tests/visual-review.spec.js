@@ -116,3 +116,48 @@ test('render representative visual-review images',async({page})=>{
   await page.goto('/#/sampling/fluency/level-1');
   await page.screenshot({path:'visual-review/27-fluency-workspace-mobile-320.png',fullPage:true,animations:'disabled'});
 });
+
+
+test('render Reasoning writing, model, checklist, review and mobile screenshots',async({page})=>{
+  test.setTimeout(70000);
+  await mkdir('visual-review',{recursive:true});
+  await page.setViewportSize({width:1440,height:960});
+  await page.goto('/#/sampling/reasoning/explain');
+  await expect(page.locator('.reasoning-task')).toBeVisible();
+  await page.screenshot({path:'visual-review/28-reasoning-write-desktop.png',
+    fullPage:true,animations:'disabled'});
+  await page.locator('#reasoning-answer').fill(
+    'The library-only sampling frame excludes students outside the library. The results may therefore be biased.');
+  await page.getByRole('button',{name:'Need a nudge?'}).click();
+  await page.screenshot({path:'visual-review/29-reasoning-nudge-desktop.png',
+    fullPage:true,animations:'disabled'});
+  await page.getByRole('button',{name:'Compare with worked argument'}).click();
+  await page.locator('input[data-reasoning-criterion="0"]').check();
+  await page.screenshot({path:'visual-review/30-reasoning-comparison-desktop.png',
+    fullPage:true,animations:'disabled'});
+  await page.goto('/#/quadratics/reasoning/critique');
+  await page.getByRole('button',{name:'Compare with worked argument'}).click();
+  await page.screenshot({path:'visual-review/31-reasoning-critique-desktop.png',
+    fullPage:true,animations:'disabled'});
+  await page.goto('/#/quadratics/reasoning/generalise');
+  await page.screenshot({path:'visual-review/32-reasoning-generalise-desktop.png',
+    fullPage:true,animations:'disabled'});
+  await page.goto('/#/sampling/reasoning/justify');
+  for(let i=0;i<4;i++){
+    await page.getByRole('button',{name:'Compare with worked argument'}).click();
+    await page.getByRole('button',{name:'Review again'}).click();
+    await page.getByRole('button',{name:i===3?'Finish this set':'Next prompt'}).click();
+  }
+  await expect(page.locator('.reasoning-complete')).toBeVisible();
+  await page.screenshot({path:'visual-review/33-reasoning-review-complete-desktop.png',
+    fullPage:true,animations:'disabled'});
+  await page.setViewportSize({width:390,height:844});
+  await page.goto('/#/quadratics/reasoning/explain');
+  await page.getByRole('button',{name:'Compare with worked argument'}).click();
+  await page.screenshot({path:'visual-review/34-reasoning-model-mobile-390.png',
+    fullPage:true,animations:'disabled'});
+  await page.setViewportSize({width:320,height:740});
+  await page.goto('/#/sampling/reasoning/generalise');
+  await page.screenshot({path:'visual-review/35-reasoning-write-mobile-320.png',
+    fullPage:true,animations:'disabled'});
+});
