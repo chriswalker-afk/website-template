@@ -187,6 +187,13 @@ for(const width of [320,390,768,1024,1440]){
         expect(w.scroll,topic+' '+level+' @ '+width).toBeLessThanOrEqual(w.width+1);
       }
     }
+    if(width===320){
+      await page.goto('/#/quadratics/fluency/level-4');
+      const columns=await page.locator('.mobile-navigation').evaluate(
+        el=>getComputedStyle(el).gridTemplateColumns.split(' ').length);
+      expect(columns).toBe(1);
+      await expect(page.locator('#mobile-section')).toHaveValue('level-4');
+    }
     await page.goto('/#/quadratics/fluency/level-4');
     await page.getByRole('button',{name:'Show full solution'}).click();
     const w=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));
