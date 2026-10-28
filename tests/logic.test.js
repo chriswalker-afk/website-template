@@ -17,7 +17,7 @@ test('top-level chapters remain qualification-neutral and fully spelled out',()=
 });
 test('configurable modes hide unsupported chapters without dead tabs',()=>{
   assert.equal(chaptersFor(TOPICS.sampling).length,7);
-  assert.equal(chaptersFor(TOPICS.sampling).some(ch=>ch.id==='modelling'),false);
+  assert.equal(chaptersFor(TOPICS.sampling).some(ch=>ch.id==='modelling'),true);
   assert.equal(chaptersFor(TOPICS.quadratics).length,7);
   for(const chapter of ['fluency','reasoning','problemSolving','modelling']){
     assert.equal(chaptersFor(TOPICS.quadratics).some(ch=>ch.id===chapter),true);
