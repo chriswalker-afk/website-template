@@ -107,6 +107,9 @@ test('render representative visual-review images',async({page})=>{
   await page.screenshot({path:'visual-review/25-fluency-completion-desktop.png',fullPage:true,animations:'disabled'});
   await page.setViewportSize({width:390,height:844});
   await page.goto('/#/quadratics/fluency/level-4');
+  // This page was visited earlier in the sweep; reload resets its in-session
+  // revealed-answer state before capturing a fresh mobile worked example.
+  await page.reload();
   await page.getByRole('button',{name:'Show full solution'}).click();
   await page.screenshot({path:'visual-review/26-fluency-worked-solution-mobile-390.png',fullPage:true,animations:'disabled'});
   await page.setViewportSize({width:320,height:740});
