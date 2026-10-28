@@ -1198,6 +1198,18 @@ app.addEventListener('click',ev=>{
   }
 });
 app.addEventListener('change',ev=>{
+  if(ev.target.matches('input[data-ps-criterion]')&&state.route?.chapterId==='problemSolving'){
+    const session=problemSession(),current=currentProblem(session);
+    if(!current||!current.response.modelComplete||current.response.rating)return;
+    const index=Number(ev.target.dataset.psCriterion);
+    if(!Number.isInteger(index)||index<0||index>=current.task.checks.length)return;
+    const checks=[...current.response.checks];checks[index]=ev.target.checked;
+    session.entries[current.task.id]={...current.response,checks};
+    rerender();
+    document.querySelector('input[data-ps-criterion="'+index+'"]')?.focus({preventScroll:true});
+    announce('Problem-solving check '+(index+1)+(checks[index]?' selected.':' cleared.'));
+    return;
+  }
   if(ev.target.matches('input[data-reasoning-criterion]')&&state.route?.chapterId==='reasoning'){
     const session=reasoningSession(),current=reasoningEntry(session);
     if(!current||!current.response.model||current.response.rating)return;
@@ -1245,6 +1257,14 @@ app.addEventListener('change',ev=>{
 });
 app.addEventListener('input',ev=>{
   const target=ev.target;
+  if((target.id==='ps-plan'||target.id==='ps-work')&&state.route?.chapterId==='problemSolving'){
+    const session=problemSession(),current=currentProblem(session);
+    if(current&&!session.complete&&!current.response.rating){
+      const field=target.id==='ps-plan'?'plan':'working';
+      session.entries[current.task.id]={...current.response,[field]:target.value};
+    }
+    return;
+  }
   if(target.id==='reasoning-answer'&&state.route?.chapterId==='reasoning'){
     const session=reasoningSession(),current=reasoningEntry(session);
     if(current&&!current.response.rating&&!session.complete)
