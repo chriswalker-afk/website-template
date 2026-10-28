@@ -23,7 +23,7 @@ export function renderProblemSolvingPage(page,topic,route,session,progress){
       (session.selection==='all')+'">All problems</button>'+
     '<button type="button" data-action="ps-selection" data-mode="focus" aria-pressed="'+
       (session.selection==='focus')+'">Revisit weaker problems</button></div>';
-  return '<div class="ps-workspace">'+counts+select+
+  return '<div class="ps-workspace">'+counts+(session.complete?'':select)+
     (session.confirmSwitch?'<div class="ps-confirm" role="alert">'+
       '<p>Replace your unfinished practice on this page? Unsaved plans and working will be lost.</p>'+
       '<button type="button" class="quiet-button" data-action="ps-cancel">Keep my work</button>'+
