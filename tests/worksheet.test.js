@@ -64,7 +64,7 @@ test('invalid settings give useful errors rather than duplicates or silent defau
   assert.throws(()=>generateWorksheet(defaults('sampling',{seed:'not-a-number'})),/whole number/);
   assert.throws(()=>generateWorksheet(defaults('sampling',{skills:[]})),/at least one/);
   assert.throws(()=>generateWorksheet(defaults('sampling',{skills:['broken']})),/at least one/);
-  assert.throws(()=>generateWorksheet(defaults('sampling',{count:8,skills:['terms']})),/Only 6 distinct questions/);
+  assert.throws(()=>generateWorksheet(defaults('sampling',{count:16,skills:['terms']})),/Only 12 distinct questions/);
   assert.throws(()=>generateWorksheet(defaults('quadratics',{style:'impossible'})),/supported worksheet style/);
 });
 test('plain user-entered titles are escaped in LaTeX, not interpreted as TeX macros',()=>{
