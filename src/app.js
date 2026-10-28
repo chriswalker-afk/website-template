@@ -52,9 +52,10 @@ function flashSession(topic,mode='all'){
   return {mode,ids:deckQueue(topic,memoryFor(topic),mode),index:0,flipped:false,complete:false,rated:0};
 }
 function clozeSession(topic,mode='all'){
-  const allowed=mode==='all'?new Set(topic.cards.map(c=>c.id)):
-    new Set(deckQueue(topic,memoryFor(topic),mode));
-  return {mode,ids:topic.clozes.filter(c=>allowed.has(c.cardId)).map(c=>c.id),
+  const priority=deckQueue(topic,memoryFor(topic),mode);
+  const ids=mode==='all'?topic.clozes.map(c=>c.id):
+    priority.flatMap(cardId=>topic.clozes.filter(c=>c.cardId===cardId).map(c=>c.id));
+  return {mode,ids,
     index:0,value:'',hint:false,checked:false,correct:false,resultKind:null,complete:false,correctCount:0};
 }
 function recallSession(topic,mode='all'){
