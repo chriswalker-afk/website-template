@@ -325,6 +325,7 @@ function renderBook(route,{animate=true}={}){
   document.title=(section?section.label+' · ':route.chapterId==='home'?'Contents · ':'')+topic.title+' | The Maths Notebook';
 }
 function navigate(){
+  const hadPreviousPage=Boolean(state.route);
   const next=resolveRoute(location.hash);
   if(location.hash!==next.canonical){history.replaceState(null,'',next.canonical);}
   if(next.topicId!==lastTopic){
@@ -342,7 +343,7 @@ function navigate(){
   }
   const label=next.chapterId==='home'?'Contents':(chapterFor(next.chapterId)?.label+' — '+sectionsFor(TOPICS[next.topicId],next.chapterId).find(s=>s.id===next.sectionId)?.label);
   announce(label+' page opened');
-  if(state.route&&document.activeElement){ // Move focus to the newly opened page, not a now-detached tab.
+  if(hadPreviousPage){ // Move focus on chapter navigation, not on first page load.
     const title=document.querySelector('#page-title');
     title?.focus({preventScroll:true});
   }
