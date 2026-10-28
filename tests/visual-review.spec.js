@@ -21,4 +21,14 @@ test('render representative visual-review images',async({page})=>{
   await page.goto('/#/quadratics/home');
   await expect(page.getByRole('heading',{name:'Contents'})).toBeVisible();
   await page.screenshot({path:'visual-review/05-contents-mobile-320.png',fullPage:true,animations:'disabled'});
+  await page.setViewportSize({width:1440,height:960});
+  await page.goto('/#/quadratics/resources/worksheet-generator');
+  await page.getByRole('button',{name:'Generate worksheet',exact:true}).click();
+  await expect(page.locator('.worksheet-questions li')).toHaveCount(8);
+  await page.screenshot({path:'visual-review/06-worksheet-desktop.png',fullPage:true,animations:'disabled'});
+  await page.setViewportSize({width:390,height:844});
+  await page.goto('/#/sampling/resources/worksheet-generator');
+  await page.getByRole('button',{name:'Generate worksheet',exact:true}).click();
+  await expect(page.locator('#worksheet-preview')).toBeVisible();
+  await page.screenshot({path:'visual-review/07-worksheet-mobile-390.png',fullPage:true,animations:'disabled'});
 });
