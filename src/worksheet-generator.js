@@ -203,10 +203,10 @@ const QUADRATIC_FAMILIES=[
       prompt:'Solve '+expanded.replaceAll('^{2}','²')+' = 0 by factorising.',
       questionTex:'Solve '+math(expanded+'=0')+' by factorising.',
       answerTex:math('x='+roots[0])+' or '+math('x='+roots[1])+'.',
-      solutionTex:'Find two numbers with sum '+math(String(-b))+' and product '+
+      solutionTex:'Find two numbers with sum '+math(String(b))+' and product '+
         math(String(c))+'. Then \\['+expanded+'='+factors+'=0.\\]'+
         'By the zero-product rule, '+math('x='+roots[0])+' or '+math('x='+roots[1])+'.',
-      hintTex:'Find two integers whose sum is '+math(String(-b))+' and product is '+math(String(c))+'.'};
+      hintTex:'Find two integers whose sum is '+math(String(b))+' and product is '+math(String(c))+'.'};
   }},
   {id:'quadratic-discriminant',skill:'discriminant',create(rng){
     const a=pick(rng,[-2,-1,1,2]),b=between(rng,-7,7),c=between(rng,-6,6);
@@ -247,7 +247,6 @@ function settings(options){
 function renderDocument(topic,opts,questions,answers){
   const student=!answers;
   const title=escapeLatexText(opts.title)+(student?'':opts.solutions==='worked'?' - Worked Solutions':' - Answers');
-  const heading=escapeLatexText(topic.title);
   const lines=[
     '% Maths Notebook worksheet generator, version '+WORKSHEET_VERSION,
     '% Topic: '+topic.id+' | Seed: '+opts.seed+' | Style: '+opts.style,
@@ -260,8 +259,7 @@ function renderDocument(topic,opts,questions,answers){
     '\\setlength{\\parskip}{4pt}',
     '\\begin{document}',
     '\\begin{center}',
-    '{\\Large\\bfseries '+title+'}\\\\[4pt]',
-    heading,
+    '{\\Large\\bfseries '+title+'}',
     '\\end{center}'
   ];
   if(student){
@@ -277,7 +275,7 @@ function renderDocument(topic,opts,questions,answers){
     const q=questions[i];
     lines.push('% Question '+(i+1)+' | '+q.familyId+' | '+q.signature);
     if(student){
-      lines.push('\\item '+q.questionTex+' \\hfill\\textit{['+q.marks+' marks]}');
+      lines.push('\\item '+q.questionTex+' \\hfill\\mbox{\\textit{['+q.marks+' marks]}}');
       if(opts.style==='scaffolded'&&i===0){
         lines.push('\\par\\smallskip\\textit{Worked model:}\\par '+q.solutionTex+'\\par\\vspace{5mm}');
       }else{
