@@ -35,11 +35,13 @@ Legacy links to the old Graph explorer, Game library and initial activity pages 
 | **Fluency** | Level 1: Foundations; Level 2: Standard; Level 3: Mixed; Level 4: Advanced | Familiar methods, numerical/algebraic accuracy and efficiency. Questions increase in complexity, without becoming concept explanations. |
 | **Reasoning** | Explain; Justify; Critique; Generalise | Mathematical explanations, arguments, error analysis and generalisations. Proof can be a topic-specific subsection. |
 | **Problem Solving** | Level 1: Guided; Level 2: Developing; Level 3: Independent; Level 4: Challenge | Genuine unfamiliar, multi-step or strategic problems. Increase independence and connections rather than simply increasing arithmetic. |
-| **Modelling** | Level 1: Guided; Level 2: Structured; Level 3: Independent; Level 4: Extended | Real-world tasks requiring assumptions, formulation, solution, interpretation and model evaluation. The tasks must *be modelling problems*, not interactive concept explorers. |
+| **Modelling** | Level 1: Guided; Level 2: Structured; Level 3: Independent; Level 4: Challenge | Real-world tasks requiring assumptions, formulation, solution, interpretation and model evaluation. The tasks must *be modelling problems*, not interactive concept explorers. |
 | **Games** | Sprint; Puzzle Quest; topic-specific options such as Curve Quest or Sort & Discover | Each game has its **own right-hand tab**, plus internal rounds and difficulty. Do not make a separate "Game library" subsection that merely links to actual games. |
 | **Exam Practice (optional)** | Topic-specific paper/task subsections | Questions and reviewed mark schemes, not the general mode names or qualification-specific learning taxonomy. |
 
 These are **defaults, not obligatory content**. Empty modes and subsections stay hidden. A subsection may have 1, 2 or many pages if the topic benefits; avoid unnecessary pagination.
+
+**Modelling quality upgrade:** Four levels with two pages each; every scenario follows Formulate → Calculate → Interpret → Evaluate. Students may request stage-specific help, compare mathematical models and self-review without automatic grading or persistent written responses. See [Modelling Mode Guide](MODELLING_MODE_GUIDE.md).
 
 **Problem Solving quality upgrade:** Four separate levels now have genuine multi-step cases in both topic demonstrations. Students plan independently, may compare strategies or request two increasingly precise hints, then reveal a mathematically complete solution one step at a time. Each problem has three criteria, an explicit self-review and targeted replay. Independent self-rating is unavailable after prior support, and no prose is automatically marked. See [Problem Solving mode quality guide](PROBLEM_SOLVING_MODE_GUIDE.md).
 
@@ -49,9 +51,9 @@ These are **defaults, not obligatory content**. Empty modes and subsections stay
 
 **Memorise quality upgrade:** Flashcards, Match Up, Missing Words, Speed Recall and Review All now use a shared locally persisted per-card revision model. Flashcards can focus on new/due/flagged items, Match Up covers the full deck over multiple rounds, contextual Missing Words and typed Speed Recall share reviewed terminology data, and Review All supports searching, filtering, flags and a guarded reset. See [Memorise mode quality guide](MEMORISE_MODE_GUIDE.md) for scheduling, privacy and correctness limits.
 
-**Understand quality upgrade:** The shared Understand component system now supports explanatory concept checks with choice-specific feedback, step-by-step method reveals, data-driven sampling visualisation, separate quadratic shape/translation graph experiments, and Show me → Help me → My turn worked-example workshops. See [Understand mode quality guide](UNDERSTAND_MODE_GUIDE.md). These blocks belong only to Understand; Fluency, Problem Solving and Modelling still contain levelled questions.
+**Understand quality upgrade:** The shared Understand component system now supports explanatory concept checks with choice-specific feedback, step-by-step method reveals, data-driven sampling visualisation, separate quadratic shape/translation graph experiments, and Show me → Help me → My turn worked-example workshops. See [Understand mode quality guide](UNDERSTAND_MODE_GUIDE.md). These blocks belong only to Understand; Fluency, Problem Solving and Modelling retain their own distinct levelled activity types.
 
-The demo illustrates both a terminology-heavy subject (Sampling Methods) and a graph/algebra-heavy subject (Quadratic Functions). Sampling currently omits Problem Solving and Modelling because suitable topic-authored examples have not been added; Quadratics demonstrates all seven core modes.
+The demo illustrates both a terminology-heavy subject (Sampling Methods) and a graph/algebra-heavy subject (Quadratic Functions). Both Sampling Methods and Quadratic Functions now demonstrate all seven core modes, including original multi-step Problem Solving tasks and four-stage Modelling investigations.
 
 ## Topic content contract
 
@@ -102,5 +104,3 @@ Current pages are **original demonstration material**, with authored example que
 The **Worksheet Generator remains an optional Contents/Resources utility**, not a main learning mode. It continues to create editable LaTeX documents from its validated question families.
 
 Before scaling, each new topic must be audited for mathematical validity, varied tasks, adequate questions at every advertised level, accessibility, proper page lengths and honest descriptions of unimplemented modes.
-
-**Modelling quality upgrade:** Four separate levels with two pages per level. Each case has four paced stages, optional per-stage nudge and worked comparison, model validation and transparent self-review. See [Modelling Mode Guide](MODELLING_MODE_GUIDE.md).
