@@ -109,10 +109,10 @@ function renderIntro(topic){
     '</div>'+
     '<div class="lesson-small"><p><strong>Example:</strong> '+e(d.example)+'</p></div>';
 }
-function renderDetail(topic,section){
+function renderDetail(topic,chapterId,section){
   const detail=topic.details?.[section];
   if(!detail)return heading('Page unavailable','No activity has been authored for this page.');
-  const sectionLabel=sectionsFor(topic,state.route.chapterId).find(item=>item.id===section)?.label||'Activity';
+  const sectionLabel=sectionsFor(topic,chapterId).find(item=>item.id===section)?.label||'Activity';
   let html=heading(sectionLabel,detail.intro);
   if(detail.panels){
     html+='<div class="topic-panels">'+detail.panels.map(panel=>
@@ -268,7 +268,7 @@ function renderPageContent(route,topic){
   if(chapterId==='memorise'&&sectionId==='missing-words')return renderCloze(topic);
   if((chapterId==='fluency'&&sectionId==='graph-lab')||(chapterId==='modelling'&&sectionId==='model-lab'))return renderGraphLab(topic,sectionId);
   if(chapterId==='games')return renderGames(topic);
-  return renderDetail(topic,sectionId);
+  return renderDetail(topic,chapterId,sectionId);
 }
 function renderTabNav(topic,route){
   return '<nav class="chapter-tabs" aria-label="Book chapters">'+chaptersFor(topic).map(chapter=>
