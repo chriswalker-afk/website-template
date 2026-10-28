@@ -1,5 +1,7 @@
 import {CHAPTER_LIBRARY,TOPICS} from './topics.js';
 import {generateWorksheet,supportsWorksheets,worksheetSkills} from './worksheet-generator.js';
+import {GRAPH_DEFAULTS,quadraticProperties,quadraticValue,quadraticEquation} from './understand-engine.js';
+import {understandKey,renderSteps,renderConceptCheck,renderWalkthrough,renderSamplingLab,renderWorkshop} from './understand-ui.js';
 import {chaptersFor,sectionsFor,pagesFor,chapterFor,routeHref,resolveRoute,topicSwitchHref,escapeHTML as e,normaliseAnswer,cardForIndex,sampleMatchCards,validateTopics} from './logic.js';
 
 const app=document.querySelector('#app');
@@ -28,7 +30,7 @@ const state={
   match:{term:null,definition:null,matched:[],message:''},
   cloze:{value:'',hint:false,checked:false,correct:false},
   recall:{index:0,value:'',checked:false,correct:false},
-  graph:{magnitude:1,h:0,k:-2,sign:1},
+  understand:{steppers:{},checks:{},workshops:{},labs:{},graphs:{}},
   revealed:{},
   worksheets:{}
 };
@@ -45,12 +47,14 @@ function pagePaper(route){
   return 'ruled';
 }
 function displayNumber(n){return Number.isInteger(n)?String(n):String(Number(n.toFixed(2)));}
-function mathCurveLabel(){
-  const {magnitude,h,k,sign}=state.graph;
-  const a=magnitude*sign;
-  const squared=h===0?'x²':'(x '+(h>0?'− '+h:'+ '+Math.abs(h))+')²';
-  return 'y = '+(a===1?'':a===-1?'−':displayNumber(a))+squared+
-    (k===0?'':(' '+(k>0?'+':'−')+' '+Math.abs(k)));
+function graphState(route=state.route){
+  const id=route?.pageId==='position'?'position':'shape';
+  if(!state.understand.graphs[id])
+    state.understand.graphs[id]={...GRAPH_DEFAULTS[id]};
+  return state.understand.graphs[id];
+}
+function mathCurveLabel(model=graphState()){
+  return quadraticEquation(model);
 }
 function renderCoverArt(){
   return '<svg class="cover-illustration" viewBox="0 0 320 220" fill="none" aria-hidden="true">'+
@@ -465,7 +469,7 @@ function navigate(){
     state.match={term:null,definition:null,matched:[],message:''};
     state.cloze={value:'',hint:false,checked:false,correct:false};
     state.recall={index:0,value:'',checked:false,correct:false};
-    state.graph={magnitude:1,h:0,k:-2,sign:1};
+    state.understand={steppers:{},checks:{},workshops:{},labs:{},graphs:{}};
     state.revealed={};
     lastTopic=next.topicId;
   }
