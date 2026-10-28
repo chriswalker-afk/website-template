@@ -105,7 +105,7 @@ test('Missing Words uses varied contextual prompts and does not count hints as m
   await page.reload();
   await expect(page.locator('.memorise-pulse')).toContainText('due');
   await page.locator('[data-action="cloze-mode"][data-mode="focus"]').click();
-  await expect(page.locator('.cloze-line')).toContainText('sample'); // priority plus remaining new
+  await expect(page.locator('.cloze-line')).toContainText('Collecting data from every member'); // the due item is prioritised
 });
 test('Speed Recall accepts reviewed aliases and minor typos but rejects wrong concepts',async({page})=>{
   await page.goto('/#/quadratics/memorise/speed-recall');
