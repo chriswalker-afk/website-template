@@ -6,7 +6,7 @@ const escape=v=>e(String(v??''));
 const icon=name=>'<svg class="icon" aria-hidden="true"><use href="#i-'+name+'"></use></svg>';
 const plural=(n,s)=>n+' '+s+(n===1?'':'s');
 const outcome=a=>a?.revealed?'Shown solution':
-  a?.correct?(a.hint||a.tries>1?'Completed with support':'Correct first try'):
+  a?.correct?(a.usedHint||a.tries>1?'Completed with support':'Correct first try'):
   a?.tries?'Try again':'Not started';
 const outcomeTone=a=>a?.revealed?'review':a?.correct?'correct':a?.tries?'retry':'new';
 export function roundScores(session){
@@ -17,7 +17,7 @@ export function roundScores(session){
     if(a.correct||a.revealed)answered++;
     if(a.revealed)revealed++;
     else if(a.correct){
-      if(a.tries===1&&!a.hint)firstTry++;
+      if(a.tries===1&&!a.usedHint)firstTry++;
       else supported++;
     }
   }
