@@ -526,43 +526,142 @@ app.addEventListener('click',ev=>{
     announce(state.bookmarks.has(state.route.canonical)?'Page bookmarked':'Bookmark removed');
     rerender();
     document.querySelector('button[data-action="bookmark"]')?.focus({preventScroll:true});
+  }else if(action==='flash-mode'){
+    const mode=button.dataset.mode;
+    if(!['all','focus','due'].includes(mode))return;
+    state.flash=flashSession(topic,mode);
+    rerender();announce(mode==='focus'?'Priority practice selected.':'Flashcard mode changed.');
+    document.querySelector('button[data-action="flash-mode"][data-mode="'+mode+'"]')?.focus({preventScroll:true});
   }else if(action==='flash-flip'){
+    if(!currentFlashCard(topic)||state.flash.complete)return;
     state.flash.flipped=!state.flash.flipped;updateFlashFlip();
-    announce(state.flash.flipped?'Answer revealed. Rate your recall.':'Question shown.');
+    announce(state.flash.flipped?'Definition revealed. Rate your recall.':'Term shown.');
   }else if(action==='flash-next'||action==='flash-prev'){
     const increment=action==='flash-next'?1:-1;
-    state.flash.index=(state.flash.index+increment+topic.cards.length)%topic.cards.length;
-    state.flash.flipped=false;rerender();
-    document.querySelector('button[data-action="'+action+'"]')?.focus({preventScroll:true});
+    const f=state.flash;
+    f.index=Math.max(0,Math.min(f.ids.length-1,f.index+increment));
+    f.flipped=false;rerender();
+    document.querySelector('button[data-action="'+action+'"]:not(:disabled)')?.focus({preventScroll:true});
   }else if(action==='flash-restart'){
-    state.flash={index:0,flipped:false,ratings:{}};rerender();announce('Deck restarted');
-    document.querySelector('button[data-action="flash-restart"]')?.focus({preventScroll:true});
+    state.flash=flashSession(topic,state.flash.mode);
+    rerender();announce('New flashcard round. Saved reviews are retained.');
+    document.querySelector('#flashcard,button[data-action="flash-mode"]')?.focus({preventScroll:true});
   }else if(action==='flash-rate'){
-    if(!state.flash.flipped)return;
-    const card=cardForIndex(topic,state.flash.index);
-    state.flash.ratings[card.id]=button.dataset.rating;
-    state.flash.index=(state.flash.index+1)%topic.cards.length;
-    state.flash.flipped=false;rerender();announce('Rated '+card.term+' '+button.dataset.rating+'. Next card.');
-    document.querySelector('#flashcard')?.focus({preventScroll:true});
+    const f=state.flash,card=currentFlashCard(topic),rating=button.dataset.rating;
+    if(!f.flipped||!card||!['again','nearly','know'].includes(rating))return;
+    saveMemory(topic,gradeCard(memoryFor(topic),topic,card.id,rating,'flashcards'));
+    f.rated++;
+    if(f.index===f.ids.length-1)f.complete=true;
+    else f.index++;
+    f.flipped=false;rerender();
+    announce('Rated '+card.term+': '+rating+'. Progress saved locally.');
+    document.querySelector('#flashcard,button[data-action="flash-restart"]')?.focus({preventScroll:true});
+  }else if(action==='memory-flag'){
+    const id=button.dataset.id;
+    if(!topic.cards.some(c=>c.id===id))return;
+    saveMemory(topic,toggleCardFlag(memoryFor(topic),topic,id));
+    rerender();announce('Review flag updated for '+topic.cards.find(c=>c.id===id).term+'.');
+    document.querySelector('button[data-action="memory-flag"][data-id="'+id+'"],#review-filter')
+      ?.focus({preventScroll:true});
   }else if(action==='match-choice'){
     const side=button.dataset.side,id=button.dataset.id,m=state.match;
-    if(m.matched.includes(id))return;
+    const roundCards=matchRoundCards(topic,m.round,4);
+    if(!['term','definition'].includes(side)||!roundCards.some(c=>c.id===id)||m.matched.includes(id))return;
     m[side]=m[side]===id?null:id;
     if(m.term&&m.definition){
-      if(m.term===m.definition){m.matched.push(m.term);m.message='Correct pair connected.';announce(m.message);}
-      else {m.message='Not quite. Compare the defining details and try again.';announce(m.message);}
+      if(m.term===m.definition){
+        m.matched.push(m.term);
+        saveMemory(topic,gradeCard(memoryFor(topic),topic,m.term,'nearly','match-up',Date.now(),true));
+        m.message='Correct pair connected.';
+      }else{
+        saveMemory(topic,gradeCard(memoryFor(topic),topic,m.term,'again','match-up'));
+        m.message='Not quite. Compare the exact meaning of each term.';
+      }
+      announce(m.message);
       m.term=null;m.definition=null;
     }else m.message=side==='term'?'Term selected. Now choose its definition.':'Definition selected. Now choose its term.';
     rerender();
     const matching=document.querySelector('.match-choice[data-side="'+side+'"][data-id="'+id+'"]');
     (matching&&!matching.disabled?matching:document.querySelector('.match-choice:not(:disabled)'))?.focus({preventScroll:true});
+  }else if(action==='match-next'){
+    if(state.match.matched.length!==matchRoundCards(topic,state.match.round,4).length)return;
+    state.match={round:state.match.round+1,term:null,definition:null,matched:[],message:''};
+    rerender();announce('Next matching round opened.');
+    document.querySelector('.match-choice')?.focus({preventScroll:true});
   }else if(action==='match-reset'){
-    state.match={term:null,definition:null,matched:[],message:''};rerender();announce('Matching game restarted');
-    document.querySelector('button[data-action="match-reset"]')?.focus({preventScroll:true});
+    state.match={...state.match,term:null,definition:null,matched:[],message:''};
+    rerender();announce('This matching round restarted. Saved learning history was retained.');
+    document.querySelector('.match-choice')?.focus({preventScroll:true});
+  }else if(action==='cloze-mode'){
+    const mode=button.dataset.mode;
+    if(!['all','focus'].includes(mode))return;
+    state.cloze=clozeSession(topic,mode);rerender();
+    announce('Missing Words '+mode+' practice selected.');
+    document.querySelector('button[data-action="cloze-mode"][data-mode="'+mode+'"]')?.focus({preventScroll:true});
   }else if(action==='cloze-hint'){
-    const input=document.querySelector('#cloze-answer');state.cloze.value=input?.value||state.cloze.value;
+    if(state.cloze.checked)return;
     state.cloze.hint=!state.cloze.hint;rerender();
     document.querySelector('#cloze-answer')?.focus({preventScroll:true});
+  }else if(action==='cloze-reveal'){
+    if(state.cloze.checked)return;
+    const item=topic.clozes.find(c=>c.id===state.cloze.ids[state.cloze.index]);
+    if(!item)return;
+    saveMemory(topic,gradeCard(memoryFor(topic),topic,item.cardId,'again','missing-words'));
+    Object.assign(state.cloze,{checked:true,correct:false,resultKind:'revealed'});
+    rerender();announce('Answer revealed: '+item.answer+'. Marked for further review.');
+    document.querySelector('button[data-action="cloze-next"]')?.focus({preventScroll:true});
+  }else if(action==='cloze-next'){
+    if(!state.cloze.checked)return;
+    if(state.cloze.index===state.cloze.ids.length-1)state.cloze.complete=true;
+    else state.cloze.index++;
+    Object.assign(state.cloze,{value:'',hint:false,checked:false,correct:false,resultKind:null});
+    rerender();
+    document.querySelector('#cloze-answer,button[data-action="cloze-restart"]')?.focus({preventScroll:true});
+  }else if(action==='cloze-restart'){
+    state.cloze=clozeSession(topic,state.cloze.mode);
+    rerender();announce('Missing Words round restarted. Saved reviews retained.');
+    document.querySelector('#cloze-answer,button[data-action="cloze-mode"]')?.focus({preventScroll:true});
+  }else if(action==='recall-mode'){
+    const mode=button.dataset.mode;
+    if(!['all','focus','due'].includes(mode))return;
+    state.recall=recallSession(topic,mode);
+    rerender();announce('Speed Recall '+mode+' practice selected.');
+    document.querySelector('button[data-action="recall-mode"][data-mode="'+mode+'"]')?.focus({preventScroll:true});
+  }else if(action==='recall-reveal'){
+    if(state.recall.checked)return;
+    const card=topic.cards.find(c=>c.id===state.recall.ids[state.recall.index]);
+    if(!card)return;
+    saveMemory(topic,gradeCard(memoryFor(topic),topic,card.id,'again','speed-recall'));
+    Object.assign(state.recall,{checked:true,correct:false,resultKind:'revealed'});
+    rerender();announce('Term revealed: '+card.term+'. Added to priority practice.');
+    document.querySelector('button[data-action="recall-next"]')?.focus({preventScroll:true});
+  }else if(action==='recall-next'){
+    if(!state.recall.checked)return;
+    if(state.recall.index===state.recall.ids.length-1)state.recall.complete=true;
+    else state.recall.index++;
+    Object.assign(state.recall,{value:'',checked:false,correct:false,resultKind:null});
+    rerender();
+    document.querySelector('#recall-answer,button[data-action="recall-restart"]')?.focus({preventScroll:true});
+  }else if(action==='recall-restart'){
+    state.recall=recallSession(topic,state.recall.mode);
+    rerender();announce('Speed Recall restarted. Saved reviews retained.');
+    document.querySelector('#recall-answer,button[data-action="recall-mode"]')?.focus({preventScroll:true});
+  }else if(action==='review-definitions'){
+    state.review.showDefinitions=!state.review.showDefinitions;
+    rerender();
+    document.querySelector('button[data-action="review-definitions"]')?.focus({preventScroll:true});
+  }else if(action==='memory-ask-reset'){
+    state.review.confirmReset=true;rerender();
+    document.querySelector('button[data-action="memory-cancel-reset"]')?.focus({preventScroll:true});
+  }else if(action==='memory-cancel-reset'){
+    state.review.confirmReset=false;rerender();
+    document.querySelector('button[data-action="memory-ask-reset"]')?.focus({preventScroll:true});
+  }else if(action==='memory-confirm-reset'){
+    if(!state.review.confirmReset)return;
+    saveMemory(topic,emptyMemory());
+    resetMemoriseSessions(topic);
+    rerender();announce('Memorise progress reset for '+topic.title+' on this device.');
+    document.querySelector('#review-filter')?.focus({preventScroll:true});
   }else if(action==='understand-check'){
     const route=state.route,key=button.dataset.key,id=button.dataset.choice;
     const page=pagesFor(topic,route.chapterId,route.sectionId).find(p=>p.id===route.pageId);
@@ -681,13 +780,6 @@ app.addEventListener('click',ev=>{
     rerender();
     document.querySelector('button[data-action="reveal-problem"][data-key="'+key+'"][data-part="'+part+'"]')
       ?.focus({preventScroll:true});
-  }else if(action==='recall-next'){
-    state.recall={
-      index:(state.recall.index+1)%topic.cards.length,
-      value:'',checked:false,correct:false
-    };
-    rerender();
-    document.querySelector('#recall-answer')?.focus({preventScroll:true});
   }else if(action==='reveal'){
     const key=button.dataset.key;
     state.revealed[key]=!state.revealed[key];
