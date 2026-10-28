@@ -410,10 +410,13 @@ function renderMobileNavigation(topic,route){
 function renderBook(route,{animate=true}={}){
   const topic=TOPICS[route.topicId],chap=chapterFor(route.chapterId);
   const section=sectionsFor(topic,route.chapterId).find(item=>item.id===route.sectionId);
+  const pages=section?.pages||[];
   const bookmarkCurrent=state.bookmarks.has(route.canonical);
   const previous=state.route;
   const motionClass=animate&&previous
-    ? (previous.chapterId!==route.chapterId||previous.topicId!==route.topicId?'page-enter--turn':previous.sectionId!==route.sectionId?'page-enter--slide':'')
+    ? (previous.chapterId!==route.chapterId||previous.topicId!==route.topicId?'page-enter--turn':
+       previous.sectionId!==route.sectionId?'page-enter--slide':
+       previous.pageId!==route.pageId?'page-enter--turn':'')
     : '';
   const chapterHeader=route.chapterId==='home'?'':(
     '<div class="paper-head"><div class="crumbs">'+
@@ -424,22 +427,30 @@ function renderBook(route,{animate=true}={}){
         (bookmarkCurrent?'Remove bookmark':'Bookmark this page')+'">'+icon('bookmark')+
         '<span>'+(bookmarkCurrent?'Saved':'Bookmark')+'</span></button></div></div>'
   );
-  const pageIndex=route.chapterId==='home'||route.chapterId==='resources'?'':(
-    '<footer class="page-foot" aria-label="Page number"><span class="page-number">'+
-      (sectionsFor(topic,route.chapterId).findIndex(item=>item.id===route.sectionId)+1)+
-      ' / '+sectionsFor(topic,route.chapterId).length+'</span></footer>'
-  );
+  const pageNavigation=pages.length>1?
+    '<nav class="page-navigation" aria-label="Pages within '+e(section.label)+'">'+
+      (route.pageIndex>0?
+        '<a class="page-navigation__link" href="'+routeHref(topic.id,route.chapterId,route.sectionId,
+           route.pageIndex-1===0?undefined:pages[route.pageIndex-1].id)+'">'+icon('arrow-left')+' Previous page</a>':
+        '<span class="page-navigation__edge">First page</span>')+
+      '<span class="page-navigation__count">Page '+(route.pageIndex+1)+' of '+pages.length+'</span>'+
+      (route.pageIndex<pages.length-1?
+        '<a class="page-navigation__link" href="'+routeHref(topic.id,route.chapterId,route.sectionId,
+           pages[route.pageIndex+1].id)+'">Next page '+icon('arrow')+'</a>':
+        '<span class="page-navigation__edge">Last page</span>')+
+    '</nav>':'';
   app.innerHTML='<div class="book-wrap">'+
     renderMobileNavigation(topic,route)+
     '<div class="book">'+renderTabNav(topic,route)+
       '<div class="book-paper"><main class="book-page '+motionClass+'" data-paper="'+pagePaper(route)+'" id="book-page">'+
         chapterHeader+
         '<div class="page-body">'+renderPageContent(route,topic)+'</div>'+
-        pageIndex+
+        pageNavigation+
       '</main></div>'+renderSideTabs(topic,route)+'</div></div>';
   topicSwitch.value=topic.id;
   state.route=route;
-  document.title=(section?section.label+' · ':route.chapterId==='home'?'Contents · ':'')+topic.title+' | The Maths Notebook';
+  document.title=(section?section.label+(pages.length>1?' · Page '+(route.pageIndex+1):'')+' · ':
+    route.chapterId==='home'?'Contents · ':'')+topic.title+' | The Maths Notebook';
 }
 function navigate(){
   const hadPreviousPage=Boolean(state.route);
@@ -459,7 +470,7 @@ function navigate(){
     state.lastPage=next.canonical;
     safeStorage.put('last-page',next.canonical);
   }
-  const label=next.chapterId==='home'?'Contents':(chapterFor(next.chapterId)?.label+' — '+sectionsFor(TOPICS[next.topicId],next.chapterId).find(s=>s.id===next.sectionId)?.label);
+  const label=next.chapterId==='home'?'Contents':(chapterFor(next.chapterId)?.label+' — '+sectionsFor(TOPICS[next.topicId],next.chapterId).find(s=>s.id===next.sectionId)?.label+(pagesFor(TOPICS[next.topicId],next.chapterId,next.sectionId).length>1?' — page '+(next.pageIndex+1):''));
   announce(label+' page opened');
   if(hadPreviousPage){ // Move focus on chapter navigation, not on first page load.
     const title=document.querySelector('#page-title');
@@ -641,7 +652,7 @@ document.querySelector('#skip-page').addEventListener('click',()=>{
 });
 
 topicSwitch.addEventListener('change',()=>{
-  location.hash=topicSwitchHref(topicSwitch.value,state.route?.chapterId,state.route?.sectionId);
+  location.hash=topicSwitchHref(topicSwitch.value,state.route?.chapterId,state.route?.sectionId,state.route?.pageId);
 });
 function syncMotion(){
   document.body.classList.toggle('motion-off',state.motionOff);
