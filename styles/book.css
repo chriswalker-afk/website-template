@@ -1010,6 +1010,7 @@ svg { display: block; }
   .ps-selection button { flex:1 1 130px; }
 }
 @media(max-width:360px){
+  .topic-switcher select { font-size:11.5px; padding-left:9px; padding-right:21px; }
   .ps-selection button { flex:1 1 100%; }
   .ps-complete-counts { grid-template-columns:1fr; }
   .ps-complete-counts > div { display:flex; align-items:center; justify-content:space-between; gap:10px; }
