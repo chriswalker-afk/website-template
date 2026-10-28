@@ -58,34 +58,30 @@ function renderContents(topic){
       '<span class="chapter-marker" aria-hidden="true"></span>'+
       '<span class="entry-num" aria-hidden="true">'+String(index+1).padStart(2,'0')+'</span>'+
       '<span class="entry-text"><strong>'+e(chapter.label)+'</strong><small>'+e(chapter.description)+'</small></span>'+
-      icon('arrow')+
-    '</a></li>').join('');
+      icon('arrow')+'</a></li>').join('');
   const saved=[...state.bookmarks].map(href=>{
     const r=resolveRoute(href);
     if(r.canonical!==href||r.topicId!==topic.id||r.chapterId==='home')return '';
-    const section=sectionsFor(topic,r.chapterId).find(s=>s.id===r.sectionId);
+    const section=sectionsFor(topic,r.chapterId).find(item=>item.id===r.sectionId);
     return '<a href="'+href+'">'+e(chapterFor(r.chapterId)?.label||'Section')+' · '+e(section?.label||'Page')+'</a>';
   }).filter(Boolean).slice(0,4).join('');
   const last=state.lastPage?resolveRoute(state.lastPage):null;
   const continuation=last?.topicId===topic.id&&last.chapterId!=='home'
-    ?'<a class="action-button" href="'+last.canonical+'">Continue reading '+icon('arrow')+'</a>':'';
+    ?'<a class="action-button" href="'+last.canonical+'">Continue '+icon('arrow')+'</a>':'';
   return '<div class="contents-layout">'+
     '<section class="contents-cover" aria-label="Book cover for '+e(topic.title)+'">'+
-      '<span class="cover-mark">THE MATHEMATICS COLLECTION / '+e(topic.mark)+'</span>'+
-      '<p class="cover-title">'+e(topic.coverTitle)+'</p><span class="cover-rule"></span>'+
+      '<span class="cover-mark">'+e(topic.subject.toUpperCase())+'</span>'+
+      '<p class="cover-title">'+e(topic.title)+'</p><span class="cover-rule"></span>'+
       renderCoverArt()+
-      '<span class="cover-bottom"><span>INTERACTIVE FIELD NOTES</span><span>VOL. '+e(topic.mark)+'</span></span>'+
     '</section>'+
     '<section class="contents-right">'+
-      '<div class="contents-heading"><p class="page-eyebrow">WELCOME TO YOUR NOTEBOOK</p>'+
-        '<h1 id="page-title" tabindex="-1">Contents</h1>'+
-        '<p>'+e(topic.strapline)+'</p></div>'+
+      '<div class="contents-heading"><h1 id="page-title" tabindex="-1">Contents</h1>'+
+        '<p>Choose a chapter to begin, or return to a bookmarked page.</p></div>'+
       '<ol class="contents-list">'+chapterEntries+'</ol>'+
       '<div class="contents-extras">'+
-        '<aside class="contents-sticky">“'+e(topic.bookNote)+'”</aside>'+
-        '<div class="saved-markers"><strong>'+icon('bookmark')+' Your bookmarks</strong>'+
-          (saved||'<span>Bookmark a page to keep it here.</span>')+'</div>'+
-      '</div>'+ (continuation?'<div style="margin-top:19px">'+continuation+'</div>':'')+
+        '<div class="saved-markers"><strong>'+icon('bookmark')+' Bookmarks</strong>'+
+          (saved||'<span>No saved pages yet.</span>')+'</div>'+
+      '</div>'+(continuation?'<div style="margin-top:19px">'+continuation+'</div>':'')+
     '</section></div>';
 }
 function renderDots(){
@@ -100,68 +96,72 @@ function renderSmallGraph(){
     '<circle cx="142" cy="160" r="5" fill="#bb8a53"/>'+
     '<text x="151" y="178" font-family="Georgia" font-size="13" fill="#355c4c">(1, −3)</text></svg>';
 }
-function heading(label,title,subtitle){
-  return '<p class="page-eyebrow">'+e(label)+'</p><h1 class="page-title" id="page-title" tabindex="-1">'+e(title)+'</h1><p class="page-subtitle">'+e(subtitle)+'</p>';
+function heading(title,description){
+  return '<h1 class="page-title" id="page-title" tabindex="-1">'+e(title)+'</h1>'+
+    '<p class="page-subtitle">'+e(description)+'</p>';
 }
 function renderIntro(topic){
   const d=topic.intro;
-  return heading(d.eyebrow,d.title,'A gentle introduction before you begin experimenting.')+
-    '<div class="chapter-intro"><div class="lesson-copy"><p>'+e(d.body)+'</p>'+
-      '<div class="callout"><span class="callout__label">'+e(d.kicker)+'</span><p>'+e(d.question)+'</p></div></div>'+
-      '<figure class="math-figure"><figcaption class="math-figure__title">'+(topic.id==='sampling'?'THE WHOLE POPULATION':'THE SHAPE OF A CURVE')+'</figcaption>'+
-      (topic.id==='sampling'?renderDots():renderSmallGraph())+'</figure></div>'+
-      '<section class="lesson-small"><h2>'+e(d.exampleTitle)+'</h2><p>'+e(d.example)+'</p></section>'+
-      '<div class="prototype-notice">This introduction demonstrates the reading-page layout. Full topic explanations and interactive discovery modules belong to Pass 3.</div>';
+  return heading('The big idea',d.body)+
+    '<div class="chapter-intro">'+
+      '<aside class="callout" aria-label="Question to consider"><p>'+e(d.question)+'</p></aside>'+
+      '<figure class="math-figure">'+(topic.id==='sampling'?renderDots():renderSmallGraph())+'</figure>'+
+    '</div>'+
+    '<div class="lesson-small"><p><strong>Example:</strong> '+e(d.example)+'</p></div>';
 }
 function renderDetail(topic,section){
   const detail=topic.details?.[section];
-  if(!detail)return heading('PAGE PREVIEW','Page not authored','This section is not part of the Pass 1A demonstration.');
-  let html=heading('A PAGE TO THINK ON',detail.title,detail.intro);
+  if(!detail)return heading('Page unavailable','No activity has been authored for this page.');
+  const sectionLabel=sectionsFor(topic,state.route.chapterId).find(item=>item.id===section)?.label||'Activity';
+  let html=heading(sectionLabel,detail.intro);
   if(detail.panels){
-    html+='<div class="topic-panels">'+detail.panels.map(panel=>'<article class="topic-panel"><h2>'+e(panel.label)+'</h2><p>'+e(panel.text)+'</p></article>').join('')+'</div>';
+    html+='<div class="topic-panels">'+detail.panels.map(panel=>
+      '<article class="topic-panel"><strong class="topic-panel__title">'+e(panel.label)+'</strong>'+
+      '<p>'+e(panel.text)+'</p></article>').join('')+'</div>';
   }
   if(detail.question){
     const key=topic.id+':'+section,shown=Boolean(state.revealed[key]);
-    html+='<section class="hint-reveal" style="margin-top:30px"><h2>Try it yourself</h2><p>'+e(detail.question)+'</p>'+
-      '<button class="quiet-button" type="button" data-action="reveal" data-key="'+e(key)+'" aria-expanded="'+shown+'">'+(shown?'Hide worked idea':'Show a worked idea')+'</button>'+
+    html+='<section class="hint-reveal" aria-label="Practice question" style="margin-top:30px">'+
+      '<p>'+e(detail.question)+'</p>'+
+      '<button class="quiet-button" type="button" data-action="reveal" data-key="'+e(key)+'" aria-expanded="'+shown+'">'+
+      (shown?'Hide answer':'Show answer')+'</button>'+
       (shown?'<div class="reveal-answer">'+e(detail.answer)+'</div>':'')+
     '</section>';
   }
   return html;
 }
 function renderFlashcards(topic){
-  const f=state.flash,card=cardForIndex(topic,f.index);
-  const rating=f.ratings[card.id];
-  return heading('MEMORISE / INDEX CARDS','Make it stick.','Flip a card, recall the answer, then rate how confidently you knew it.')+
+  const f=state.flash,card=cardForIndex(topic,f.index),rating=f.ratings[card.id];
+  return heading('Flashcards','Recall the definition before flipping each card, then rate your recall.')+
     '<div class="memory-layout">'+
-      '<section><div class="flashcard-counter"><span>INDEX CARD '+String(f.index+1).padStart(2,'0')+' / '+String(topic.cards.length).padStart(2,'0')+'</span><span>'+(rating?'Last rating: '+e(rating):'Think before you flip')+'</span></div>'+
-      '<div class="flashcard-stage"><button class="flashcard'+(f.flipped?' is-flipped':'')+'" type="button" id="flashcard" data-action="flash-flip" '+
-        'aria-label="'+(f.flipped?'Show front of '+e(card.term):'Reveal answer for '+e(card.term))+'" aria-pressed="'+f.flipped+'">'+
+      '<section><div class="flashcard-counter"><span>Card '+(f.index+1)+' of '+topic.cards.length+'</span>'+
+        (rating?'<span>Last rated: '+e(rating)+'</span>':'')+'</div>'+
+      '<div class="flashcard-stage"><button class="flashcard'+(f.flipped?' is-flipped':'')+
+        '" type="button" id="flashcard" data-action="flash-flip" '+
+        'aria-label="'+(f.flipped?'Show front of '+e(card.term):'Reveal answer for '+e(card.term))+
+        '" aria-pressed="'+f.flipped+'">'+
         '<span class="flashcard__inner">'+
           '<span class="flashcard__face flashcard__face--front" aria-hidden="'+f.flipped+'">'+
-            '<span class="flashcard__eyebrow">FRONT / RETRIEVE</span><span class="flashcard__main">'+e(card.term)+'</span>'+
-            '<span class="flashcard__bottom">SELECT THE CARD TO REVEAL</span>'+
+            '<span class="flashcard__main">'+e(card.term)+'</span>'+
           '</span>'+
           '<span class="flashcard__face flashcard__face--back" aria-hidden="'+!f.flipped+'">'+
-            '<span class="flashcard__eyebrow">BACK / CHECK</span><span class="flashcard__main">'+e(card.definition)+'</span>'+
-            '<span class="flashcard__bottom">HOW WELL DID YOU REMEMBER?</span>'+
+            '<span class="flashcard__main">'+e(card.definition)+'</span>'+
           '</span>'+
-        '</span>'+
-      '</button></div>'+
+        '</span></button></div>'+
       '<div class="flashcard-controls">'+
         '<button class="nav-button" type="button" data-action="flash-prev" aria-label="Previous card">'+icon('arrow-left')+' Previous</button>'+
         '<button class="nav-button" type="button" data-action="flash-next">Next '+icon('arrow')+'</button>'+
         '<button class="quiet-button" type="button" data-action="flash-restart">'+icon('refresh')+' Restart</button>'+
       '</div>'+
-      '<div class="self-ratings" id="ratings"'+(f.flipped?'':' hidden')+'><small>How did you do?</small>'+
-        ['Again','Nearly','Know'].map(value=>'<button type="button" class="rating" data-action="flash-rate" data-rating="'+value+'">'+value+'</button>').join('')+'</div>'+
-    '</section>'+
-    '<aside class="memory-sidebar"><p class="preview-label">'+icon('layers')+' THE CARD BOX</p><h2>A little, often.</h2>'+
-      '<p>Say the answer aloud before turning the card. Cards rated “Again” or “Nearly” can be revisited in the full Memorise engine.</p>'+
-      '<div class="stat"><span>Cards in this deck</span><strong>'+topic.cards.length+'</strong></div>'+
-      '<div class="stat"><span>Rated in this preview</span><strong>'+Object.keys(f.ratings).length+'</strong></div>'+
+      '<div class="self-ratings" id="ratings" role="group" aria-label="Rate your recall"'+(f.flipped?'':' hidden')+'>'+
+        '<small>Rate your recall:</small>'+
+        ['Again','Nearly','Know'].map(value=>'<button type="button" class="rating" data-action="flash-rate" data-rating="'+value+'">'+value+'</button>').join('')+
+      '</div></section>'+
+    '<aside class="memory-sidebar" aria-label="Deck progress">'+
+      '<div class="stat"><span>Cards in deck</span><strong>'+topic.cards.length+'</strong></div>'+
+      '<div class="stat"><span>Cards rated</span><strong>'+Object.keys(f.ratings).length+'</strong></div>'+
     '</aside></div>'+
-    '<details class="deck-browser"><summary>Browse all '+topic.cards.length+' cards and definitions</summary>'+
+    '<details class="deck-browser"><summary>Browse all '+topic.cards.length+' cards</summary>'+
       '<ol>'+topic.cards.map(c=>'<li><strong>'+e(c.term)+'</strong><span>'+e(c.definition)+'</span></li>').join('')+'</ol></details>';
 }
 function renderMatch(topic){
@@ -169,20 +169,21 @@ function renderMatch(topic){
   const complete=game.matched.length===items.length;
   const button=(card,side,label)=>'<button type="button" class="match-choice" data-action="match-choice" data-side="'+side+'" data-id="'+e(card.id)+'" '+
     'aria-pressed="'+(game[side]===card.id)+'" '+(game.matched.includes(card.id)?'disabled':'')+'>'+e(label)+'</button>';
-  return heading('MEMORISE / LANGUAGE GAMES','Match the meaning.','Choose a mathematical term, then find the definition that belongs to it.')+
+  return heading('Match Up','Choose a term, then select its matching definition.')+
     '<div class="match-columns">'+
-      '<div class="match-column"><h2>01 / Terms</h2>'+items.map(card=>button(card,'term',card.term)).join('')+'</div>'+
-      '<div class="match-column"><h2>02 / Definitions</h2>'+defOrder.map(card=>button(card,'definition',card.definition)).join('')+'</div>'+
+      '<section class="match-column" aria-label="Terms"><p class="match-column__label">Terms</p>'+
+        items.map(card=>button(card,'term',card.term)).join('')+'</section>'+
+      '<section class="match-column" aria-label="Definitions"><p class="match-column__label">Definitions</p>'+
+        defOrder.map(card=>button(card,'definition',card.definition)).join('')+'</section>'+
     '</div>'+
     '<div class="game-feedback" id="match-feedback" role="status">'+
-       e(complete?'All three pairs found. Excellent retrieval!':game.message||(game.matched.length+' of '+items.length+' pairs connected.'))+
-    '</div><button type="button" class="quiet-button" data-action="match-reset">'+icon('refresh')+' Start again</button>'+
-    '<div class="prototype-notice">Working interaction preview: this demonstrates the language-game page, not the final content bank or progression system.</div>';
+       e(complete?'All '+items.length+' pairs matched.':game.message||(game.matched.length+' of '+items.length+' pairs matched.'))+
+    '</div><button type="button" class="quiet-button" data-action="match-reset">'+icon('refresh')+' Start again</button>';
 }
 function renderCloze(topic){
   const game=state.cloze,c=topic.cloze;
-  return heading('MEMORISE / LANGUAGE GAMES','Find the missing words.','Retrieve the exact term from a sentence rather than picking from a list.')+
-    '<section class="cloze-area"><p class="preview-label">'+icon('pen')+' A SMALL RETRIEVAL CHALLENGE</p>'+
+  return heading('Missing Words','Type the missing mathematical term, then check your answer.')+
+    '<section class="cloze-area">'+
       '<form id="cloze-form"><p class="cloze-line">'+e(c.before)+
         '<label class="sr-only" for="cloze-answer">Missing mathematical word or phrase</label>'+
         '<input class="cloze-input" id="cloze-answer" name="answer" autocomplete="off" spellcheck="false" value="'+e(game.value)+'" aria-describedby="cloze-feedback">'+
@@ -191,8 +192,8 @@ function renderCloze(topic){
       '<button class="quiet-button" type="button" data-action="cloze-hint" aria-expanded="'+game.hint+'">'+(game.hint?'Hide hint':'Give me a hint')+'</button></div></form>'+
       (game.hint?'<p class="reveal-answer">Hint: '+e(c.hint)+'</p>':'')+
       '<div id="cloze-feedback" class="game-feedback" role="status" data-state="'+(game.checked?(game.correct?'correct':'incorrect'):'')+'">'+
-        (game.checked?(game.correct?'Correct — the precise term matters.':'Not yet. Look for the specific mathematical term and try again.'):'Type your answer and select Check answer.')+
-      '</div></section>';
+        (game.checked?(game.correct?'Correct.':'Check the term and try again.'):'')+'</div>'+
+    '</section>';
 }
 function renderGraphSvg(){
   const {magnitude,h,k,sign}=state.graph, a=magnitude*sign;
