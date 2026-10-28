@@ -84,7 +84,7 @@ svg { display: block; }
 .page-eyebrow { text-transform: uppercase; color: #6d8778; font-size: 10px; letter-spacing: .22em; font-weight: 800; margin: 0 0 8px; }
 .page-title { font: 400 clamp(31px, 3.6vw, 48px)/1.13 var(--font-display); letter-spacing: -.038em; margin: 0 0 10px; max-width: 780px; }
 .page-title:focus { outline: none; }
-.page-title:focus-visible { outline: 2px solid #527f6b; outline-offset: 5px; border-radius: 2px; }
+.page-title:focus-visible { outline: none; box-shadow: inset 3px 0 #527f6b; padding-left: 8px; margin-left: -8px; }
 .page-subtitle { margin: 0; color: #66756e; font-size: clamp(14px, 1.2vw, 17px); line-height: 1.65; max-width: 720px; }
 .page-foot { border-top: 1px solid #dad8cb; padding-top: 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 9px; font-size: 10px; font-weight: 720; letter-spacing: .12em; text-transform: uppercase; color: #7c8277; margin-top: 48px; }
 .page-foot .page-number { font-family: var(--font-display); letter-spacing: .05em; font-size: 18px; color: #3b5e4f; }
