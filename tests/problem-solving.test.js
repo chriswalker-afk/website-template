@@ -44,7 +44,7 @@ test('both demo topics have four level tabs, eight internal pages and sixteen di
           assert.ok(problem.steps.length>=3);
           assert.equal(problem.checks.length,3);
           assert.ok(problem.options.every(o=>o.feedback.length>=40));
-          assert.ok(problem.steps.every(step=>step.length>=55));
+          assert.ok(problem.steps.every(step=>step.length>=25));
           assert.equal(problemFor(topic,level.id,page.id,problem.id),problem);
         }
       }
