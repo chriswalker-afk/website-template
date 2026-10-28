@@ -601,7 +601,98 @@ app.addEventListener('click',ev=>{
   const button=ev.target.closest('button[data-action]');
   if(!button)return;
   const action=button.dataset.action,topic=TOPICS[state.route.topicId];
-  if(action==='fluency-hint'){
+  if(action==='reasoning-hint'){
+    const session=reasoningSession(),current=reasoningEntry(session);
+    if(!current||session.complete||current.response.rating)return;
+    const old=current.response;
+    session.entries[current.task.id]={...old,hint:!old.hint,usedHint:Boolean(old.usedHint||!old.hint)};
+    rerender();
+    document.querySelector('button[data-action="reasoning-hint"]')?.focus({preventScroll:true});
+    announce(session.entries[current.task.id].hint?'A helpful reasoning prompt is shown.':'Nudge hidden.');
+  }else if(action==='reasoning-model'){
+    const session=reasoningSession(),current=reasoningEntry(session);
+    if(!current||session.complete||current.response.rating)return;
+    const old=current.response,show=!old.model;
+    session.entries[current.task.id]={...old,model:show,
+      modelFirst:Boolean(old.modelFirst||(show&&old.draft.trim().length<20))};
+    rerender();
+    document.querySelector('button[data-action="reasoning-model"]')?.focus({preventScroll:true});
+    announce(show?'Model argument and self-review criteria shown.':'Model argument hidden.');
+  }else if(action==='reasoning-rate'){
+    const session=reasoningSession(),current=reasoningEntry(session),
+      rating=button.dataset.rating;
+    if(!current||session.complete||current.response.rating||!current.response.model||
+      !REASONING_RATINGS.includes(rating))return;
+    const entry=current.response,review={
+      rating,checked:entry.checks.filter(Boolean).length,
+      attempted:entry.draft.trim().length>=20,
+      assisted:Boolean(entry.usedHint||entry.modelFirst),
+      modelFirst:Boolean(entry.modelFirst)
+    };
+    try{
+      saveReasoningProgress(topic,reviewReasoning(reasoningProgressFor(topic),
+        topic.id,state.route.sectionId,current.task.id,review));
+    }catch(error){
+      announce(error instanceof Error?error.message:'Cannot save this self-review.');
+      return;
+    }
+    session.entries[current.task.id]={...entry,rating};
+    rerender();
+    document.querySelector('button[data-action="reasoning-next"]')?.focus({preventScroll:true});
+    announce('Self-review saved as '+rating+'. This is not an automatic grade.');
+  }else if(action==='reasoning-next'){
+    const session=reasoningSession(),current=reasoningEntry(session);
+    if(!current||!current.response.rating||session.complete)return;
+    if(session.index===session.ids.length-1){
+      session.complete=true;
+      rerender();
+      announce('You have completed the '+state.route.sectionId+' review set.');
+      document.querySelector('.reasoning-complete__lead')?.focus({preventScroll:true});
+    }else{
+      session.index++;
+      rerender();
+      document.querySelector('#reasoning-answer')?.focus({preventScroll:true});
+      announce('Next reasoning prompt.');
+    }
+  }else if(action==='reasoning-mode'){
+    const session=reasoningSession(),selection=button.dataset.mode;
+    if(!session||!['all','focus'].includes(selection)||session.selection===selection)return;
+    const current=reasoningEntry(session);
+    if(current&&!current.response.rating&&
+      (current.response.draft.trim()||current.response.model)){
+      session.confirmSwitch=true;
+      session.pendingSelection=selection;
+      rerender();
+      document.querySelector('button[data-action="reasoning-cancel-switch"]')?.focus({preventScroll:true});
+      announce('Confirm replacing your unfinished reasoning prompt.');
+    }else{
+      reasoningSelect(selection);rerender();
+      document.querySelector('button[data-action="reasoning-mode"][data-mode="'+selection+'"]')
+        ?.focus({preventScroll:true});
+      announce('Reasoning prompts changed to '+(selection==='focus'?'needs another look':'all')+'.');
+    }
+  }else if(action==='reasoning-cancel-switch'){
+    const session=reasoningSession();
+    if(!session)return;
+    session.confirmSwitch=false;session.pendingSelection=null;
+    rerender();announce('Your unfinished argument was preserved.');
+    document.querySelector('#reasoning-answer')?.focus({preventScroll:true});
+  }else if(action==='reasoning-confirm-switch'){
+    const session=reasoningSession();
+    if(!session?.confirmSwitch||!['all','focus'].includes(session.pendingSelection))return;
+    const choice=session.pendingSelection;
+    reasoningSelect(choice);rerender();
+    announce('Reasoning selection changed.');
+    document.querySelector('button[data-action="reasoning-mode"][data-mode="'+choice+'"]')
+      ?.focus({preventScroll:true});
+  }else if(action==='reasoning-repeat'){
+    const session=reasoningSession(),selection=button.dataset.mode;
+    if(!session?.complete||!['all','focus'].includes(selection))return;
+    reasoningSelect(selection);rerender();
+    announce(selection==='focus'?'Reviewing selected weaker arguments.':'Starting the full argument set again.');
+    document.querySelector('#reasoning-answer,button[data-action="reasoning-mode"]')
+      ?.focus({preventScroll:true});
+  }else if(action==='fluency-hint'){
     const session=fluencySession(),current=fluencyAnswer(session);
     if(!current||session.complete)return;
     const a=current.response;
