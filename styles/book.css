@@ -1265,4 +1265,11 @@ body.motion-off, body.motion-off * { scroll-behavior: auto !important; animation
  .mdl-complete-stats{grid-template-columns:1fr;}
  .mdl-complete-stats>div{display:flex;align-items:center;justify-content:space-between;}
 }
+/* On phones, use a two-by-two stage strip so Formulate/Calculate/Interpret/Evaluate remain readable. */
+@media(max-width:420px){
+  .mdl-phases { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .mdl-phases button { min-height:48px; padding:8px 10px; font-size:12px;
+    flex-direction:row; gap:7px; justify-content:flex-start; }
+}
+
 /* END MODELLING QUALITY UPGRADE */
