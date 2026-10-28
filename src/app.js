@@ -220,21 +220,20 @@ function renderGraphSvg(){
     '<g clip-path="url(#graph-clip)"><path d="'+path+'" fill="none" stroke="#2d755f" stroke-width="4" stroke-linecap="round"/>'+
     '<line x1="'+vertexX+'" y1="34" x2="'+vertexX+'" y2="386" stroke="#c69b64" stroke-dasharray="5 6" stroke-width="1.5"/>'+
     '<circle cx="'+vertexX+'" cy="'+vertexY+'" r="5.7" fill="#d5a665" stroke="#fff" stroke-width="2"/></g>'+
-    '<text x="605" y="407" font-size="11" text-anchor="end" fill="#71877a">LIVE GRAPH · COMPLETED-SQUARE FORM</text>'+
+    ''+
     '</svg>';
 }
 function renderGraphLab(topic,section){
   const isModel=section==='model-lab';
-  const subtitle=isModel
-    ?'Imagine a curved arch or a fountain jet. Change the parameters to explore how one mathematical model might describe its shape.'
-    :'Move the controls and watch the parabola change, one property at a time.';
+  const description=isModel
+    ?'Adjust the parameters and consider whether the curve could model a real arch or water jet.'
+    :'Adjust the parameters to see how the graph changes. The dotted line is its axis of symmetry.';
   const g=state.graph;
-  return heading(isModel?'MODELLING / THE CURVE':'FLUENCY / GRAPH EXPLORER',isModel?'Shape a real-world curve.':'Turn the page into a graph.',subtitle)+
+  return heading(isModel?'Model a curve':'Graph explorer',description)+
     '<div class="math-lab">'+
-      '<div class="graph-card"><div class="graph-topline"><h2>Graph paper</h2><span>INTERACTIVE STUDY</span></div>'+
-      renderGraphSvg()+'</div>'+
-      '<div class="graph-controls"><h2>The controls</h2><p>Adjust the parameters and look for what stays the same. The dotted line is the axis of symmetry.</p>'+
-        '<div class="equation-card"><span>YOUR FUNCTION</span><strong id="equation-display">'+e(mathCurveLabel())+'</strong></div>'+
+      '<div class="graph-card">'+renderGraphSvg()+'</div>'+
+      '<div class="graph-controls">'+
+        '<div class="equation-card"><span>Function</span><strong id="equation-display">'+e(mathCurveLabel())+'</strong></div>'+
         '<label class="graph-control"><span class="graph-control__label"><span>Steepness |a|</span><output id="out-a">'+displayNumber(g.magnitude)+'</output></span>'+
           '<input type="range" data-graph="magnitude" min="0.5" max="2.5" step="0.5" value="'+g.magnitude+'"></label>'+
         '<label class="graph-control"><span class="graph-control__label"><span>Horizontal shift h</span><output id="out-h">'+g.h+'</output></span>'+
@@ -244,17 +243,21 @@ function renderGraphLab(topic,section){
         '<button class="quiet-button" type="button" data-action="graph-reflect">'+icon('refresh')+' Flip opening direction</button>'+
         '<div class="vertex-note" style="margin-top:17px">Turning point <strong id="vertex-display">('+g.h+', '+g.k+')</strong></div>'+
       '</div></div>'+
-      '<div class="callout"><span class="callout__label">NOTICE & EXPLAIN</span><p>'+(isModel?'Which assumptions would you need before using this curve to represent a real arch?':'What happens to the turning point when only the value of a changes?')+'</p></div>';
+      '<div class="callout" aria-label="Question to consider"><p>'+
+      (isModel?'What assumptions would you need before using this curve to represent a real arch?':
+       'What happens to the turning point when only the value of a changes?')+'</p></div>';
 }
 function renderGames(topic){
   const games=[
-    {icon:'clock',title:'Sprint',detail:'A short round of mixed questions, with a calm untimed alternative.'},
-    {icon:'puzzle',title:'Puzzle Quest',detail:'A sequence of clues and challenges that open the next part of the book.'},
-    {icon:'grid',title:topic.id==='quadratics'?'Curve Quest':'Sort & Discover',detail:topic.id==='quadratics'?'Playful graph transformations and curve discoveries.':'A visual challenge built around choosing and evaluating methods.'}
+    {icon:'clock',title:'Sprint',detail:'Answer as many questions as possible in a set time, or play untimed.'},
+    {icon:'puzzle',title:'Puzzle Quest',detail:'Solve a sequence of problems to unlock new challenges.'},
+    {icon:'grid',title:topic.id==='quadratics'?'Curve Quest':'Sort & Discover',
+      detail:topic.id==='quadratics'?'Explore quadratic graph transformations.':'Compare and classify sampling methods.'}
   ];
-  return heading('GAMES / THE CHALLENGE SHELF','Play with purpose.','A distinct place for longer games and mixed-topic challenges, not just quick vocabulary retrieval.')+
-    '<div class="games-shelf">'+games.map((game,i)=>'<article class="shelf-game">'+icon(game.icon)+'<h2>'+e(game.title)+'</h2><p>'+e(game.detail)+'</p><span class="shelf-game__status">'+String(i+1).padStart(2,'0')+' · PASS 4 GAME MODULE</span></article>').join('')+'</div>'+
-    '<div class="prototype-notice"><strong>Design prototype only:</strong> these are deliberately non-interactive previews. Gameplay, awards and challenge progression are scheduled for Pass 4.</div>';
+  return heading('Game library','Preview the planned challenges. These games are not playable yet.')+
+    '<div class="games-shelf">'+games.map(game=>
+      '<article class="shelf-game">'+icon(game.icon)+'<h2>'+e(game.title)+'</h2>'+
+      '<p>'+e(game.detail)+'</p></article>').join('')+'</div>';
 }
 function renderPageContent(route,topic){
   const {chapterId,sectionId}=route;
@@ -277,11 +280,10 @@ function renderSideTabs(topic,route){
   if(route.chapterId==='home')return '';
   const chapter=chapterFor(route.chapterId),sections=sectionsFor(topic,route.chapterId);
   return '<nav class="side-tabs" aria-label="'+e(chapter.label)+' subsections">'+
-    '<div class="side-tabs__eyebrow">PAGE INDEX</div>'+
     sections.map((section,index)=>'<a class="side-tab" href="'+routeHref(topic.id,route.chapterId,section.id)+'" '+
       'style="--side-color:'+chapter.color+'"'+(route.sectionId===section.id?' aria-current="page"':'')+'>'+
       '<span class="index-number" aria-hidden="true">'+(index+1)+'</span><span>'+e(section.label)+'</span></a>').join('')+
-    '<p class="side-tabs__note">Find a page. Follow a thought.</p></nav>';
+    '</nav>';
 }
 function renderMobileNavigation(topic,route){
   const currentSection=sectionsFor(topic,route.chapterId);
@@ -298,30 +300,33 @@ function renderMobileNavigation(topic,route){
 }
 function renderBook(route,{animate=true}={}){
   const topic=TOPICS[route.topicId],chap=chapterFor(route.chapterId);
-  const section=sectionsFor(topic,route.chapterId).find(s=>s.id===route.sectionId);
+  const section=sectionsFor(topic,route.chapterId).find(item=>item.id===route.sectionId);
   const bookmarkCurrent=state.bookmarks.has(route.canonical);
   const previous=state.route;
   const motionClass=animate&&previous
     ? (previous.chapterId!==route.chapterId||previous.topicId!==route.topicId?'page-enter--turn':previous.sectionId!==route.sectionId?'page-enter--slide':'')
     : '';
-  const crumbs='<a href="'+routeHref(topic.id)+'">Contents</a>'+
-    (chap?'<span class="crumb-separator">/</span><span>'+e(chap.label)+'</span>':'')+
-    (section?'<span class="crumb-separator">/</span><span>'+e(section.label)+'</span>':'');
+  const chapterHeader=route.chapterId==='home'?'':(
+    '<div class="paper-head"><div class="crumbs">'+
+      '<a href="'+routeHref(topic.id)+'">Contents</a>'+
+      '<span class="crumb-separator">/</span><span>'+e(chap.label)+'</span></div>'+
+      '<div class="page-tools"><button type="button" class="bookmark-button" data-action="bookmark"'+
+        ' aria-pressed="'+bookmarkCurrent+'" aria-label="'+
+        (bookmarkCurrent?'Remove bookmark':'Bookmark this page')+'">'+icon('bookmark')+
+        '<span>'+(bookmarkCurrent?'Saved':'Bookmark')+'</span></button></div></div>'
+  );
+  const pageIndex=route.chapterId==='home'?'':(
+    '<footer class="page-foot" aria-label="Page number"><span class="page-number">'+
+      (sectionsFor(topic,route.chapterId).findIndex(item=>item.id===route.sectionId)+1)+
+      ' / '+sectionsFor(topic,route.chapterId).length+'</span></footer>'
+  );
   app.innerHTML='<div class="book-wrap">'+
-    '<div class="book-kicker"><span>THE MATHS NOTEBOOK <span class="mobile-book-label">/ '+e(topic.title)+'</span></span><span>'+e(topic.subject)+' · VOL. '+e(topic.mark)+'</span></div>'+
     renderMobileNavigation(topic,route)+
-    '<div class="book">'+
-      renderTabNav(topic,route)+
+    '<div class="book">'+renderTabNav(topic,route)+
       '<div class="book-paper"><main class="book-page '+motionClass+'" data-paper="'+pagePaper(route)+'" id="book-page">'+
-        '<div class="paper-head"><div class="crumbs">'+crumbs+'</div>'+
-          '<div class="page-tools">'+(route.chapterId!=='home'
-            ?'<button type="button" class="bookmark-button" data-action="bookmark" aria-pressed="'+bookmarkCurrent+'" aria-label="'+
-              (bookmarkCurrent?'Remove bookmark':'Bookmark this page')+'">'+icon('bookmark')+'<span>'+(bookmarkCurrent?'Saved':'Bookmark')+'</span></button>'
-            :'')+'</div></div>'+
+        chapterHeader+
         '<div class="page-body">'+renderPageContent(route,topic)+'</div>'+
-        '<footer class="page-foot"><span>THE MATHS NOTEBOOK · '+e(topic.title)+'</span><span class="page-number">'+
-          (route.chapterId==='home'?'Contents':e(chap.label)+' / '+(sectionsFor(topic,route.chapterId).findIndex(s=>s.id===route.sectionId)+1))+
-        '</span></footer>'+
+        pageIndex+
       '</main></div>'+renderSideTabs(topic,route)+'</div></div>';
   topicSwitch.value=topic.id;
   state.route=route;
