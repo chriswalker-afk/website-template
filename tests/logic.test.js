@@ -16,7 +16,7 @@ test('top-level chapters remain qualification-neutral and fully spelled out',()=
   }
 });
 test('configurable modes hide unsupported chapters without dead tabs',()=>{
-  assert.equal(chaptersFor(TOPICS.sampling).length,6);
+  assert.equal(chaptersFor(TOPICS.sampling).length,7);
   assert.equal(chaptersFor(TOPICS.sampling).some(ch=>ch.id==='modelling'),false);
   assert.equal(chaptersFor(TOPICS.quadratics).length,7);
   for(const chapter of ['fluency','reasoning','problemSolving','modelling']){
@@ -47,8 +47,10 @@ test('practice and game modes only contain the intended activity types',()=>{
       assert.ok(section.pages.length>=2);
       assert.ok(section.pages.every(p=>p.type==='problem-solving'&&p.tasks.length>=2));
     }
-    for(const section of sectionsFor(topic,'modelling'))
-      assert.ok(section.pages.every(page=>page.type==='questions'));
+    for(const section of sectionsFor(topic,'modelling')){
+      assert.equal(section.pages.length,2);
+      assert.ok(section.pages.every(page=>page.type==='modelling'&&page.tasks.length===2));
+    }
     for(const section of sectionsFor(topic,'games')){
       assert.equal(section.pages.length,1);
       assert.equal(section.pages[0].type,'game');
@@ -87,7 +89,8 @@ test('topic switching preserves valid positions and falls back when a mode is un
     '#/quadratics/memorise/match-up');
   assert.equal(topicSwitchHref('sampling','understand','big-idea','representativeness'),
     '#/sampling/understand/big-idea/representativeness');
-  assert.equal(topicSwitchHref('sampling','modelling','level-3'),'#/sampling/home');
+  assert.equal(topicSwitchHref('sampling','modelling','level-3'),
+    '#/sampling/modelling/level-3');
   assert.equal(topicSwitchHref('sampling','problemSolving','level-3'),
     '#/sampling/problemSolving/level-3');
 });
