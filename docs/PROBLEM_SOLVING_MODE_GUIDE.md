@@ -33,7 +33,7 @@ Each level has **two distinct book pages**, each page containing **two separate,
 - **Retry** is available after viewing all solution steps, even without an initial written attempt. Pupils can learn from a complete model without pretending to have solved the problem.
 - **Solved with support** requires a sufficiently complete written strategy and calculations (minimum length to discourage accidental empty submissions) and all three self-check criteria selected.
 - **Solved independently** additionally requires that no strategy-feedback or hint was requested and that the worked solution was not opened before a written attempt. It remains a self-report; text length is not evidence of mathematical correctness.
-- Assistance is recorded even if the student subsequently closes the strategy panel or navigates back to the question.
+- Opening the possible-strategies panel counts as assistance, since reading its routes may influence the solution even without choosing an option. Assistance remains recorded if the panel is subsequently closed or the student navigates back to the question.
 - An advanced problem does not become a Fluency problem simply because a student uses a known technique. It should require choosing the technique, linking conditions or checking a nontrivial constraint.
 
 ## Engineering and authoring contract
