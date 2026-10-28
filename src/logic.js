@@ -1,11 +1,16 @@
 import {CHAPTER_LIBRARY,TOPICS,DEFAULT_TOPIC} from './topics.js';
+import {supportsWorksheets} from './worksheet-generator.js';
+
 
 export const CHAPTER_BY_ID = Object.fromEntries(CHAPTER_LIBRARY.map(x=>[x.id,x]));
 export const KNOWN_CHAPTER_IDS = CHAPTER_LIBRARY.map(x=>x.id);
+const RESOURCE_CHAPTER={id:'resources',label:'Resources'};
+const RESOURCE_SECTIONS=[{id:'worksheet-generator',label:'Worksheet Generator'}];
 const isSlug=value=>/^[a-z][a-z0-9-]*$/.test(value);
 export const chaptersFor=topic=>CHAPTER_LIBRARY.filter(chapter=>Array.isArray(topic?.chapters?.[chapter.id])&&topic.chapters[chapter.id].length>0);
-export const sectionsFor=(topic,chapter)=>topic?.chapters?.[chapter]||[];
-export const chapterFor=id=>CHAPTER_BY_ID[id]??null;
+export const sectionsFor=(topic,chapter)=>chapter==='resources'?
+  (supportsWorksheets(topic?.id)?RESOURCE_SECTIONS:[]):(topic?.chapters?.[chapter]||[]);
+export const chapterFor=id=>CHAPTER_BY_ID[id]??(id==='resources'?RESOURCE_CHAPTER:null);
 export function routeHref(topicId,chapterId='home',sectionId){
   return '#/'+[topicId,chapterId,...(sectionId?[sectionId]:[])].map(encodeURIComponent).join('/');
 }
@@ -14,14 +19,16 @@ export function resolveRoute(hash){
   const [requestedTopic,requestedChapter,requestedSection]=path;
   const topic=TOPICS[requestedTopic]||TOPICS[DEFAULT_TOPIC];
   const chapters=chaptersFor(topic);
-  const chapterId=chapters.some(x=>x.id===requestedChapter)?requestedChapter:'home';
+  const chapterId=chapters.some(x=>x.id===requestedChapter)||
+    (requestedChapter==='resources'&&supportsWorksheets(topic.id))?requestedChapter:'home';
   const sections=sectionsFor(topic,chapterId);
   const sectionId=chapterId==='home'?null:(sections.some(x=>x.id===requestedSection)?requestedSection:sections[0].id);
   return {topicId:topic.id,chapterId,sectionId,canonical:routeHref(topic.id,chapterId,sectionId)};
 }
 export function topicSwitchHref(targetTopic,currentChapter='home',currentSection=null){
   const topic=TOPICS[targetTopic]||TOPICS[DEFAULT_TOPIC];
-  const chapter=chaptersFor(topic).some(c=>c.id===currentChapter)?currentChapter:'home';
+  const chapter=chaptersFor(topic).some(c=>c.id===currentChapter)||
+    (currentChapter==='resources'&&supportsWorksheets(topic.id))?currentChapter:'home';
   const section=sectionsFor(topic,chapter).find(s=>s.id===currentSection)?.id||sectionsFor(topic,chapter)[0]?.id;
   return routeHref(topic.id,chapter,chapter==='home'?undefined:section);
 }
