@@ -565,7 +565,7 @@ app.addEventListener('click',ev=>{
     const session=fluencySession(),current=fluencyAnswer(session);
     if(!current||session.complete)return;
     const a=current.response;
-    session.answers[current.question.id]={...a,hint:!a.hint};
+    session.answers[current.question.id]={...a,hint:!a.hint,usedHint:Boolean(a.usedHint||!a.hint)};
     rerender();
     document.querySelector('button[data-action="fluency-hint"]')?.focus({preventScroll:true});
     announce(session.answers[current.question.id].hint?'Hint displayed.':'Hint hidden.');
