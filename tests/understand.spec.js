@@ -14,6 +14,7 @@ test('Big idea concept checks give specific feedback without duplicate headings'
     await expect(page.locator('.concept-choice--selected')).toHaveCount(1);
     await page.locator('button[data-action="understand-check"][data-choice="'+correct+'"]').click();
     await expect(page.locator('.concept-check__feedback')).toContainText('Correct.');
+    await expect(page.locator('.concept-check__feedback')).not.toContainText('Correct. Correct.');
     await expect(page.locator('.concept-check__feedback')).toHaveClass(/is-correct/);
     await page.getByRole('link',{name:'Next page'}).click();
     await expect(page.getByRole('heading',{name:'The big idea'})).toBeVisible();
@@ -141,6 +142,13 @@ for(const width of [320,390,768,1024,1440]){
       await expect(page.locator('#page-title')).toBeVisible();
       if(path.endsWith('worked-examples')){
         await page.getByRole('button',{name:'Compare with model solution'}).click();
+      }
+      if(width<=390&&path.endsWith('visual-explanations')){
+        const table=page.locator('.sampling-lab__compare');
+        const layout=await table.evaluate(node=>({
+          scroll:node.scrollWidth,width:node.clientWidth
+        }));
+        expect(layout.scroll).toBeLessThanOrEqual(layout.width+1);
       }
       const measure=await page.evaluate(()=>({
         width:document.documentElement.scrollWidth,
