@@ -295,86 +295,12 @@ function renderGamePage(page){
     '<p class="game-feature__notice"><strong>Planned game:</strong> '+e(page.mechanic)+'</p></div>'+
   '</section>';
 }
-function renderReviewAll(topic){
-  return '<ol class="review-deck">'+topic.cards.map(card=>
-    '<li><strong>'+e(card.term)+'</strong><p>'+e(card.definition)+'</p></li>').join('')+'</ol>';
-}
-function renderSpeedRecall(topic){
-  const recall=state.recall,card=cardForIndex(topic,recall.index);
-  return '<div class="recall-workspace">'+
-    '<div class="flashcard-counter">Definition '+(recall.index+1)+' of '+topic.cards.length+'</div>'+
-    '<p class="recall-definition">'+e(card.definition)+'</p>'+
-    '<form id="recall-form" class="recall-form">'+
-      '<label for="recall-answer">Mathematical term</label>'+
-      '<input id="recall-answer" type="text" autocomplete="off" spellcheck="false" required value="'+e(recall.value)+'">'+
-      '<button class="action-button" type="submit">Check answer</button></form>'+
-    (recall.checked?'<p class="game-feedback" role="status" data-state="'+(recall.correct?'correct':'incorrect')+'">'+
-      (recall.correct?'Correct.':('The term is '+e(card.term)+'.'))+'</p>':'')+
-    '<button class="quiet-button recall-next" type="button" data-action="recall-next">'+
-      'Next definition '+icon('arrow')+'</button></div>';
-}
-function renderFlashcards(topic){
-  const f=state.flash,card=cardForIndex(topic,f.index),rating=f.ratings[card.id];
-  return '<div class="memory-layout">'+
-      '<section><div class="flashcard-counter"><span>Card '+(f.index+1)+' of '+topic.cards.length+'</span>'+
-        (rating?'<span>Last rated: '+e(rating)+'</span>':'')+'</div>'+
-      '<div class="flashcard-stage"><button class="flashcard'+(f.flipped?' is-flipped':'')+
-        '" type="button" id="flashcard" data-action="flash-flip" '+
-        'aria-label="'+(f.flipped?'Show front of '+e(card.term):'Reveal answer for '+e(card.term))+
-        '" aria-pressed="'+f.flipped+'">'+
-        '<span class="flashcard__inner">'+
-          '<span class="flashcard__face flashcard__face--front" aria-hidden="'+f.flipped+'">'+
-            '<span class="flashcard__main">'+e(card.term)+'</span>'+
-          '</span>'+
-          '<span class="flashcard__face flashcard__face--back" aria-hidden="'+!f.flipped+'">'+
-            '<span class="flashcard__main">'+e(card.definition)+'</span>'+
-          '</span>'+
-        '</span></button></div>'+
-      '<div class="flashcard-controls">'+
-        '<button class="nav-button" type="button" data-action="flash-prev" aria-label="Previous card">'+icon('arrow-left')+' Previous</button>'+
-        '<button class="nav-button" type="button" data-action="flash-next">Next '+icon('arrow')+'</button>'+
-        '<button class="quiet-button" type="button" data-action="flash-restart">'+icon('refresh')+' Restart</button>'+
-      '</div>'+
-      '<div class="self-ratings" id="ratings" role="group" aria-label="Rate your recall"'+(f.flipped?'':' hidden')+'>'+
-        '<small>Rate your recall:</small>'+
-        ['Again','Nearly','Know'].map(value=>'<button type="button" class="rating" data-action="flash-rate" data-rating="'+value+'">'+value+'</button>').join('')+
-      '</div></section>'+
-    '<aside class="memory-sidebar" aria-label="Deck progress">'+
-      '<div class="stat"><span>Cards in deck</span><strong>'+topic.cards.length+'</strong></div>'+
-      '<div class="stat"><span>Cards rated</span><strong>'+Object.keys(f.ratings).length+'</strong></div>'+
-    '</aside></div>'+
-    '<details class="deck-browser"><summary>Browse all '+topic.cards.length+' cards</summary>'+
-      '<ol>'+topic.cards.map(c=>'<li><strong>'+e(c.term)+'</strong><span>'+e(c.definition)+'</span></li>').join('')+'</ol></details>';
-}
-function renderMatch(topic){
-  const game=state.match,items=sampleMatchCards(topic),defOrder=[...items].reverse();
-  const complete=game.matched.length===items.length;
-  const button=(card,side,label)=>'<button type="button" class="match-choice" data-action="match-choice" data-side="'+side+'" data-id="'+e(card.id)+'" '+
-    'aria-pressed="'+(game[side]===card.id)+'" '+(game.matched.includes(card.id)?'disabled':'')+'>'+e(label)+'</button>';
-  return '<div class="match-columns">'+
-      '<section class="match-column" aria-label="Terms"><p class="match-column__label">Terms</p>'+
-        items.map(card=>button(card,'term',card.term)).join('')+'</section>'+
-      '<section class="match-column" aria-label="Definitions"><p class="match-column__label">Definitions</p>'+
-        defOrder.map(card=>button(card,'definition',card.definition)).join('')+'</section>'+
-    '</div>'+
-    '<div class="game-feedback" id="match-feedback" role="status">'+
-       e(complete?'All '+items.length+' pairs matched.':game.message||(game.matched.length+' of '+items.length+' pairs matched.'))+
-    '</div><button type="button" class="quiet-button" data-action="match-reset">'+icon('refresh')+' Start again</button>';
-}
-function renderCloze(topic){
-  const game=state.cloze,c=topic.cloze;
-  return '<section class="cloze-area">'+
-      '<form id="cloze-form"><p class="cloze-line">'+e(c.before)+
-        '<label class="sr-only" for="cloze-answer">Missing mathematical word or phrase</label>'+
-        '<input class="cloze-input" id="cloze-answer" name="answer" autocomplete="off" spellcheck="false" value="'+e(game.value)+'" aria-describedby="cloze-feedback">'+
-        e(c.after)+'</p>'+
-      '<div class="form-actions"><button class="action-button" type="submit">Check answer '+icon('check')+'</button>'+
-      '<button class="quiet-button" type="button" data-action="cloze-hint" aria-expanded="'+game.hint+'">'+(game.hint?'Hide hint':'Give me a hint')+'</button></div></form>'+
-      (game.hint?'<p class="reveal-answer">Hint: '+e(c.hint)+'</p>':'')+
-      '<div id="cloze-feedback" class="game-feedback" role="status" data-state="'+(game.checked?(game.correct?'correct':'incorrect'):'')+'">'+
-        (game.checked?(game.correct?'Correct.':'Check the term and try again.'):'')+'</div>'+
-    '</section>';
-}
+function renderReviewAll(topic){return memoryReviewAll(topic,memoryFor(topic),state.review);}
+function renderSpeedRecall(topic){return memorySpeedRecall(topic,memoryFor(topic),state.recall);}
+function renderFlashcards(topic){return memoryFlashcards(topic,memoryFor(topic),state.flash);}
+function renderMatch(topic){return memoryMatch(topic,memoryFor(topic),state.match);}
+function renderCloze(topic){return memoryCloze(topic,memoryFor(topic),state.cloze);}
+
 function renderGraphSvg(model){
   const {h,k}=quadraticProperties(model);
   const X=x=>60+(x+5)*55,Y=y=>210-y*22;
@@ -567,7 +493,8 @@ function rerender(){
 function updateFlashFlip(){
   const cardEl=document.querySelector('#flashcard');
   if(!cardEl)return;
-  const f=state.flash,card=cardForIndex(TOPICS[state.route.topicId],f.index);
+  const f=state.flash,card=currentFlashCard(TOPICS[state.route.topicId]);
+  if(!card)return;
   cardEl.classList.toggle('is-flipped',f.flipped);
   cardEl.setAttribute('aria-pressed',String(f.flipped));
   cardEl.setAttribute('aria-label',f.flipped?'Show front of '+card.term:'Reveal answer for '+card.term);
