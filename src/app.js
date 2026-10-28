@@ -621,8 +621,9 @@ app.addEventListener('click',ev=>{
       action==='understand-step-prev'?Math.max(0,current-1):Math.min(total,current+1);
     rerender();
     const nextAction=action==='understand-step-reset'?'understand-step-next':
-      (action==='understand-step-prev'?'understand-step-prev':
-       state.understand.steppers[key]===total?'understand-step-reset':'understand-step-next');
+      (action==='understand-step-prev'?
+        (state.understand.steppers[key]===0?'understand-step-next':'understand-step-prev'):
+        state.understand.steppers[key]===total?'understand-step-reset':'understand-step-next');
     document.querySelector('button[data-action="'+nextAction+'"][data-key="'+key+'"]')?.focus({preventScroll:true});
     announce('Step '+state.understand.steppers[key]+' revealed.');
   }else if(action==='sampling-method'||action==='sampling-redraw'){
@@ -748,9 +749,20 @@ app.addEventListener('input',ev=>{
   const target=ev.target;
   if(target.id==='cloze-answer'){state.cloze.value=target.value;state.cloze.checked=false;}
   if(target.id==='recall-answer'){state.recall.value=target.value;state.recall.checked=false;}
+  if(target.matches('textarea[data-understand-response]')){
+    const key=target.dataset.understandResponse;
+    if(key!==understandKey(state.route,'workshop'))return;
+    const prior=state.understand.workshops[key]||{};
+    state.understand.workshops[key]={...prior,response:target.value};
+  }
   if(target.matches('input[data-graph]')){
-    const key=target.dataset.graph;
-    if(['magnitude','h','k'].includes(key)){state.graph[key]=Number(target.value);updateGraph();}
+    const key=target.dataset.graph,id=state.route?.pageId;
+    const permitted=id==='shape'?['magnitude']:id==='position'?['h','k']:[];
+    const number=Number(target.value);
+    if(permitted.includes(key)&&Number.isFinite(number)){
+      graphState(state.route)[key]=number;
+      updateGraph();
+    }
   }
 });
 app.addEventListener('submit',ev=>{
