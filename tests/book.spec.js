@@ -29,6 +29,11 @@ test('topic selection reconfigures chapters without dead tabs',async({page})=>{
 test('flashcards flip, rate and show the whole deck',async({page})=>{
   await page.goto('/#/sampling/memorise/flashcards');
   const flash=page.locator('#flashcard');
+  await expect(page.locator('#ratings')).toBeHidden();
+  const outer=await flash.boundingBox();
+  const face=await page.locator('.flashcard__face--front').boundingBox();
+  expect(face.width).toBeGreaterThan(outer.width*0.96);
+  expect(face.height).toBeGreaterThan(outer.height*0.96);
   await expect(flash).toHaveAttribute('aria-pressed','false');
   await flash.focus();
   await page.keyboard.press('Enter');
