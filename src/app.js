@@ -2,6 +2,9 @@ import {CHAPTER_LIBRARY,TOPICS} from './topics.js';
 import {buildFluencySet,checkFluencyAnswer,PRACTICE_LENGTHS} from './fluency-engine.js';
 import {emptyFluencyProgress,hydrateFluencyProgress,saveFluencyRound} from './fluency-progress.js';
 import {renderFluencyPage,roundScores} from './fluency-ui.js';
+import {renderReasoningPage} from './reasoning-ui.js';
+import {emptyReasoningProgress,hydrateReasoningProgress,queueReasoning,taskFor,
+  reviewReasoning,REASONING_RATINGS} from './reasoning-engine.js';
 import {emptyMemory,hydrateMemory,gradeCard,toggleCardFlag,deckQueue,matchRoundCards,
   assessTerm,recordFor} from './memorise-engine.js';
 import {renderFlashcards as memoryFlashcards,renderMatch as memoryMatch,
@@ -39,7 +42,8 @@ const state={
   understand:{steppers:{},checks:{},workshops:{},labs:{},graphs:{}},
   revealed:{},
   worksheets:{},
-  fluencySessions:{},fluencyProgress:{}
+  fluencySessions:{},fluencyProgress:{},
+  reasoningSessions:{},reasoningProgress:{}
 };
 let lastTopic=null;
 
@@ -107,6 +111,41 @@ function fluencyNewSet(route,count){
   const session=fluencySession(route);
   const nextSeed=1+((session.set.seed*1664525+1013904223)%999999998);
   state.fluencySessions[fluencyRouteKey(route)]=freshFluencySet(route,nextSeed,count);
+}
+
+function reasoningProgressFor(topic){
+  if(!state.reasoningProgress[topic.id])
+    state.reasoningProgress[topic.id]=hydrateReasoningProgress(
+      safeStorage.get('reasoning:'+topic.id),topic.id);
+  return state.reasoningProgress[topic.id];
+}
+function saveReasoningProgress(topic,value){
+  state.reasoningProgress[topic.id]=value;
+  safeStorage.put('reasoning:'+topic.id,JSON.stringify(value));
+}
+const reasoningRouteKey=route=>[route.topicId,route.sectionId].join(':');
+function freshReasoningSession(route,selection='all'){
+  return {selection,ids:queueReasoning(route.topicId,route.sectionId,
+    reasoningProgressFor(TOPICS[route.topicId]),selection),
+    index:0,entries:{},complete:false,confirmSwitch:false,pendingSelection:null};
+}
+function reasoningSession(route=state.route){
+  if(route?.chapterId!=='reasoning')return null;
+  const key=reasoningRouteKey(route);
+  if(!state.reasoningSessions[key])
+    state.reasoningSessions[key]=freshReasoningSession(route);
+  return state.reasoningSessions[key];
+}
+function reasoningEntry(session){
+  const task=taskFor(state.route.topicId,state.route.sectionId,session?.ids?.[session.index]);
+  if(!task)return null;
+  return {task,response:session.entries[task.id]||{
+    draft:'',hint:false,usedHint:false,model:false,modelFirst:false,
+    checks:[false,false,false],rating:null}};
+}
+function reasoningSelect(selection){
+  state.reasoningSessions[reasoningRouteKey(state.route)]=
+    freshReasoningSession(state.route,selection);
 }
 
 function currentFlashCard(topic){
@@ -420,6 +459,7 @@ function renderPageContent(route,topic){
     lesson:()=>renderLessonPage(page,topic,route),
     questions:()=>renderQuestionPage(page,route),
     fluency:()=>renderFluencyPage(page,topic,route,fluencySession(route),fluencyProgressFor(topic)),
+    reasoning:()=>renderReasoningPage(page,topic,route,reasoningSession(route),reasoningProgressFor(topic)),
     graph:()=>renderGraphLab(page,route),
     'sampling-lab':()=>renderSamplingLab(page,route,state.understand.labs),
     workshop:()=>renderWorkshop(page,route,state.understand.steppers,state.understand.workshops),
