@@ -9,7 +9,8 @@ Build an adaptable website **engine**, not a blank visual clone or an A Level-on
 
 - A **Contents** opening page acts as the home/journey view, with progress, bookmarks and resume links.
 - **Primary sections have chapter tabs across the top** of the book. The active tab visually connects to the open page.
-- **Subsections have smaller index tabs down the right side** on desktop, e.g. Flashcards / Match Up / Missing Words / Speed Recall inside Memorise.
+- **Subsections have smaller index tabs down the right side** on desktop, e.g. Flashcards / Match Up / Missing Words / Speed Recall inside Memorise. Those tabs select a distinct subsection, **not an individual page**.
+- **Pages within a subsection have their own Previous/Next controls** when needed; the active right tab stays unchanged as pages turn. A self-contained flashcard deck/game has internal progress instead.
 - Slight paper shadows, a modest book edge/spine, faint ruled or squared paper, paper flashcards and small sticky-note hints establish the notebook feel.
 - **Page-turn and tab animations** may enhance chapter changes, but must be brief, interruptible, reduced-motion aware and never block interaction; **do not** flip a whole page for every practice question.
 - Desktop defaults to a **single spacious working page**; mathematical inputs, graphs, wide diagrams and worked solutions take priority over cosmetic book geometry.
@@ -53,7 +54,10 @@ Games are not the same as Memorise's short language games. Games focus on multi-
 - Topics **opt in** to relevant modules; automatically hide sections with no meaningful content.
 - Desktop exposes the active modules as **top chapter tabs** and the selected module's activities as **right-side index tabs**. The Contents page always provides an accessible alternative.
 - On mobile, top/side tabs reflow to **Chapter** and **Section** controls; never require horizontally scrolling main navigation or tiny rotated labels.
-- Within Memorise, flashcards and games have independently configurable entries.
+- Within Memorise, flashcards and language games have independently configurable entries. Games is a separate mode with **one right-hand tab per named game**.
+- Understand defaults to **The big idea, How it works, Visual explanations, Worked examples**. Move concept visualisations such as quadratic graph explorers to Understand; Fluency, Problem Solving and Modelling contain properly designed questions at different levels, not repackaged concept explorers.
+- Default levels: Fluency (Foundations/Standard/Mixed/Advanced), Problem Solving (Guided/Developing/Independent/Challenge), Modelling (Guided/Structured/Independent/Extended).
+- Refer to [the implemented mode/subsection/page hierarchy](MODE_SUBSECTION_PAGE_SYSTEM.md) for content types, routes and all learning-mode boundaries.
 - Students can learn in any order. Recommended pathways do not block navigation.
 - Use age-neutral language and theme presets instead of hard-coded grade or exam-board labels.
 
@@ -99,6 +103,8 @@ Games are not the same as Memorise's short language games. Games focus on multi-
   "features": { "localProgress": true, "awards": false, "multiplayer": false }
 }
 ```
+
+Content in the prototype already follows `Topic → Mode → Subsection → Page`, with stable page IDs and separate typed content. The earlier JSON above illustrates site-level capabilities only; [the detailed authoring contract](MODE_SUBSECTION_PAGE_SYSTEM.md) specifies chapter sections and pages.
 
 Content must be separate from runtime code. Future schemas should define `concepts`, `questions`, `workedSolutions`, `activityConfigurations`, `games`, `diagrams` and optional **parameterised worksheet question families with LaTeX renderers**. Use stable IDs and strict per-activity validation. The same concept can appear in several modes without copying its definition. Do not assume all answers are simple strings: support structured mathematical answer types and authored equivalence rules.
 
