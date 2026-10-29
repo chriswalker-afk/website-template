@@ -2,6 +2,7 @@ import {CHAPTER_LIBRARY,TOPICS} from './topics.js';
 import {buildFluencySet,checkFluencyAnswer,PRACTICE_LENGTHS} from './fluency-engine.js';
 import {emptyFluencyProgress,hydrateFluencyProgress,saveFluencyRound} from './fluency-progress.js';
 import {renderFluencyPage,roundScores} from './fluency-ui.js';
+import {enhanceMathInputs,latexToFluencyText} from './math-input.js';
 import {renderReasoningPage} from './reasoning-ui.js';
 import {renderProblemSolvingPage} from './problem-solving-ui.js';
 import {renderModellingPage} from './modelling-ui.js';
@@ -622,6 +623,24 @@ function renderBook(route,{animate=true}={}){
       '</main></div>'+renderSideTabs(topic,route)+'</div></div>';
   topicSwitch.value=topic.id;
   state.route=route;
+  enhanceMathInputs(app,{
+    onToggle(target,active){
+      if(target!=='fluency-answer'||state.route?.chapterId!=='fluency')return;
+      const current=fluencyAnswer(fluencySession());
+      if(!current||current.response.correct||current.response.revealed)return;
+      const response={...current.response,mathMode:active};
+      if(active&&!response.mathLatex)response.mathLatex='';
+      fluencySession().answers[current.question.id]=response;
+      rerender();
+      document.querySelector(active?'[data-math-source]':'#fluency-answer')?.focus({preventScroll:true});
+    },
+    onChange(target,latex){
+      if(target!=='fluency-answer'||state.route?.chapterId!=='fluency')return;
+      const current=fluencyAnswer(fluencySession());
+      if(current&&!current.response.correct&&!current.response.revealed)
+        fluencySession().answers[current.question.id]={...current.response,mathLatex:latex};
+    }
+  });
   document.title=(section?section.label+(pages.length>1?' · Page '+(route.pageIndex+1):'')+' · ':
     route.chapterId==='home'?'Contents · ':'')+topic.title+' | The Maths Notebook';
 }
@@ -1048,7 +1067,7 @@ app.addEventListener('click',ev=>{
   }else if(action==='fluency-new'){
     const session=fluencySession();
     if(!session)return;
-    if(!session.complete&&Object.values(session.answers).some(a=>a.tries||a.revealed||a.draft?.trim()||a.working?.trim())){
+    if(!session.complete&&Object.values(session.answers).some(a=>a.tries||a.revealed||a.draft?.trim()||a.working?.trim()||a.mathLatex?.trim())){
       session.confirmFresh=true;session.pendingCount=session.configCount;rerender();
       document.querySelector('button[data-action="fluency-cancel-new"]')?.focus({preventScroll:true});
       announce('Confirm replacing your unfinished Fluency set.');
@@ -1466,11 +1485,15 @@ app.addEventListener('submit',ev=>{
     ev.preventDefault();
     const session=fluencySession(),current=fluencyAnswer(session);
     if(!current||session.complete||current.response.correct||current.response.revealed)return;
-    const draft=document.querySelector('#fluency-answer')?.value||'';
-    const verdict=checkFluencyAnswer(draft,current.question);
+    const latex=current.response.mathMode?(document.querySelector('[data-math-source]')?.value||''):'';
+    const converted=current.response.mathMode?latexToFluencyText(latex,current.question.answer):null;
+    const draft=current.response.mathMode?(converted??latex):(document.querySelector('#fluency-answer')?.value||'');
+    const verdict=converted===null&&current.response.mathMode?
+      {correct:false,kind:'format',message:'Enter a supported numerical expression or use simple typing.'}:
+      checkFluencyAnswer(draft,current.question);
     const attempts=(current.response.tries||0)+(verdict.kind==='format'?0:1);
     session.answers[current.question.id]={
-      ...current.response,draft,tries:attempts,
+      ...current.response,draft,mathLatex:latex||current.response.mathLatex||'',tries:attempts,
       correct:verdict.correct,revealed:false,
       feedback:verdict.correct?
         'Correct. Compare your method with the worked solution if you wish.':

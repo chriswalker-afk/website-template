@@ -2,6 +2,7 @@
 // and all student-originated strings are escaped before inserting in HTML.
 import {escapeHTML as e} from './logic.js';
 import {answerText} from './fluency-engine.js';
+import {mathInputMarkup} from './math-input.js';
 const escape=v=>e(String(v??''));
 const icon=name=>'<svg class="icon" aria-hidden="true"><use href="#i-'+name+'"></use></svg>';
 const plural=(n,s)=>n+' '+s+(n===1?'':'s');
@@ -43,9 +44,9 @@ function answerForm(q,a){
     '<div class="fluency-answer-form__row">'+
       '<input id="fluency-answer" name="response" type="text" autocomplete="off" spellcheck="false" '+
         'value="'+escape(a?.draft||'')+'" aria-describedby="fluency-feedback" '+
-        (a?.correct||a?.revealed?'disabled':'required')+'>'+
+        (a?.correct||a?.revealed||a?.mathMode?'disabled':'required')+'>'+
       '<button type="submit" class="action-button" '+(a?.correct||a?.revealed?'disabled':'')+
-        '>Check answer</button></div></form>';
+        '>Check answer</button></div>'+mathInputMarkup({targetId:'fluency-answer',active:Boolean(a?.mathMode),disabled:Boolean(a?.correct||a?.revealed),latex:a?.mathLatex||''})+'</form>';
 }
 function worked(q,open){
   return open?'<div class="fluency-solution" id="fluency-solution">'+
