@@ -44,7 +44,7 @@ function answerForm(q,a){
     '<div class="fluency-answer-form__row">'+
       '<input id="fluency-answer" name="response" type="text" autocomplete="off" spellcheck="false" '+
         'value="'+escape(a?.draft||'')+'" aria-describedby="fluency-feedback" '+
-        (a?.correct||a?.revealed?'disabled':'required')+'>'+
+        (a?.correct||a?.revealed||a?.mathMode?'disabled':'required')+'>'+
       '<button type="submit" class="action-button" '+(a?.correct||a?.revealed?'disabled':'')+
         '>Check answer</button></div>'+mathInputMarkup({targetId:'fluency-answer',active:Boolean(a?.mathMode),disabled:Boolean(a?.correct||a?.revealed),latex:a?.mathLatex||''})+'</form>';
 }
