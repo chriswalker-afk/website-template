@@ -1,0 +1,25 @@
+/* Pass 1: responsive, reusable mathematical response field. */
+.math-input { flex:1 1 100%; min-width:0; margin-top:4px; }
+.math-input__toggle { border:1px solid #9fb9a5; border-radius:8px; background:#f1f5ea;
+  color:#254b39; font:700 12px system-ui,sans-serif; padding:9px 14px; min-height:40px; cursor:pointer; }
+.math-input__toggle:disabled { opacity:.65; cursor:default; }
+.math-input__panel { max-width:100%; min-width:0; border:1px solid #c5d7c8; border-radius:11px;
+  background:#fffef8; padding:12px; margin-top:10px; }
+.math-input__hint { color:#496551; font-size:12px; line-height:1.6; margin:0 0 10px; }
+.math-input__entry { min-width:0; }
+.math-input__source { width:100%; min-width:0; box-sizing:border-box; border:1px solid #9db9a2;
+  border-radius:8px; min-height:47px; background:white; padding:9px 12px; font-size:16px; color:#294b39; }
+.math-input--ready .math-input__source { position:absolute; width:1px; height:1px;
+  min-height:0; padding:0; border:0; clip-path:inset(50%); overflow:hidden; }
+.math-input__field { display:block; width:100%; max-width:100%; min-width:0; box-sizing:border-box;
+  padding:10px 11px; background:#fff; border:1px solid #8fb29c; border-radius:8px;
+  font-size:21px; color:#233f32; overflow-x:auto; }
+.math-input__palette { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+.math-input__symbol { min-width:43px; min-height:43px; padding:7px 9px;
+  border:1px solid #c4d4c2; border-radius:8px; background:#f4f6ee;
+  color:#244a39; font-size:17px; cursor:pointer; }
+.math-input__symbol:hover { background:#e5f0e5; }
+.math-input__symbol:disabled { opacity:.5; cursor:default; }
+.math-input__status { color:#627b6a; font-size:11px; line-height:1.5; margin:10px 0 0; }
+.math-input :is(button,input,math-field):focus-visible { outline:3px solid #3c6fb0; outline-offset:2px; }
+@media(max-width:420px) { .math-input__panel { padding:9px; } .math-input__field { font-size:18px; } }
