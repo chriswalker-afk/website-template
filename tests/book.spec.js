@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {expectReadingContains} from './math-assertions.js';
 import {TOPICS} from '../src/topics.js';
 
 test('Contents, top modes and right-hand subsections are separate navigation levels',async({page})=>{
@@ -90,7 +91,7 @@ test('the quadratic graph teaches shape separately from translations',async({pag
   await page.locator('input[data-graph="magnitude"]').evaluate(el=>{
     el.value='2';el.dispatchEvent(new Event('input',{bubbles:true}));
   });
-  await expect(page.locator('#graph-observation')).toContainText('narrower than y = x²');
+  await expectReadingContains(page.locator('#graph-observation'),'narrower than y = x²');
   const updated=await page.locator('#graph-svg path[stroke="#2d755f"]').getAttribute('d');
   expect(updated).not.toBe(original);
   await page.getByRole('button',{name:'Flip opening direction'}).click();
