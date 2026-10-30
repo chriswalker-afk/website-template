@@ -99,7 +99,7 @@ test('complete unaided writing supports an honest independent self-rating',async
   const task=tasks('quadratics','level-1','shapes')[0];
   await advance(page);
   await expect(page.locator('.mdl-comparison-stage')).toHaveCount(4);
-  await expect(page.locator('.mdl-comparison-stage').first()).toContainText(task.phases[0].model);
+  await expectReadingContains(page.locator('.mdl-comparison-stage').first(),task.phases[0].model);
   await expectReadingContains(page.locator('.mdl-comparison'),task.phases[3].model);
   await expect(page.getByRole('button',{name:'Modelled independently'})).toBeDisabled();
   await allChecks(page);
