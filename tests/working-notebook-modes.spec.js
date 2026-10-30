@@ -49,7 +49,8 @@ test('Reasoning accepts a confirmed notebook argument for self-review without au
   await page.goto('/#/quadratics/reasoning/justify');
   const scope=await page.locator('details[data-working-notebook]').getAttribute('data-scope');
   expect(scope).toMatch(/^quadratics:reasoning:justify:main:/);
-  await page.locator('input[data-reasoning-notebook-evidence]').check();
+  // Click instead of check: an empty notebook is deliberately rejected.
+  await page.locator('input[data-reasoning-notebook-evidence]').click();
   await expect(page.locator('input[data-reasoning-notebook-evidence]')).not.toBeChecked();
   await typeMath(page,'x^2-(x+1)(x-1)=1');
   await page.locator('input[data-reasoning-notebook-evidence]').check();
