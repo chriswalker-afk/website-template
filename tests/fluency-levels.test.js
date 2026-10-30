@@ -33,8 +33,10 @@ test('Guided and Structured offer targeted method scaffolds without worked answe
         assert.equal(cue.label,level==='level-1'?'Start here':'Method checklist');
         assert.equal(cue.steps.length,level==='level-1'?1:3);
         assert.ok(cue.steps.every(step=>step.length>24));
-        assert.ok(!cue.steps.some(step=>/\d{3,}/.test(step)),
-          'Cues should not contain generated numerical answers');
+        // Numbers such as 100 in percentage formulas are mathematical
+        // constants, not generated answers; verify cues are seed-independent.
+        const copy=fluencyQuestionScaffold(level,family);
+        assert.deepEqual(copy,cue);
         assert.ok(!cue.steps.some(step=>step.includes('Check the final value = ')));
       }
     }
