@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {writeWorking,notebookContains} from './notebook-helpers.js';
 
 test('Big idea concept checks give specific feedback without duplicate headings',async({page})=>{
   for(const [topic,wrong,correct] of [
@@ -102,25 +103,25 @@ test('Show me → Help me → My turn retains writing and supports self-assessme
   await expect(page.locator('.workshop-stage .concept-check__feedback')).toContainText('Not yet.');
   await page.locator('button[data-action="understand-guided"][data-choice="correct"]').click();
   await expect(page.locator('.workshop-stage .concept-check__feedback')).toContainText('Correct.');
-  await page.locator('#own-response').fill('The turning point is (-2, 7), a maximum.');
+  await writeWorking(page,'The turning point is (-2, 7), a maximum.');
   await page.getByRole('button',{name:'Show hint'}).click();
-  await expect(page.locator('#own-response')).toHaveValue('The turning point is (-2, 7), a maximum.');
+  await notebookContains(page,'The turning point is (-2, 7), a maximum.');
   await expect(page.locator('.practice-question__hint')).toBeVisible();
   await page.getByRole('button',{name:'Compare with model solution'}).click();
   await expect(page.locator('.workshop-stage__model li')).toHaveCount(3);
-  await expect(page.locator('#own-response')).toHaveValue('The turning point is (-2, 7), a maximum.');
+  await notebookContains(page,'The turning point is (-2, 7), a maximum.');
   await page.getByRole('button',{name:'I can do this'}).click();
   await expect(page.locator('.workshop-stage__rating-note')).toContainText('confident');
   await page.getByRole('link',{name:'Next page'}).click();
   await expect(page.getByRole('heading',{name:'Worked examples'})).toBeVisible();
   await page.getByRole('link',{name:'Previous page'}).click();
-  await expect(page.locator('#own-response')).toHaveValue('The turning point is (-2, 7), a maximum.');
+  await notebookContains(page,'The turning point is (-2, 7), a maximum.');
   await expect(page.locator('.workshop-stage__rating-note')).toContainText('confident');
 });
 test('Sampling worked examples support qualitative written responses without false automatic grading',async({page})=>{
   await page.goto('/#/sampling/understand/worked-examples/bias');
   await expect(page.locator('.workshop-stage')).toHaveCount(3);
-  await page.locator('#own-response').fill('The sample excludes students who do not attend.');
+  await writeWorking(page,'The sample excludes students who do not attend.');
   await page.getByRole('button',{name:'Compare with model solution'}).click();
   await expect(page.locator('.workshop-stage__model')).toContainText('The sample excludes students');
   await expect(page.locator('.workshop-stage__model')).toContainText('Compare your working');
