@@ -66,6 +66,10 @@ export function hydrateWorkingNotebook(raw){
     return isWorkingNotebook(value)?JSON.parse(JSON.stringify(value)):blankWorkingNotebook();
   }catch{return blankWorkingNotebook();}
 }
+export function hasWorkingContent(book){
+  return isWorkingNotebook(book)&&book.pages.some(page=>
+    page.strokes.length>0||page.blocks.some(block=>block.value.trim().length>0));
+}
 const clone=book=>JSON.parse(JSON.stringify(book));
 
 export function editWorkingNotebook(previous,action){
