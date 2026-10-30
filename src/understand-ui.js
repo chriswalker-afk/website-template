@@ -1,4 +1,4 @@
-import {samplingExperiment,SAMPLING_METHODS,POPULATION_SIZE,STRATUM_A,STRATUM_B} from './understand-engine.js';
+export {renderSamplingLab} from './visuals/explorer-ui.js';
 import {modeWorkingNotebook} from './working-notebook-integration.js';
 
 const e=value=>String(value??'').replace(/[&<>"']/g,ch=>({
@@ -46,59 +46,6 @@ export function renderWalkthrough(block,key,progress){
     '<p class="method-walkthrough__problem">'+e(block.prompt)+'</p>'+
     renderSteps(block.steps,key,progress)+
   '</section>';
-}
-
-export function renderSamplingLab(page,route,labs){
-  const key=understandKey(route,'sampling');
-  const saved=labs[key]||{method:page.methods[0],run:1};
-  const method=page.methods.includes(saved.method)?saved.method:page.methods[0];
-  const result=samplingExperiment(method,1024+saved.run*37+route.pageIndex*11);
-  const picked=new Set(result.selected);
-  const group=(start,length,label,color)=>{
-    const dots=Array.from({length},(_,i)=>{
-      const index=start+i;
-      return '<span class="population-person population-person--'+color+
-        (picked.has(index)?' population-person--selected':'')+'" aria-hidden="true"></span>';
-    }).join('');
-    return '<div class="population-stratum">'+
-      '<div class="population-stratum__label"><strong>'+e(label)+'</strong><span>'+length+' people</span></div>'+
-      '<div class="population-stratum__people">'+dots+'</div></div>';
-  };
-  const sampleCount=result.size===POPULATION_SIZE?'40 (census)':result.size;
-  const summary=result.method==='census'?'This is a census: the entire population is included.':
-    result.method==='convenience'?'In this ordered list, the first ten names all belong to Group A.':
-    result.method==='systematic'?'The random starting position is '+result.randomStart+'.':
-    result.method==='stratified'?'The allocation is proportional: 4 from A and 6 from B.':
-    'This random sample may have different proportions from the population.';
-  return '<div class="sampling-lab">'+
-    '<div class="sampling-lab__controls"><div class="sampling-lab__methods" role="group" aria-label="Sampling method">'+
-      page.methods.map(id=>'<button type="button" class="sampling-method'+(method===id?' is-selected':'')+
-        '" aria-pressed="'+(method===id)+'" data-action="sampling-method" data-key="'+e(key)+
-        '" data-method="'+id+'">'+e(SAMPLING_METHODS[id].label)+'</button>').join('')+
-      '</div><button type="button" class="quiet-button" data-action="sampling-redraw" data-key="'+e(key)+
-      '" '+(['census','convenience'].includes(method)?'disabled title="This selection is fixed"':'')+
-      '>Draw another sample</button></div>'+
-    '<p class="sampling-lab__method">'+e(SAMPLING_METHODS[method].description)+'</p>'+
-    '<div class="sampling-lab__population" role="img" aria-label="'+
-      e('Population of 40, with 16 in Group A and 24 in Group B. '+result.size+
-      ' are highlighted: '+result.groupA+' from A and '+result.groupB+' from B.')+'">'+
-      group(0,STRATUM_A,'Group A','a')+group(STRATUM_A,STRATUM_B,'Group B','b')+
-    '</div>'+
-    '<p class="sampling-lab__legend"><span class="population-legend-dot"></span>Outlined = selected</p>'+
-    '<div class="sampling-lab__metrics">'+
-      '<div><span>Population</span><strong>'+POPULATION_SIZE+'</strong></div>'+
-      '<div><span>Selected</span><strong>'+sampleCount+'</strong></div>'+
-      '<div><span>Group A</span><strong>'+result.groupA+' / '+STRATUM_A+'</strong></div>'+
-      '<div><span>Group B</span><strong>'+result.groupB+' / '+STRATUM_B+'</strong></div>'+
-    '</div>'+
-    '<div class="sampling-lab__compare"><table><caption>Group proportions</caption>'+
-      '<thead><tr><th scope="col">Group</th><th scope="col">Population</th><th scope="col">Selection</th></tr></thead>'+
-      '<tbody><tr><th scope="row">A</th><td>40%</td><td>'+result.proportionA+'%</td></tr>'+
-        '<tr><th scope="row">B</th><td>60%</td><td>'+result.proportionB+'%</td></tr></tbody>'+
-    '</table></div>'+
-    '<p class="sampling-lab__interpretation" role="status">'+e(summary)+
-      ' One selection does not prove a method is always representative.</p>'+
-  '</div>';
 }
 
 function renderGuided(guided,key,choice){

@@ -25,12 +25,13 @@ The first and last subsections deliberately use a low-text UI: mathematical cont
 
 ## Component/data contract
 
-Topic-owned content for Understand lives in **src/understand-content.js**, separate from other learning modes in **src/mode-content.js**. Rendering is provided by **src/understand-ui.js**, numerical/domain logic by **src/understand-engine.js** and routing/state wiring by **src/app.js**.
+Topic content lives in **src/topic-packs/<topic-id>/understand.js**, and visual definitions in **src/topic-packs/<topic-id>/visuals.js**. Shared mathematical renderers and engines live in **src/visuals/**. The former Understand modules remain compatibility facades. See [Pass 3 visual guide](VISUAL_PACK_PASS3.md).
 
 Reusable page/block types:
+- visual: generic configured mathematical graph or sampling explorer (preferred for new topics)
 - \`lesson\`: supported blocks \`text\`, \`note\`, \`comparison\`, \`diagram\`, \`concept-check\`, \`stepper\`
-- \`graph\`: targeted quadratic experiment with explanatory output and a reset control
-- \`sampling-lab\`: deterministic drawing from a 40-person population with two strata and method comparison
+- \`graph\`: legacy graph page type, now using the topic-defined graph configuration and shared renderer
+- \`sampling-lab\`: legacy sampling page type, now using topic-defined group sizes, sample size and supported methods
 - \`workshop\`: a complete model, one guided question and an independent written attempt
 
 A concept check provides a unique ID, precise prompt, at least two distinct choices, one correct response and **individual feedback for every choice**. The student can change an answer. A stepper has an ID, problem/context statement and an authored sequence of meaningful steps. Never hide an incomplete explanation behind randomised generic text.

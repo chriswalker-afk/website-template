@@ -1,6 +1,8 @@
 import {CHAPTER_LIBRARY,TOPICS,DEFAULT_TOPIC} from './topics.js';
 import {supportsWorksheets} from './worksheet-generator.js';
 import {validateUnderstandContent} from './understand-engine.js';
+import {validateVisualLibrary} from './visuals/validation.js';
+import {visualLibraryFor} from './visuals/registry.js';
 import {validateMemoriseContent} from './memorise-engine.js';
 import {validateFluencyChapters} from './fluency-engine.js';
 import {validateReasoningContent} from './reasoning-engine.js';
@@ -30,7 +32,7 @@ const LEGACY_ROUTES={
 };
 const isSlug=value=>typeof value==='string'&&/^[a-z][a-z0-9-]*$/.test(value);
 const MODE_PAGE_TYPES={
-  understand:new Set(['lesson','graph','sampling-lab','workshop']),
+  understand:new Set(['lesson','graph','sampling-lab','visual','workshop']),
   memorise:new Set(['flashcards','match-up','missing-words','speed-recall','review-all']),
   fluency:new Set(['fluency']),
   reasoning:new Set(['reasoning']),
@@ -159,8 +161,11 @@ export function validateTopics(topics=TOPICS){
       }
     }
     issues.push(...validateQuestionBank(topic).map(message=>key+': '+message));
-    if(enabled('understand'))
+    if(enabled('understand')){
       issues.push(...validateUnderstandContent(topic.chapters.understand).map(message=>key+': '+message));
+      issues.push(...validateVisualLibrary(topic,topic.visuals||visualLibraryFor(key))
+        .map(message=>key+': '+message));
+    }
     if(enabled('memorise'))
       issues.push(...validateMemoriseContent(topic).map(message=>key+': '+message));
     if(enabled('fluency'))

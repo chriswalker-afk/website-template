@@ -1273,3 +1273,10 @@ body.motion-off, body.motion-off * { scroll-behavior: auto !important; animation
 }
 
 /* END MODELLING QUALITY UPGRADE */
+
+/* Pass 3: lightweight, responsive, topic-configured mathematical diagrams. */
+.visual-diagram { display:block; width:100%; height:auto; max-width:720px; margin:12px auto; }
+.visual-diagram--number-line { max-width:640px; }
+.visual-diagram--probability-tree { max-width:720px; }
+.population-person--c { background:#9c83b8; }
+.population-person--d { background:#809bba; }
