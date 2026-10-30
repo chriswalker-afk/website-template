@@ -2,6 +2,7 @@
 import {escapeHTML as e} from './logic.js';
 import {loadMathLive,MATH_SYMBOLS} from './math-input.js';
 import {DRAW_WIDTH,DRAW_HEIGHT,MAX_NOTEBOOK_PAGES,MAX_NOTEBOOK_BLOCKS,
+  hasWorkingContent,
   blankWorkingNotebook,workingStorageKey,hydrateWorkingNotebook,
   editWorkingNotebook,findInkStroke,inkSVG,inkStrokePath,exportWorkingHTML}
   from './working-notebook-model.js';
@@ -13,13 +14,14 @@ const item=(value,label,selected)=>'<option value="'+value+'"'+
 const actionButton=(name,label,disabled=false)=>'<button type="button" data-book-action="'+name+
   '"'+(disabled?' disabled':'')+'>'+label+'</button>';
 
-export function workingNotebookMarkup({scope,label='Working notebook'}={}){
+export function workingNotebookMarkup({scope,label='Working notebook',guidance=''}={}){
   workingStorageKey(scope);
   return '<details class="working-notebook" data-working-notebook data-scope="'+e(scope)+
     '" data-label="'+e(label)+'"'+(openScopes.has(scope)?' open':'')+'>'+
     '<summary><span class="working-notebook__summary-title">Working notebook</span>'+
       '<span class="working-notebook__summary-note">Type maths, draw, or combine both · saved on this device</span>'+
-    '</summary><div class="working-notebook__mount"></div></details>';
+    '</summary>'+(guidance?'<p class="working-notebook__guidance">'+e(guidance)+'</p>':'')+
+    '<div class="working-notebook__mount"></div></details>';
 }
 function storeFor(scope){
   if(controllers.has(scope))return controllers.get(scope);
@@ -30,6 +32,9 @@ function storeFor(scope){
     saveOk:true,confirmClear:false,expanded:false,activeMathId:null};
   controllers.set(scope,entry);
   return entry;
+}
+export function hasSavedWorking(scope){
+  return hasWorkingContent(storeFor(scope).book);
 }
 function save(scope,entry){
   try{
