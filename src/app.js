@@ -862,11 +862,12 @@ app.addEventListener('click',ev=>{
     announce('Worked solution step '+step+' of '+current.task.steps.length+' shown.');
   }else if(action==='ps-rate'){
     const session=problemSession(),current=currentProblem(session),rating=button.dataset.rating;
-    if(!current||session.complete||current.response.rating||
-      !canRateProblem(current.response,rating))return;
+    if(!current||session.complete||current.response.rating)return;
+    const response=problemWithNotebook(current);
+    if(!canRateProblem(response,rating))return;
     try{
       saveProblemProgress(topic,reviewProblem(problemProgressFor(topic),
-        topic.id,state.route.sectionId,state.route.pageId,current.task.id,current.response,rating));
+        topic.id,state.route.sectionId,state.route.pageId,current.task.id,response,rating));
     }catch(error){
       announce(error instanceof Error?error.message:'Could not save your problem review.');
       return;
