@@ -286,13 +286,13 @@ function connectControls(host,scope,entry){
   host.querySelectorAll('[data-book-action]').forEach(button=>{
     button.addEventListener('click',()=>actionHandlers[button.dataset.bookAction]?.());
   });
-  host.addEventListener('keydown',ev=>{
+  host.onkeydown=ev=>{
     if(ev.key==='Escape'&&entry.expanded){
       ev.stopPropagation();
       entry.expanded=false;document.body.classList.remove('working-book-expanded');
       rerender('[data-book-action="expand"]');
     }
-  },{once:true});
+  };
   // Exposed only to the ink and MathLive wiring within this render.
   host._bookApply=apply;
   host._bookUpdate=updateBlock;
