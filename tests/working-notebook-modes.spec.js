@@ -33,7 +33,7 @@ test('Understand My turn stores maths across guidance reveal and refresh',async(
   const workshop=section.pages.find(p=>p.type==='workshop');
   await page.goto('/#/quadratics/understand/worked-examples'+
     (section.pages[0]===workshop?'':'/'+workshop.id));
-  await expect(page.locator('#own-response')).toBeVisible();
+  await expect(page.locator('details[data-working-notebook]')).toBeVisible();
   await typeMath(page,'x=\\frac{1}{2}');
   const storage=await page.locator('details[data-working-notebook]').getAttribute('data-scope');
   expect(storage).toBe('quadratics:understand:worked-examples:'+workshop.id+':my-turn');
