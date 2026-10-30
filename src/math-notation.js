@@ -16,11 +16,15 @@ const asText=value=>String(value??'');
 const tag=(name,children,attrs='')=>'<'+name+attrs+'>'+children+'</'+name+'>';
 const token=(kind,value)=>tag(kind,escape(value));
 const op=value=>token('mo',value);
+// Fenced parentheses must be a single atom before applying an exponent.
+// Otherwise MathML attaches ² to the closing bracket alone, separating it
+// visually from its base and leaving awkward space in quadratic expressions.
+const fence=value=>tag('mo',escape(value),' fence="true" stretchy="false"');
 const mi=value=>token('mi',value);
 const mn=value=>token('mn',value);
-const MATH_START=/^(?:[A-Za-z]\(|[a-zA-Z]\s*[²³⁴⁵⁶⁷⁸⁹⁰^_=<>≤≥≈]|[a-zA-Z]{1,3}[²³⁴⁵⁶⁷⁸⁹⁰]|[+\-−]?\d+(?:\.\d+)?[a-zA-Z](?:[²³⁴⁵^]|\b)|\d+(?:\.\d+)?\s*(?:[²³⁴⁵⁶⁷⁸⁹⁰]|\/\s*\d|\(|%|[×÷=+−≤≥≈-]\s*[\da-zA-Z])|\(\s*[-−]?\d+(?:\.\d+)?\s*,\s*[-−]?\d+(?:\.\d+)?\s*\)|√\s*[\d(]|[a-zA-Z]\s*\/\s*[a-zA-Z\d])/u;
+const MATH_START=/^(?:[A-Za-z]\(|[a-zA-Z]\s*[²³⁴⁵⁶⁷⁸⁹⁰^_=<>≤≥≈]|[a-zA-Z]{1,3}[²³⁴⁵⁶⁷⁸⁹⁰]|[+\-−]?\d+(?:\.\d+)?[a-zA-Z](?:[²³⁴⁵^]|\b)|\d+(?:\.\d+)?\s*(?:[²³⁴⁵⁶⁷⁸⁹⁰]|\/\s*\d|\(|%|[×÷=+−≤≥≈-]\s*[\da-zA-Z])|\(\s*[A-Za-z]\s*,\s*[A-Za-z]\s*\)|\(\s*[A-Za-z0-9][^)]{0,40}\)\s*(?:[²³⁴⁵⁶⁷⁸⁹⁰]|\^\s*(?:\d|\{))|\(\s*[-−]?\d+(?:\.\d+)?\s*,\s*[-−]?\d+(?:\.\d+)?\s*\)|√\s*[\d(]|[a-zA-Z]\s*\/\s*[a-zA-Z\d])/u;
 const wordPattern=/^[A-Za-z]+/;
-const numberPattern=/^(?:\d+(?:\.\d*)?|\.\d+)/;
+const numberPattern=/^(?:\d+(?:\.\d+)?|\.\d+)/;
 const operatorChars=new Set('+-−×÷=≤≥<>≈≠±*/^_%,:|πΔ∞√²³⁰¹⁴⁵⁶⁷⁸⁹⁻⁺');
 const skipSelector=[
   'math','svg','script','style','pre','code','textarea','input','select','option',
@@ -42,7 +46,8 @@ function readMathRun(text,index){
       const spaces=rest.match(/^\s+/)[0],next=rest.slice(spaces.length);
       if(!next||/^[.;!?]/.test(next))break;
       const word=next.match(wordPattern);
-      if(word&&(previousType!=='operator'&&previousType!=='open'||
+      if(word&&(previousType!=='operator'&&previousType!=='open'&&
+        !(previousType==='comma'&&depth>0)||
         stopWords.has(word[0].toLowerCase())||
         (word[0].length>3||![...word[0]].every(c=>mathAlphabet.has(c)))))break;
       pos+=spaces.length;continue;
@@ -93,6 +98,7 @@ function asciiToMathML(expression,depth=0){
   if(depth>15||expression.length>1200)throw new Error('Mathematical expression is too complex');
   let i=0;
   const atoms=[];
+  const frames=[];
   const input=expression;
   const skip=()=>{while(/\s/.test(input[i]||'')&&i<input.length)i++;};
   const grouped=(open='{',close='}')=>{
@@ -112,6 +118,7 @@ function asciiToMathML(expression,depth=0){
     skip();
     const rest=input.slice(i);
     if(rest.startsWith('{'))return grouped();
+    if(rest.startsWith('('))return grouped('(',')');
     const n=rest.match(numberPattern);
     if(n){i+=n[0].length;return mn(n[0]);}
     const ch=rest[0];
@@ -175,8 +182,20 @@ function asciiToMathML(expression,depth=0){
       }else next=op('/');
     }else if(input[i]==='{'||input[i]==='}'){
       next=op(input[i++]);
-    }else if(input[i]==='('||input[i]===')'||input[i]==='['||
-      input[i]===']'||input[i]===','||input[i]==='|'){
+    }else if(input[i]==='('||input[i]==='['){
+      // Opening a bracket starts a new atomic base. Close it as an mrow
+      // so a following superscript applies to the full bracketed expression.
+      if(frames.length>=20)throw new Error('Mathematical groups are too deeply nested');
+      frames.push({start:atoms.length,open:input[i++]});
+      continue;
+    }else if(input[i]===')'||input[i]===']'){
+      const closing=input[i++],frame=frames.pop();
+      if(!frame||frame.open!==(closing===')'?'(':'['))
+        throw new Error('Unmatched mathematical bracket');
+      const inside=atoms.splice(frame.start).join('');
+      atoms.push(tag('mrow',fence(frame.open)+inside+fence(closing)));
+      continue;
+    }else if(input[i]===','||input[i]==='|'){
       next=op(input[i++]);
     }else if(operatorChars.has(input[i])&&!Object.prototype.hasOwnProperty.call(supDigits,input[i])){
       const symbol=input[i++];
@@ -196,6 +215,7 @@ function asciiToMathML(expression,depth=0){
     }
     atoms.push(next);
   }
+  if(frames.length)throw new Error('Unclosed mathematical bracket');
   return tag('mrow',atoms.join(''));
 }
 

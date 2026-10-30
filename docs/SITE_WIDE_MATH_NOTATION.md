@@ -27,6 +27,20 @@ In JavaScript source, **escape backslashes** (e.g. `'\\(x^2\\)'`). The supported
 
 **Never put HTML into student-facing content as a way to render a formula.** All authored prose and mathematical token contents are escaped before insertion. Do not typeset editable inputs or keyboard controls as if they were answers.
 
+### Parenthesised expressions and exponents
+
+Superscripts **must attach to the complete mathematical base**. In particular,
+\(2(x-1)^2+2\) must render with an exponent on the entire bracketed
+expression \((x-1)\), not on a closing parenthesis. The shared renderer
+treats matched parentheses and square brackets as single mathematical
+groups before applying any superscript. Symbolic coordinates such as
+\((h,k)\) are also treated as mathematical notation.
+
+Regression tests cover turning-point prompts, guided method cues, negative
+and nested powers, explicit LaTeX, and the visual position of the exponent
+in Chromium. Do not regress to appending a superscript to a single
+\`<mo>)</mo>\` node.
+
 ### Educational safeguards
 
 - Display enhancement does **not** affect numerical checking, hints, score recording, practice ordering, completed-round summaries or LaTeX worksheet source generation.
