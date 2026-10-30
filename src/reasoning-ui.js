@@ -2,6 +2,9 @@
 // are escaped, and no automated correctness judgement is implied.
 import {escapeHTML as e} from './logic.js';
 import {reasoningSummary,recordFor,taskFor} from './reasoning-engine.js';
+import {modeWorkingNotebook,workingScope,archivedWorkingNotebooks}
+  from './working-notebook-integration.js';
+import {hasSavedWorking} from './working-notebook.js';
 const icon=name=>'<svg class="icon" aria-hidden="true"><use href="#i-'+name+'"></use></svg>';
 const labelFor=rating=>rating==='ready'?'Ready to move on':
   rating==='developing'?'Still developing':rating==='revisit'?'Review again':'Not reviewed';
@@ -30,9 +33,9 @@ function selectionControls(session){
     '<button type="button" data-action="reasoning-mode" data-mode="focus" aria-pressed="'+
       (session.selection==='focus')+'">Needs another look</button></div>';
 }
-function reviewPanel(task,entry){
+function reviewPanel(task,entry,notebookAttempt=false){
   const checked=entry.checks.filter(Boolean).length;
-  const canWrite=written(entry);
+  const canWrite=written(entry)||notebookAttempt;
   const all=checked===task.criteria.length;
   const canReady=canWrite&&all;
   const criteria=task.criteria.map((criterion,i)=>
@@ -76,6 +79,8 @@ function taskView(topic,route,session){
   const task=currentTask(topic,route,session);
   if(!task)return '<div class="reasoning-empty">There are no prompts in this selection. Choose All prompts to practise the full set.</div>';
   const entry=currentEntry(task,session),rating=entry.rating;
+  const scope=workingScope(topic.id,'reasoning',route.sectionId,route.pageId,task.id);
+  const notebookAttempt=Boolean(entry.notebookConfirmed&&hasSavedWorking(scope));
   const compare='<button class="quiet-button" type="button" data-action="reasoning-model" '+
     'aria-expanded="'+entry.model+'" '+(rating?'disabled':'')+'>'+
     (entry.model?'Hide worked argument':'Compare with worked argument')+'</button>';
@@ -87,6 +92,13 @@ function taskView(topic,route,session){
     '<textarea id="reasoning-answer" class="reasoning-writing" maxlength="2500" rows="6" '+
       'placeholder="Write a precise explanation using mathematical evidence." '+
       (rating?'disabled':'')+'>'+e(entry.draft)+'</textarea>'+
+    modeWorkingNotebook(topic.id,'reasoning',route.sectionId,route.pageId,task.id)+
+    '<label class="working-notebook-evidence">'+
+      '<input type="checkbox" data-reasoning-notebook-evidence '+
+        (notebookAttempt?'checked ':'')+(rating?'disabled':'')+'>'+
+      '<span>My mathematical argument is recorded in the notebook. '+
+        '<span class="working-notebook-evidence__note">Confirm this if you used the notebook rather than the written-response box. '+
+        'It will count as a written attempt for self-review, not an automatic mark.</span></span></label>'+
     '<div class="reasoning-actions">'+
       '<button type="button" class="quiet-button" data-action="reasoning-hint" '+
         'aria-expanded="'+entry.hint+'" '+(rating?'disabled':'')+'>'+
@@ -94,7 +106,7 @@ function taskView(topic,route,session){
       compare+'</div>'+
     (entry.hint?'<div class="reasoning-hint"><p><strong>Think about:</strong> '+e(task.hint)+'</p>'+
       '<p><strong>Possible start:</strong> '+e(task.starter)+'</p></div>':'')+
-    (entry.model?reviewPanel(task,entry):'')+
+    (entry.model?reviewPanel(task,entry,notebookAttempt):'')+
     (rating?'<div class="reasoning-saved" role="status">'+icon('check')+
       '<span>Self-review saved: <strong>'+e(labelFor(rating))+'</strong>. '+
       'This does not mean your writing was automatically assessed.</span></div>'+
@@ -123,7 +135,9 @@ function finished(topic,route,session,progress){
         const record=recordFor(progress,route.sectionId,t.id);
         return '<li><strong>'+e(t.prompt)+'</strong><span class="reasoning-review-label reasoning-review-label--'+
           toneFor(record?.rating)+'">'+e(labelFor(record?.rating))+'</span></li>';
-      }).join('')+'</ol></details>'+
+      }).join('')+'</ol></details>'+ 
+    archivedWorkingNotebooks({topicId:topic.id,mode:'reasoning',sectionId:route.sectionId,
+      pageId:route.pageId,items:tasks.map((task,i)=>({id:task.id,title:'Prompt '+(i+1)}))})+
     '</section>';
 }
 export function renderReasoningPage(page,topic,route,session,progress){
@@ -140,6 +154,6 @@ export function renderReasoningPage(page,topic,route,session,progress){
       '<div class="reasoning-empty">Nothing currently needs another look in this subsection. '+
       'Choose All prompts to revisit any argument.</div>')+
     '<p class="reasoning-privacy">Written arguments stay in this browser session and disappear on refresh. '+
-      'Only your chosen self-review status and number of checked criteria are saved on this device.</p>'+
+      'Your notebook is saved separately on this device; self-review judgements still require a written attempt and checked criteria. No work is automatically graded.</p>'+
   '</div>';
 }
