@@ -133,7 +133,7 @@ test('Fluency, Problem Solving and Modelling stay educationally distinct',async(
   await expect(page.locator('#graph-svg')).toHaveCount(0);
   await page.locator('.side-tabs a[href$="level-4"]').click();
   await expect(page.getByRole('heading',{name:/Level 4:/})).toBeVisible();
-  await expect(page.locator('.ps-writing-grid')).toBeVisible();
+  await expect(page.locator('details[data-working-notebook]')).toBeVisible();
   await page.goto('/#/quadratics/modelling/level-1');
   await expect(page.locator('.side-tab')).toHaveCount(4);
   await expect(page.locator('.mdl-case')).toBeVisible();
