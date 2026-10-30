@@ -7,6 +7,8 @@ import {escapeHTML as escape} from './logic.js';
 export const NOTATION_VERSION=1;
 const mathAlphabet=new Set('abcdefghijklnpqrstuvwxyzABCDEFGHJKLNPQRSTUVXYZ');
 const stopWords=new Set(['and','or','an','at','as','by','be','in','is','it','if','of',
+  'has','had','are','can','was','but','all','get','did','its','yet','set','let',
+  'use','due','few','new','try','yes','ask','key','day','tax','cut','run','raw',
   'on','to','we','the','for','was','from','with','than','not','per','max','min']);
 const supDigits=Object.freeze({'⁰':'0','¹':'1','²':'2','³':'3','⁴':'4',
   '⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9','⁻':'−','⁺':'+'});
@@ -16,7 +18,7 @@ const token=(kind,value)=>tag(kind,escape(value));
 const op=value=>token('mo',value);
 const mi=value=>token('mi',value);
 const mn=value=>token('mn',value);
-const MATH_START=/^(?:[fghPRdvA]\s*\(|[a-zA-Z]\s*[²³⁴⁵⁶⁷⁸⁹⁰^_=<>≤≥≈]|[a-zA-Z]{1,3}[²³⁴⁵⁶⁷⁸⁹⁰]|[+\-−]?\d+(?:\.\d+)?[a-zA-Z](?:[²³⁴⁵^]|\b)|\d+(?:\.\d+)?\s*(?:\/\s*\d|%|[×÷=+−≤≥≈-]\s*\d)|\(\s*[-−]?\d+(?:\.\d+)?\s*,\s*[-−]?\d+(?:\.\d+)?\s*\)|√\s*[\d(]|[a-zA-Z]\s*\/\s*[a-zA-Z\d])/u;
+const MATH_START=/^(?:[A-Za-z]\(|[a-zA-Z]\s*[²³⁴⁵⁶⁷⁸⁹⁰^_=<>≤≥≈]|[a-zA-Z]{1,3}[²³⁴⁵⁶⁷⁸⁹⁰]|[+\-−]?\d+(?:\.\d+)?[a-zA-Z](?:[²³⁴⁵^]|\b)|\d+(?:\.\d+)?\s*(?:[²³⁴⁵⁶⁷⁸⁹⁰]|\/\s*\d|\(|%|[×÷=+−≤≥≈-]\s*[\da-zA-Z])|\(\s*[-−]?\d+(?:\.\d+)?\s*,\s*[-−]?\d+(?:\.\d+)?\s*\)|√\s*[\d(]|[a-zA-Z]\s*\/\s*[a-zA-Z\d])/u;
 const wordPattern=/^[A-Za-z]+/;
 const numberPattern=/^(?:\d+(?:\.\d*)?|\.\d+)/;
 const operatorChars=new Set('+-−×÷=≤≥<>≈≠±*/^_%,:|πΔ∞√²³⁰¹⁴⁵⁶⁷⁸⁹⁻⁺');
@@ -40,7 +42,8 @@ function readMathRun(text,index){
       const spaces=rest.match(/^\s+/)[0],next=rest.slice(spaces.length);
       if(!next||/^[.;!?]/.test(next))break;
       const word=next.match(wordPattern);
-      if(word&&(stopWords.has(word[0].toLowerCase())||
+      if(word&&(previousType!=='operator'&&previousType!=='open'||
+        stopWords.has(word[0].toLowerCase())||
         (word[0].length>3||![...word[0]].every(c=>mathAlphabet.has(c)))))break;
       pos+=spaces.length;continue;
     }
@@ -69,7 +72,8 @@ function readMathRun(text,index){
     }
     if(char==='.'||char===';'||char===':'||char==='?'||char==='!')break;
     if(operatorChars.has(char)){
-      pos++;meaningful=true;previousType='operator';continue;
+      pos++;meaningful=true;
+      previousType=Object.prototype.hasOwnProperty.call(supDigits,char)?'superscript':'operator';continue;
     }
     break;
   }
