@@ -1,6 +1,9 @@
 // Render-only multi-step Problem Solving studio. No free-text auto-grading.
 import {escapeHTML as e} from './logic.js';
 import {attemptedProblem,canRateProblem,summaryForLevel,recordFor,problemFor} from './problem-solving-engine.js';
+import {modeWorkingNotebook,workingScope,archivedWorkingNotebooks}
+  from './working-notebook-integration.js';
+import {hasSavedWorking} from './working-notebook.js';
 const icon=name=>'<svg class="icon" aria-hidden="true"><use href="#i-'+name+'"></use></svg>';
 const ratingText=rating=>rating==='independent'?'Solved independently (self-rated)':
   rating==='supported'?'Solved with support (self-rated)':rating==='retry'?'Retry this problem':'Not reviewed';
@@ -34,13 +37,18 @@ export function renderProblemSolvingPage(page,topic,route,session,progress){
       '<div class="ps-empty">There are no unfinished or supported problems on this page. '+
       'Choose All problems to practise them again.</div>')+
     '<p class="ps-privacy">Your plan and calculations stay in this browser session only. '+
-      'The device saves your chosen review status, not your written answers or mathematical grades.</p>'+
+      'Your optional mathematical notebook is saved locally per problem, separately from self-review status. ' +
+      'None of this working receives an automatic grade.</p>'+
     '</div>';
 }
 function renderCurrent(topic,route,session,level){
   const problem=problemFor(topic.id,route.sectionId,route.pageId,session.ids[session.index]);
   if(!problem)return '<div class="ps-empty">Problem unavailable. Return to All problems.</div>';
-  const entry=problemEntry(session,problem);
+  const scope=workingScope(topic.id,'problemSolving',route.sectionId,route.pageId,problem.id);
+  const hasNotebook=hasSavedWorking(scope);
+  const entry={...problemEntry(session,problem)};
+  entry.notebookPlan=Boolean(entry.notebookPlan&&hasNotebook);
+  entry.notebookWorking=Boolean(entry.notebookWorking&&hasNotebook);
   const locked=Boolean(entry.rating);
   return '<section class="ps-case" aria-label="Problem '+(session.index+1)+'">'+
     '<div class="ps-meta"><span>Problem '+(session.index+1)+' of '+session.ids.length+'</span>'+
@@ -54,6 +62,16 @@ function renderCurrent(topic,route,session,level){
       '<div><label for="ps-work">My working and result</label>'+
       '<textarea id="ps-work" rows="6" maxlength="3500" '+(locked?'disabled':'')+
         ' placeholder="Work through the mathematics and check your answer.">'+e(entry.working)+'</textarea></div>'+
+    '</div>'+
+    modeWorkingNotebook(topic.id,'problemSolving',route.sectionId,route.pageId,problem.id)+
+    '<div class="ps-notebook-confirm" role="group" aria-label="Notebook evidence for self-review">'+
+      '<p>Using the notebook instead of these text boxes? Confirm which parts you completed there.</p>'+
+      '<label class="working-notebook-evidence"><input type="checkbox" data-ps-notebook-evidence="plan" '+
+        (entry.notebookPlan?'checked ':'')+(locked?'disabled':'')+
+        '><span>My strategy is explained in the notebook.</span></label>'+
+      '<label class="working-notebook-evidence"><input type="checkbox" data-ps-notebook-evidence="working" '+
+        (entry.notebookWorking?'checked ':'')+(locked?'disabled':'')+
+        '><span>My mathematical working and result are in the notebook.</span></label>'+
     '</div>'+
     (!locked?'<div class="ps-tools">'+
       '<button type="button" class="quiet-button" data-action="ps-strategies" aria-expanded="'+
@@ -152,5 +170,9 @@ function renderComplete(topic,route,session,progress){
       reviewed.map(problem=>{
         const r=recordFor(progress,route.sectionId,route.pageId,problem.id);
         return '<li><p>'+e(problem.prompt)+'</p><strong>'+e(ratingText(r?.rating))+'</strong></li>';
-      }).join('')+'</ol></details></section>';
+      }).join('')+'</ol></details>'+
+    archivedWorkingNotebooks({topicId:topic.id,mode:'problemSolving',
+      sectionId:route.sectionId,pageId:route.pageId,
+      items:reviewed.map((problem,i)=>({id:problem.id,title:'Problem '+(i+1)}))})+
+    '</section>';
 }
