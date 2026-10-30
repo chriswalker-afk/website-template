@@ -113,7 +113,7 @@ export const fluencyFamilies=Object.freeze({
       values:[run],steps:['Gradient = signed rise ÷ run, so run = signed rise ÷ gradient.',
         'Run = ('+signed(rise)+') ÷ ('+signed(m)+') = '+run+'.'],
       hint:'Rearrange rise ÷ run = gradient to make run the subject.',
-      mistake:'Divide signed rise by gradient. Both negative values give a positive run.',marks:3});
+      mistake:'Divide signed rise by gradient. Signed rise and gradient have the same sign when the run is positive.',marks:3});
   },
   'compare-steepness':rng=>{
     const a=int(rng,2,4),b=int(rng,0,1),run=int(rng,2,5);

@@ -69,7 +69,7 @@ export const cards=[
   {
     "id": "parallel-lines",
     "term": "Parallel lines",
-    "definition": "Distinct straight lines that never meet have the same gradient."
+    "definition": "Distinct non-vertical straight lines with the same gradient are parallel. Vertical lines are also parallel to each other, although their gradients are undefined."
   },
   {
     "id": "steepness",
