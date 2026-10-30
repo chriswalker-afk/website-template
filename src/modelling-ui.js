@@ -48,9 +48,7 @@ function stageView(task,session,entry,notebook){
   return '<section class="mdl-stage" aria-label="'+e(phase.label)+' stage">'+
     '<div class="mdl-stage-heading"><span>Stage '+(i+1)+' of 4</span><span>'+e(phase.label)+'</span></div>'+
     '<p class="mdl-stage-prompt">'+e(phase.prompt)+'</p>'+
-    '<label class="mdl-draft-label" for="mdl-answer">Your '+e(phase.label.toLowerCase())+' response</label>'+
-    '<textarea id="mdl-answer" rows="6" maxlength="2500" placeholder="Record your mathematical decisions and evidence. This is not automatically marked.">'+
-      e(entry.drafts[phase.id]||'')+'</textarea>'+
+    '<p class="mdl-draft-label"><strong>Your '+e(phase.label.toLowerCase())+' response</strong> — record your work in the notebook below.</p>'+
     notebook+
     '<label class="working-notebook-evidence"><input type="checkbox" '+
       'data-mdl-notebook-evidence="'+e(phase.id)+'" '+
@@ -126,7 +124,7 @@ export function renderModellingPage(page,topic,route,session,progress){
     '<button type="button" data-action="mdl-selection" data-selection="focus" aria-pressed="'+
       (session.selection==='focus')+'">Revisit weaker scenarios</button></div>';
   const confirm=session.confirmSwitch?'<div class="mdl-confirm" role="alert">'+
-    '<p>Replace this unfinished scenario? Unsaved written modelling decisions will be lost.</p>'+ 
+    '<p>Change practice selection? The investigation notebook is saved; current self-review confirmations will reset.</p>'+ 
     '<button type="button" class="quiet-button" data-action="mdl-cancel">Keep writing</button>'+ 
     '<button type="button" class="action-button" data-action="mdl-confirm">Replace scenario</button></div>':'';
   return '<div class="mdl-workspace">'+pulse+(session.complete?'':selection)+confirm+
