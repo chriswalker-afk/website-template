@@ -10,24 +10,34 @@ The original Sampling and Quadratics content is now organised as independent `sr
 
 See **[Pass 1 — Topic pack authoring guide](docs/TOPIC_PACKS_PASS1.md)**, **[Pass 2 — Shared question banks and skills](docs/QUESTION_BANK_PASS2.md)** and **[Pass 3 — Reusable mathematical visuals](docs/VISUAL_PACK_PASS3.md)** for the folder contract, constraints and next passes. Fluency generators, worksheet families and per-family method cues now live inside each topic pack; the shared engines use a versioned question-bank contract. New Fluency topics must provide reviewed answer generators and worked solutions.
 
+## First complete reuse example: Gradient (4MA1 Foundation)
+
+The **Gradient** topic now includes 15 Understand pages, 15 vocabulary flashcards, four Fluency levels and 16 question families, 16 Reasoning tasks, 16 Problem Solving tasks, 16 Modelling investigations, interactive straight-line plots and four printable worksheet skills with worked solutions. The content concentrates on gradient from a graph, signed rise/run, straight-line equations and rates of change. Coordinate-pair gradient calculation is labelled as optional stretch.
+
+Open [the Gradient topic](https://chriswalker-afk.github.io/website-template/#/gradient/home) inside the template hub, or export a separate standalone site using the manual **Export standalone topic website** GitHub Actions workflow with topic ID `gradient`. See [Pass 5 — Gradient](docs/PASS_5_GRADIENT.md) for the content scope and verification.
+
+To create a *different* topic with the creator, use a fresh ID such as:
+
+    npm run new-topic -- --id percentage-change --title "Percentage Change" --qualification 4MA1 --level Foundation
+
 ## Start a new maths topic
 
 **Pass 4 — New Topic Creator** now provides a one-command topic pack, an authoring-readiness audit and a draft-safe standalone preview. In a terminal, run:
 
-    npm run new-topic -- --id gradient-and-midpoint --title "Gradient and Midpoint" --qualification 4MA1 --level Foundation --modes understand,memorise,fluency
+    npm run new-topic -- --id percentage-change --title "Percentage Change" --qualification 4MA1 --level Foundation --modes understand,memorise,fluency
 
 Then use:
 
-    npm run audit:topic -- --topic gradient-and-midpoint
-    npm run preview:topic -- --topic gradient-and-midpoint
+    npm run audit:topic -- --topic percentage-change
+    npm run preview:topic -- --topic percentage-change
 
 Drafts remain hidden from the published hub. Only fully reviewed, ready topics can be exported with npm run build:site. The standalone build retains the notebook but hides the topic switcher.
 
-See **[Pass 4 — New Topic Creator and publishing guide](docs/NEW_TOPIC_CREATOR_PASS4.md)** for modes, teaching-content requirements, notation checks, preview and GitHub Pages export. The next step, Pass 5, is a complete new topic built without changing the shared application.
+See **[Pass 4 — New Topic Creator and publishing guide](docs/NEW_TOPIC_CREATOR_PASS4.md)** for modes, teaching-content requirements, notation checks, preview and GitHub Pages export. Pass 5 proves this process with the completed Gradient topic, without changing any shared application code.
 
 ## Try the book prototype
 
-The static application starts at **index.html** and includes two contrasting sample books:
+The static application starts at **index.html** and includes two contrasting sample books plus the new complete Gradient topic:
 - **Sampling Methods:** Understand includes conceptual checks, step-reveal methods, interactive sampling experiments and gradual-release worked examples. Memorise now includes twelve cards, twelve contextual language prompts, multi-round matching, adaptive recall and local progress. Fluency generates checked calculations, Reasoning offers 16 guided written-argument tasks, Problem Solving has 16 multi-step challenges, and Modelling offers 16 four-stage investigations; Games previews remain.
 - **Quadratic Functions:** Understand includes concept diagnostics, completing-square walkthroughs, interactive graph explorations and Show me → Help me → My turn worked examples. Memorise has the same twelve-card adaptive retrieval system; Fluency has generated question practice, Reasoning includes 16 written arguments, and Problem Solving adds 16 unfamiliar multi-step questions with optional graduated support. Modelling adds 16 four-stage investigations with quantitative model evaluation; Games previews remain.
 

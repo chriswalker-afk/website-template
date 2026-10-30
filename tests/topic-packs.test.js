@@ -9,9 +9,9 @@ import {PROBLEM_SOLVING_CHAPTERS} from '../src/problem-solving-content.js';
 import {MODELLING_CHAPTERS} from '../src/modelling-content.js';
 import {worksheetSkills} from '../src/worksheet-generator.js';
 
-test('the registry owns both unchanged example topics and their content',()=>{
+test('the registry retains both examples and registers the independent Gradient pack',()=>{
   assert.equal(DEFAULT_TOPIC,'sampling');
-  assert.deepEqual(TOPIC_PACKS.map(t=>t.id),['sampling','quadratics']);
+  assert.deepEqual(TOPIC_PACKS.map(t=>t.id),['sampling','quadratics','gradient']);
   for(const topic of TOPIC_PACKS){
     assert.strictEqual(TOPICS[topic.id],topic);
     assert.strictEqual(UNDERSTAND_CONTENT[topic.id],topic.chapters.understand);
@@ -20,7 +20,7 @@ test('the registry owns both unchanged example topics and their content',()=>{
     assert.strictEqual(PROBLEM_SOLVING_CHAPTERS[topic.id],topic.chapters.problemSolving);
     assert.strictEqual(MODELLING_CHAPTERS[topic.id],topic.chapters.modelling);
     assert.deepEqual(worksheetSkills(topic.id),topic.worksheetSkills);
-    assert.equal(chaptersFor(topic).length,7);
+    assert.equal(chaptersFor(topic).length,topic.id==='gradient'?6:7);
   }
   assert.deepEqual(validateTopics(),[]);
 });
