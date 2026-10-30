@@ -3,6 +3,7 @@ import {buildFluencySet,checkFluencyAnswer,PRACTICE_LENGTHS} from './fluency-eng
 import {emptyFluencyProgress,hydrateFluencyProgress,saveFluencyRound} from './fluency-progress.js';
 import {renderFluencyPage,roundScores} from './fluency-ui.js';
 import {enhanceMathInputs,latexToFluencyText} from './math-input.js';
+import {typesetSiteMath} from './math-notation.js';
 import {mountWorkingNotebooks,hasSavedWorking} from './working-notebook.js';
 import {workingScope} from './working-notebook-integration.js';
 import {reasoningAttempt,effectiveProblemAttempt,effectiveModellingAttempt}
@@ -640,6 +641,9 @@ function renderBook(route,{animate=true}={}){
       '</main></div>'+renderSideTabs(topic,route)+'</div></div>';
   topicSwitch.value=topic.id;
   state.route=route;
+  // Apply native, accessible mathematical typography to every reading mode,
+  // without touching inputs, working notebooks or live editing controls.
+  typesetSiteMath(app);
   enhanceMathInputs(app,{
     onToggle(target,active){
       if(target!=='fluency-answer'||state.route?.chapterId!=='fluency')return;
@@ -706,6 +710,7 @@ function updateGraph(){
   svg.outerHTML=renderGraphSvg(model);
   document.querySelector('#equation-display').textContent=mathCurveLabel(model);
   document.querySelector('#graph-observation').textContent=graphObservation(model);
+  typesetSiteMath(app);
   for(const [key,id] of [['magnitude','out-magnitude'],['h','out-h'],['k','out-k']]){
     const output=document.getElementById(id);
     if(output)output.textContent=displayNumber(model[key]);
