@@ -3,7 +3,7 @@ import {test,expect} from '@playwright/test';
 async function openNotebook(page){
   const details=page.locator('details[data-working-notebook]');
   await expect(details).toBeVisible();
-  if(!(await details.getAttribute('open'))) {
+  if((await details.getAttribute('open'))===null) {
     await details.locator('summary').click();
   }
   await expect(page.locator('.working-book')).toBeVisible();
