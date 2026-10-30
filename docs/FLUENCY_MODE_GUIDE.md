@@ -6,15 +6,15 @@
 
 Fluency is for accurate and efficient execution of **familiar** mathematical procedures: calculating, manipulating, substituting, factorising, completing the square, and using sampling formulas. It does **not** house conceptual graph demonstrations (Understand), simple definition retrieval (Memorise), unfamiliar strategy problems (Problem Solving) or model formulation/evaluation (Modelling).
 
-The four right-hand subsections are **Level 1: Foundations**, **Level 2: Standard**, **Level 3: Mixed** and **Level 4: Advanced**. They are always levels of *Fluency*, not qualification-specific assessment objectives. Levels can contain meaningful internal pages (e.g. count calculations vs systematic intervals) that use bottom book-page navigation. Advancing one question **does not** turn the book page or change the highlighted right tab.
+The four right-hand subsections use the **same names as Problem Solving**: **Level 1: Guided**, **Level 2: Structured**, **Level 3: Independent** and **Level 4: Challenge**. They are always levels of *Fluency*, not qualification-specific assessment objectives. Levels can contain meaningful internal pages (e.g. count calculations vs systematic intervals) that use bottom book-page navigation. Advancing one question **does not** turn the book page or change the highlighted right tab.
 
-One title and one subsection explanation are displayed; the generated exercise carries the prompt, skill, marks and response interface without another decorative heading.
+One title and one subsection explanation are displayed. A compact level-introduction panel explains the kind of support available; questions retain their prompt, marks, answer input and notebook. The skill name is withheld until completion at Independent/Challenge.
 
 ## Learning experience
 
 - Each authored level/page lists approved mathematical question families and a focus, but **not** a small fixed list of repeated prompts.
 - A reproducible numeric seed generates six or ten **distinct** questions. New questions change the seed; cancelling an unfinished-set replacement preserves both prompt and student working.
-- Exactly one question is active at a time to reduce distraction. A lined, optional working space is kept **only for the current browser session**.
+- Exactly one question is active at a time to reduce distraction. The **working notebook** is saved locally by topic and level/page and supports typed maths, explanations, drawings and editable diagrams.
 - A typed answer is checked by strict numerical logic, not by a remote service, AI judgement or ambiguous string matching.
 - Answers can be a **number** (including equivalent fractions), an **ordered list** (e.g. vertex coordinates or allocations), or **unordered roots**. Explicitly requested two-decimal-place answers use a tolerance tied to rounding.
 - Wrong numerical values produce a **family-specific mathematical hint** and allow correction. Empty or malformed answers don't count as a mathematical attempt.
@@ -25,16 +25,20 @@ One title and one subsection explanation are displayed; the generated exercise c
 
 ### Level progression
 
-| Level | Sampling Methods | Quadratic Functions |
-| --- | --- | --- |
-| 1 Foundations | Sample percentages and sizes; systematic intervals and sample counts | Substitute values into quadratic functions; identify turning points; simple factorised roots; y-intercepts |
-| 2 Standard | Two-stratum allocations, sample positions and interval calculations | Solve monic quadratic equations, calculate discriminants and find vertices by completing the square |
-| 3 Mixed | Three-stratum allocations, final systematic positions and familiar calculations in a mixed sequence | Non-monic factorising, non-monic vertices, discriminants and monic roots |
-| 4 Advanced | Reverse proportional allocation and combined stratified/systematic calculations | Quadratic formula to 2 d.p., solve for an unknown coefficient and calculate extreme values from completed-square form |
+| Level | Scaffolding | Sampling Methods | Quadratic Functions |
+| --- | --- | --- | --- |
+| **1 Guided** | A method-specific **Start here** cue is always visible; no numbers are calculated for the student | Percentages and sizes; systematic intervals | Substitution, turning points, simple factorised roots and intercepts |
+| **2 Structured** | A three-step **Method checklist** organises the method without doing the calculation | Proportional allocations, systematic positions and intervals | Monic factorising, discriminants and completing the square |
+| **3 Independent** | No starting cue; the skill label is revealed only after checking or revealing a solution | Mixed allocations and systematic positions | Mixed familiar methods, including non-monic quadratics |
+| **4 Challenge** | No starting cue; more demanding calculations and reverse procedures | Reverse and combined sampling calculations | Quadratic formula, unknown coefficients and extreme-value calculations |
 
-Different levels change the **mathematics**, not merely the size of the numbers. They are not intended to substitute for Reasoning or Modelling.
+The levels change both the mathematical content and the help available. Automatic prompts appear only at Guided and Structured; students can request a hint at any level. Opening a hint continues to count as **supported** work. A first-try correct answer at Guided level is accurate practice *with* its built-in cue, not evidence of fully independent mastery.
+
+The IDs `level-1` to `level-4`, existing question pools, marking contracts and saved progress keys are unchanged. These levels remain Fluency practice, distinct from non-routine Problem Solving, Reasoning and Modelling.
 
 ## Technical contracts
+
+- `src/fluency-levels.js`: reusable level descriptions and family-specific start cues/method checklists; no generated numerical answers are exposed.
 
 - \`src/fluency-engine.js\`: source of truth for topic/level/page configuration, deterministic question families, numeric answer specifications, step-by-step generated working and response validation.
 - \`src/fluency-ui.js\`: accessible one-question-at-a-time interface, response feedback, progress and full-solution rendering.
@@ -70,7 +74,7 @@ The printable implementation escapes external text before LaTeX export and repre
 
 ## Local progress and privacy
 
-Only aggregate completed-round records are saved in \`localStorage\` under the per-topic key \`maths-notebook-pass1a:fluency:<topic-id>\`. A record contains completed rounds and counts of first-try successes, supported completions and revealed solutions by level. Working notes and raw typed answers are **not persisted**. A refreshed unfinished round restarts with new questions; previous completed-round totals remain. Progress on one topic does not alter another.
+Only aggregate completed-round records are saved in \`localStorage\` under the per-topic key \`maths-notebook-pass1a:fluency:<topic-id>\`. A record contains completed rounds and counts of first-try successes, supported completions and revealed solutions by level. Raw final-answer drafts are **not persisted**, but the structured working notebook **is saved locally** under `maths-notebook:working:v1:<topic>:fluency:<level>:<page>` and can be exported. Refreshing an unfinished round starts new questions while retaining its notebook. Previously completed-round totals remain. Progress on one topic does not alter another.
 
 Aggregate counts are **practice evidence**, not student grades, diagnostic mastery scores, teacher surveillance or accounts. The site remains static/offline-capable after asset download and needs no sign-in, cloud storage or data submission. When local storage is blocked or cleared, progress will not persist.
 
@@ -78,7 +82,7 @@ Aggregate counts are **practice evidence**, not student grades, diagnostic maste
 
 - Form labels explain the required format, buttons are keyboard-operable and feedback is described in text.
 - Focus moves to the next answer field or meaningful action following a state change. A hint may be hidden without erasing evidence that it was viewed.
-- The optional writing area accepts mathematical scratch work without automated grading or storage.
+- The working notebook stores typed maths, explanations, drawings and diagrams locally without automatic grading.
 - A reduced-motion preference and the existing Motion Off toggle remain respected.
 - The minimum tested width is 320px, alongside 390, 768, 1024 and 1440px; question controls and worked solutions must not cause page-wide overflow.
 - Mathematical property tests reconstruct generated parameters and verify sample fractions, allocations, roots, vertices, discriminants and inverse calculations over many random seeds.
