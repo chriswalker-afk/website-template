@@ -89,7 +89,8 @@ test('Understand My turn offers a notebook while preserving original self-review
   assert.ok(page);
   const markup=renderWorkshop(page,
     {topicId:'quadratics',sectionId:'worked-examples',pageId:page.id}, {}, {});
-  assert.match(markup,/data-understand-response/);
+  assert.doesNotMatch(markup,/data-understand-response/);
+  assert.match(markup,/data-working-notebook/);
   assert.match(markup,/quadratics:understand:worked-examples:[a-z-]+:my-turn/);
   assert.match(markup,/Compare with model solution/);
 });
