@@ -1,5 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {REASONING_CHAPTERS} from '../src/reasoning-content.js';
+import {writeWorking,notebookContains,confirmReasoning,openNotebook} from './notebook-helpers.js';
 
 const modes=['explain','justify','critique','generalise'];
 async function open(page,topic='sampling',mode='explain'){
@@ -9,7 +10,8 @@ async function compare(page){
   await page.getByRole('button',{name:'Compare with worked argument'}).click();
 }
 async function completeFirst(page,text='This argument uses the correct mathematical rule and explains why the conclusion follows.'){
-  await page.locator('#reasoning-answer').fill(text);
+  await writeWorking(page,text);
+  await confirmReasoning(page);
   await compare(page);
   for(let i=0;i<3;i++)await page.locator('input[data-reasoning-criterion="'+i+'"]').check();
   await page.getByRole('button',{name:'Ready to move on'}).click();
@@ -39,14 +41,15 @@ test('student writes, gets optional nudge, compares mathematical argument, then 
   await open(page);
   const task=REASONING_CHAPTERS.sampling[0].pages[0].tasks[0];
   await expect(page.getByRole('button',{name:'Ready to move on'})).toHaveCount(0);
-  await page.locator('#reasoning-answer').fill(
+  await writeWorking(page,
     'The library-only sample excludes pupils elsewhere, who might prefer different meals.');
+  await confirmReasoning(page);
   await page.getByRole('button',{name:'Need a nudge?'}).click();
   await expect(page.locator('.reasoning-hint')).toContainText(task.hint);
   await expect(page.locator('.reasoning-hint')).toContainText(task.starter);
-  await expect(page.locator('#reasoning-answer')).toContainText('The library-only sample');
+  await notebookContains(page,'The library-only sample');
   await page.getByRole('button',{name:'Hide nudge'}).click();
-  await expect(page.locator('#reasoning-answer')).toContainText('The library-only sample');
+  await notebookContains(page,'The library-only sample');
   await compare(page);
   await expect(page.locator('.reasoning-model-steps li')).toHaveCount(3);
   await expect(page.locator('.reasoning-model-steps')).toContainText(task.model[0]);
@@ -96,8 +99,9 @@ test('students can view a model without an attempt but cannot claim independent 
 test('self-review distinguishes developing from ready and supports targeted corrections',async({page})=>{
   await open(page,'quadratics','critique');
   const task=REASONING_CHAPTERS.quadratics[2].pages[0].tasks[0];
-  await page.locator('#reasoning-answer').fill(
+  await writeWorking(page,
     'The horizontal coordinate is negative three, not positive three, because the bracket is x plus three.');
+  await confirmReasoning(page);
   await compare(page);
   await expect(page.locator('.reasoning-model-steps')).toContainText('(−3, −2)');
   await page.locator('input[data-reasoning-criterion="0"]').check();
@@ -113,14 +117,15 @@ test('self-review distinguishes developing from ready and supports targeted corr
 });
 test('mode switch confirms that unfinished student writing would be lost',async({page})=>{
   await open(page);
-  await page.locator('#reasoning-answer').fill('A student writes a draft explanation of how sampling works.');
+  await writeWorking(page,'A student writes a draft explanation of how sampling works.');
+  await confirmReasoning(page);
   await page.getByRole('button',{name:'Needs another look'}).click();
-  await expect(page.locator('.reasoning-confirm')).toContainText('unsaved written response will be lost');
+  await expect(page.locator('.reasoning-confirm')).toContainText('current self-review confirmations');
   await page.getByRole('button',{name:'Keep writing'}).click();
-  await expect(page.locator('#reasoning-answer')).toHaveValue('A student writes a draft explanation of how sampling works.');
+  await notebookContains(page,'A student writes a draft explanation of how sampling works.');
   await page.getByRole('button',{name:'Needs another look'}).click();
   await page.getByRole('button',{name:'Change practice'}).click();
-  await expect(page.locator('#reasoning-answer')).toHaveValue('');
+  await notebookContains(page,'A student writes a draft explanation of how sampling works.');
   await expect(page.locator('.reasoning-modes [data-mode="focus"]')).toHaveAttribute('aria-pressed','true');
   await expect(page.locator('.reasoning-task-meta')).toContainText('Prompt 1 of 4');
 });
@@ -158,21 +163,24 @@ test('all-ready sections show an informative empty focus state without a dead en
   await page.getByRole('button',{name:'All prompts'}).click();
   await expect(page.locator('.reasoning-task-prompt')).toBeVisible();
 });
-test('saved self-review survives refresh, remains topic-specific and contains no student writing',async({page})=>{
+test('saved self-review stays separate from locally saved mathematical notebook work',async({page})=>{
   await open(page,'sampling','generalise');
-  await page.locator('#reasoning-answer').fill('<script>alert("student answer")</script> Explanation about fractions and proportional allocation.');
+  await writeWorking(page,'<script>alert("student answer")</script> Explanation about fractions and proportional allocation.');
+  await confirmReasoning(page);
   await page.getByRole('button',{name:'Need a nudge?'}).click();
   await compare(page);
   await page.locator('input[data-reasoning-criterion="0"]').check();
   await expect(page.locator('.reasoning-workspace script')).toHaveCount(0);
-  await expect(page.locator('#reasoning-answer')).toHaveValue(/<script>alert/);
+  await notebookContains(page,'<script>alert');
   await page.getByRole('button',{name:'Still developing'}).click();
-  const before=await page.evaluate(()=>JSON.stringify(localStorage));
-  expect(before).not.toContain('student answer');
+  const notebookKey=await page.locator('details[data-working-notebook]').getAttribute('data-scope');
+  const localNotebook=await page.evaluate(key=>localStorage.getItem('maths-notebook:working:v1:'+key),notebookKey);
+  expect(localNotebook).toContain('student answer');
   const saved=await page.evaluate(()=>localStorage.getItem('maths-notebook-pass1a:reasoning:sampling'));
   expect(JSON.parse(saved).records['generalise:allocation-rule'].rating).toBe('developing');
   await page.reload();
-  await expect(page.locator('#reasoning-answer')).toHaveValue('');
+  await notebookContains(page,'A student writes a draft explanation of how sampling works.');
+  await notebookContains(page,'student answer');
   await expect(page.locator('.reasoning-pulse')).toContainText('1 / 4 reviewed');
   await page.getByRole('button',{name:'Needs another look'}).click();
   await expect(page.locator('.reasoning-task-prompt')).toContainText('For strata of sizes');
@@ -181,9 +189,9 @@ test('saved self-review survives refresh, remains topic-specific and contains no
 });
 test('the written answer cannot accidentally trigger form submission or a fake marking score',async({page})=>{
   await open(page);
-  await page.locator('#reasoning-answer').fill('x = 2 and this is the conclusion.\nThe next line is why it follows.');
-  await page.locator('#reasoning-answer').press('Enter');
-  await expect(page.locator('#reasoning-answer')).toHaveValue(/The next line/);
+  await writeWorking(page,'x = 2 and this is the conclusion.\nThe next line is why it follows.');
+  await page.locator('[data-book-kind="text"]').last().press('Enter');
+  await notebookContains(page,'The next line');
   await expect(page.locator('.reasoning-task-meta')).toContainText('Prompt 1 of 4');
   await expect(page.locator('.reasoning-workspace')).not.toContainText('100% mastery');
   await expect(page.locator('.reasoning-workspace')).not.toContainText('Auto-graded');
@@ -192,8 +200,11 @@ test('the written answer cannot accidentally trigger form submission or a fake m
 test('written mathematics, model steps and navigation remain keyboard accessible',async({page})=>{
   await page.emulateMedia({reducedMotion:'reduce'});
   await open(page,'quadratics','explain');
-  await page.locator('#reasoning-answer').focus();
+  await openNotebook(page);
+  await page.locator('[data-book-action="add-text"]').click();
+  await page.locator('[data-book-kind="text"]').last().focus();
   await page.keyboard.type('For every real x, a squared term is nonnegative and so a negative coefficient gives an upper bound.');
+  await confirmReasoning(page);
   await page.getByRole('button',{name:'Compare with worked argument'}).focus();
   await page.keyboard.press('Enter');
   await expect(page.locator('.reasoning-review-panel')).toBeVisible();
