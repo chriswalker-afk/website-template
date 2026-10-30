@@ -11,7 +11,6 @@ const labelFor=rating=>rating==='ready'?'Ready to move on':
   rating==='developing'?'Still developing':rating==='revisit'?'Review again':'Not reviewed';
 const toneFor=rating=>rating==='ready'?'ready':rating==='developing'?'developing':
   rating==='revisit'?'revisit':'new';
-const written=entry=>Boolean(entry?.draft?.trim()?.length>=20);
 function currentTask(topic,route,session){
   return taskFor(topic.id,route.sectionId,session?.ids?.[session.index]);
 }
@@ -36,7 +35,7 @@ function selectionControls(session){
 }
 function reviewPanel(task,entry,notebookAttempt=false){
   const checked=entry.checks.filter(Boolean).length;
-  const canWrite=written(entry)||notebookAttempt;
+  const canWrite=notebookAttempt;
   const all=checked===task.criteria.length;
   const canReady=canWrite&&all;
   const criteria=task.criteria.map((criterion,i)=>
@@ -89,10 +88,7 @@ function taskView(topic,route,session){
     '<div class="reasoning-task-meta"><span>Prompt '+(session.index+1)+' of '+session.ids.length+'</span>'+
       '<span>'+e(route.sectionId[0].toUpperCase()+route.sectionId.slice(1))+'</span></div>'+
     '<p class="reasoning-task-prompt">'+e(task.prompt)+'</p>'+
-    '<label class="reasoning-writing-label" for="reasoning-answer">Your mathematical argument</label>'+
-    '<textarea id="reasoning-answer" class="reasoning-writing" maxlength="2500" rows="6" '+
-      'placeholder="Write a precise explanation using mathematical evidence." '+
-      (rating?'disabled':'')+'>'+e(entry.draft)+'</textarea>'+
+    '<p class="reasoning-writing-label"><strong>Your mathematical argument</strong> — use maths lines, explanations or diagrams in the notebook.</p>'+
     modeWorkingNotebook(topic.id,'reasoning',route.sectionId,route.pageId,task.id)+
     '<label class="working-notebook-evidence">'+
       '<input type="checkbox" data-reasoning-notebook-evidence '+
@@ -146,7 +142,7 @@ export function renderReasoningPage(page,topic,route,session,progress){
   return '<div class="reasoning-workspace">'+
     statusRow(topic,route,progress)+selectionControls(session)+
     (session.confirmSwitch?'<div class="reasoning-confirm" role="alert"><p>'+
-      'Replace this unfinished prompt? Your unsaved written response will be lost.</p>'+
+      'Change practice selection? Your notebook is saved; only the current self-review confirmations will be reset.</p>'+
       '<button class="quiet-button" type="button" data-action="reasoning-cancel-switch">Keep writing</button>'+
       '<button class="action-button" type="button" data-action="reasoning-confirm-switch">Change practice</button>'+
       '</div>':'')+
