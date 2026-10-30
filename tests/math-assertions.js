@@ -11,10 +11,10 @@ export async function readableMathText(locator){
         math.getAttribute('aria-label')||math.textContent||''
       ));
     });
-    return clone.textContent.replace(/\\s+/g,' ').trim();
+    return clone.textContent.replace(/\s+/g,' ').trim();
   });
 }
-const normalise=value=>String(value).replace(/\\s+/g,' ').trim();
+const normalise=value=>String(value).replace(/\s+/g,' ').trim();
 export async function expectReadingText(locator,expected){
   await expect.poll(()=>readableMathText(locator)).toBe(normalise(expected));
 }
