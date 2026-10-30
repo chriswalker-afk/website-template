@@ -5,11 +5,15 @@
   "type": "module",
   "description": "Accessible interactive Maths notebook with a prototype LaTeX worksheet generator",
   "scripts": {
-    "check": "node --check src/app.js && node --check src/topics.js && node --check src/logic.js && node --check src/math-input.js && node --check src/math-notation.js && node --check src/working-notebook-model.js && node --check src/math-toolkit.js && node --check src/math-toolkit-ui.js && node --check src/working-notebook.js && node --check src/working-notebook-integration.js && node --check src/working-notebook-evidence.js && node --check src/worksheet-generator.js && node --check src/understand-content.js && node --check src/understand-engine.js && node --check src/understand-ui.js && node --check src/memorise-content.js && node --check src/memorise-engine.js && node --check src/memorise-ui.js && node --check src/fluency-levels.js && node --check src/fluency-engine.js && node --check src/fluency-ui.js && node --check src/fluency-progress.js && node --check src/reasoning-content.js && node --check src/reasoning-engine.js && node --check src/reasoning-ui.js && node --check src/problem-solving-content.js && node --check src/problem-solving-engine.js && node --check src/problem-solving-ui.js && node --check src/modelling-content.js && node --check src/modelling-engine.js && node --check src/modelling-ui.js && node --test tests/*.test.js",
+    "check": "node --check src/app.js && node --check src/topics.js && node --check src/logic.js && node --check src/math-input.js && node --check src/math-notation.js && node --check src/working-notebook-model.js && node --check src/math-toolkit.js && node --check src/math-toolkit-ui.js && node --check src/working-notebook.js && node --check src/working-notebook-integration.js && node --check src/working-notebook-evidence.js && node --check src/worksheet-generator.js && node --check src/understand-content.js && node --check src/understand-engine.js && node --check src/understand-ui.js && node --check src/memorise-content.js && node --check src/memorise-engine.js && node --check src/memorise-ui.js && node --check src/fluency-levels.js && node --check src/fluency-engine.js && node --check src/fluency-ui.js && node --check src/fluency-progress.js && node --check src/reasoning-content.js && node --check src/reasoning-engine.js && node --check src/reasoning-ui.js && node --check src/problem-solving-content.js && node --check src/problem-solving-engine.js && node --check src/problem-solving-ui.js && node --check src/modelling-content.js && node --check src/modelling-engine.js && node --check src/modelling-ui.js && node --test tests/*.test.js && node scripts/validate-topic.mjs --all --structural",
     "test": "node --test tests/*.test.js",
     "test:browser": "playwright test",
     "preview": "node scripts/serve.mjs",
-    "test:latex": "node scripts/worksheet-smoke.mjs"
+    "test:latex": "node scripts/worksheet-smoke.mjs",
+    "new-topic": "node scripts/new-topic.mjs",
+    "audit:topic": "node scripts/validate-topic.mjs",
+    "build:site": "node scripts/build-site.mjs",
+    "preview:topic": "node scripts/preview-topic.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.56.1"
