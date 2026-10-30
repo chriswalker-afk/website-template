@@ -49,8 +49,12 @@ export function blankModellingEntry(){
     compared:false};
 }
 export function attemptedModelling(entry){
+  // Students may confirm mathematical working in the shared investigation
+  // notebook at each stage instead of duplicating it in plain text.
+  // This is evidence of an attempt for SELF-review, never a mark.
   return Boolean(entry?.drafts&&MODEL_PHASE_IDS.every(id=>
-    typeof entry.drafts[id]==='string'&&entry.drafts[id].trim().length>=20));
+    (typeof entry.drafts[id]==='string'&&entry.drafts[id].trim().length>=20)||
+      entry?.notebookStages?.[id]===true));
 }
 export function canSelfRateModel(entry,rating){
   if(!entry?.compared||!MODELLING_RATINGS.includes(rating)||entry.rating)return false;
