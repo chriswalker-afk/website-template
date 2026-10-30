@@ -64,10 +64,8 @@ function activeQuestion(session,scope){
       '</span><span>'+q.marks+' marks</span></div>'+
     '<div class="fluency-question__skill">'+e(q.skill)+'</div>'+
     '<p class="fluency-question__prompt">'+e(q.prompt)+'</p>'+
-    '<label class="fluency-working-label" for="fluency-working">Working space (optional)</label>'+
-    '<textarea id="fluency-working" class="fluency-working" rows="3" '+
-      'placeholder="Use this space to plan your calculations. It is not marked or saved.">'+
-       escape(a.working||'')+'</textarea>'+
+    // The notebook replaces the former plain-text working textarea.
+
     workingNotebookMarkup({scope,label:'Fluency mathematical working'})+
     answerForm(q,a)+
     '<div class="fluency-assistance">'+
@@ -132,7 +130,7 @@ export function renderFluencyPage(page,topic,route,session,progress){
         icon('refresh')+' New questions</button>'+
       '<span class="fluency-seed">Set #'+session.set.seed+'</span></div>'+
     (session.confirmFresh?'<div class="fluency-confirm" role="alert">'+
-      '<p>Replace this unfinished set? Unchecked work and typed notes will be lost.</p>'+
+      '<p>Replace the unfinished question responses? Your working notebook is saved separately and will be kept.</p>'+
       '<button type="button" class="quiet-button" data-action="fluency-cancel-new">Keep practising</button>'+
       '<button type="button" class="action-button" data-action="fluency-confirm-new">Replace set</button></div>':'')+
     roundProgressMarkup(session)+
@@ -141,6 +139,6 @@ export function renderFluencyPage(page,topic,route,session,progress){
       label:'Fluency mathematical working'}):activeQuestion(session,
       [topic.id,'fluency',route.sectionId,route.pageId].join(':')))+
     '<p class="fluency-privacy">Answers are checked numerically, with equivalent root orders and suitable fractions accepted. '+
-    'Completed-round summaries and notebook pages are saved separately on this device; the quick notes box is session-only.</p>'+
+    'Completed-round summaries and notebook pages are saved separately on this device.</p>'+
     '</div>';
 }
