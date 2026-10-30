@@ -30,7 +30,7 @@ test('How it works reveals and resets meaningful mathematical steps',async({page
   await page.getByRole('button',{name:'Show first step'}).click();
   await expect(page.locator('.explain-steps__meta')).toContainText('1 of 4');
   await expect(page.locator('.explain-steps__list li')).toHaveCount(1);
-  await expect(page.locator('.explain-steps__list')).toContainText('30 ÷ 6 = 5');
+  await expectReadingContains(page.locator('.explain-steps__list'),'30 ÷ 6 = 5');
   await page.getByRole('button',{name:'Previous step'}).click();
   await expect(page.locator('.explain-steps__list li')).toHaveCount(0);
   await page.getByRole('button',{name:'Show first step'}).click();
@@ -99,7 +99,7 @@ test('Show me → Help me → My turn retains writing and supports self-assessme
   await expect(page.locator('.workshop-stage__label')).toHaveText(['Show me','Help me','My turn']);
   await expect(page.locator('.explain-steps__meta')).toContainText('0 of 3');
   await page.getByRole('button',{name:'Show first step'}).click();
-  await expect(page.locator('.explain-steps__list')).toContainText('h = −1');
+  await expectReadingContains(page.locator('.explain-steps__list'),'h = −1');
   await page.locator('button[data-action="understand-guided"][data-choice="wrong-sign"]').click();
   await expect(page.locator('.workshop-stage .concept-check__feedback')).toContainText('Not yet.');
   await page.locator('button[data-action="understand-guided"][data-choice="correct"]').click();
