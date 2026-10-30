@@ -7,11 +7,15 @@ import {questionBank as samplingQuestions} from './sampling/question-bank.js';
 import {questionBank as quadraticsQuestions} from './quadratics/question-bank.js';
 import {visuals as samplingVisuals} from './sampling/visuals.js';
 import {visuals as quadraticsVisuals} from './quadratics/visuals.js';
+import {topic as topic_gradient} from './gradient/index.js';
+import {questionBank as question_gradient} from './gradient/question-bank.js';
+import {visuals as visual_gradient} from './gradient/visuals.js';
 // @topic-creator:imports
 
 const REGISTRATIONS=Object.freeze([
   {topic:sampling,questionBank:samplingQuestions,visuals:samplingVisuals},
   {topic:quadratics,questionBank:quadraticsQuestions,visuals:quadraticsVisuals},
+  {topic:topic_gradient,questionBank:question_gradient,visuals:visual_gradient},
   // @topic-creator:entries
 ]);
 const enabled=SITE_CONFIG.mode==='standalone'?
