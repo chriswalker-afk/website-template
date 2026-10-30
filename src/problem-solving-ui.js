@@ -4,6 +4,7 @@ import {attemptedProblem,canRateProblem,summaryForLevel,recordFor,problemFor} fr
 import {modeWorkingNotebook,workingScope,archivedWorkingNotebooks}
   from './working-notebook-integration.js';
 import {hasSavedWorking} from './working-notebook.js';
+import {effectiveProblemAttempt} from './working-notebook-evidence.js';
 const icon=name=>'<svg class="icon" aria-hidden="true"><use href="#i-'+name+'"></use></svg>';
 const ratingText=rating=>rating==='independent'?'Solved independently (self-rated)':
   rating==='supported'?'Solved with support (self-rated)':rating==='retry'?'Retry this problem':'Not reviewed';
@@ -45,10 +46,7 @@ function renderCurrent(topic,route,session,level){
   const problem=problemFor(topic.id,route.sectionId,route.pageId,session.ids[session.index]);
   if(!problem)return '<div class="ps-empty">Problem unavailable. Return to All problems.</div>';
   const scope=workingScope(topic.id,'problemSolving',route.sectionId,route.pageId,problem.id);
-  const hasNotebook=hasSavedWorking(scope);
-  const entry={...problemEntry(session,problem)};
-  entry.notebookPlan=Boolean(entry.notebookPlan&&hasNotebook);
-  entry.notebookWorking=Boolean(entry.notebookWorking&&hasNotebook);
+  const entry=effectiveProblemAttempt(problemEntry(session,problem),hasSavedWorking(scope));
   const locked=Boolean(entry.rating);
   return '<section class="ps-case" aria-label="Problem '+(session.index+1)+'">'+
     '<div class="ps-meta"><span>Problem '+(session.index+1)+' of '+session.ids.length+'</span>'+
