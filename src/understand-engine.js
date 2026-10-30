@@ -1,86 +1,27 @@
-// Small deterministic mathematical engines behind Understand visualisations.
-// No network, no user data, no dependence on the DOM or web framework.
-export const POPULATION_SIZE=40;
-export const SAMPLE_SIZE=10;
-export const STRATUM_A=16;
-export const STRATUM_B=POPULATION_SIZE-STRATUM_A;
-export const SAMPLING_METHODS={
-  census:{label:'Census',description:'Every person is included; this is not a sample.'},
-  random:{label:'Simple random',description:'Every possible group of ten has the same chance of selection.'},
-  systematic:{label:'Systematic',description:'Choose a random start from the first four positions, then take every fourth person.'},
-  stratified:{label:'Stratified',description:'Randomly select four from Group A and six from Group B, preserving the population proportions.'},
-  convenience:{label:'Convenience',description:'Take the first ten names from this group-ordered list. Group B is excluded.'}
-};
-export function seededRandom(seed){
-  let value=(Number(seed)||1)>>>0;
-  return ()=>{
-    value=(value+0x6D2B79F5)>>>0;
-    let x=value;
-    x=Math.imul(x^(x>>>15),x|1);
-    x^=x+Math.imul(x^(x>>>7),x|61);
-    return ((x^(x>>>14))>>>0)/4294967296;
-  };
-}
-function shuffled(length,offset,rng){
-  const list=Array.from({length},(_,i)=>i+offset);
-  for(let i=list.length-1;i>0;i--){
-    const j=Math.floor(rng()*(i+1));
-    [list[i],list[j]]=[list[j],list[i]];
-  }
-  return list;
-}
+// Compatibility facade for legacy Understand APIs.
+// The plot and sampling mathematics are now shared, configurable engines.
+import {sampleSelection} from './visuals/sampling.js';
+import {SAMPLING_VISUAL} from './topic-packs/sampling/visuals.js';
+import {visuals as quadraticVisuals} from './topic-packs/quadratics/visuals.js';
+export {seededRandom} from './visuals/sampling.js';
+export {quadraticProperties,quadraticValue,quadraticEquation} from './visuals/models.js';
+export const POPULATION_SIZE=SAMPLING_VISUAL.groups.reduce((n,g)=>n+g.size,0);
+export const SAMPLE_SIZE=SAMPLING_VISUAL.sampleSize;
+export const STRATUM_A=SAMPLING_VISUAL.groups[0].size;
+export const STRATUM_B=SAMPLING_VISUAL.groups[1].size;
+export const SAMPLING_METHODS=SAMPLING_VISUAL.methods;
 export function samplingExperiment(method,seed=1){
-  if(!Object.prototype.hasOwnProperty.call(SAMPLING_METHODS,method))
-    throw new Error('Unknown sampling method');
-  const rng=seededRandom(seed);
-  let indices;
-  let randomStart=null;
-  if(method==='census')indices=Array.from({length:POPULATION_SIZE},(_,i)=>i);
-  else if(method==='random')indices=shuffled(POPULATION_SIZE,0,rng).slice(0,SAMPLE_SIZE);
-  else if(method==='stratified')indices=[
-    ...shuffled(STRATUM_A,0,rng).slice(0,4),
-    ...shuffled(STRATUM_B,STRATUM_A,rng).slice(0,6)
-  ];
-  else if(method==='systematic'){
-    randomStart=1+Math.floor(rng()*4);
-    indices=Array.from({length:SAMPLE_SIZE},(_,i)=>randomStart-1+i*4);
-  }else indices=Array.from({length:SAMPLE_SIZE},(_,i)=>i);
-  const selected=[...indices].sort((a,b)=>a-b);
-  const groupA=selected.filter(i=>i<STRATUM_A).length;
-  const groupB=selected.length-groupA;
-  return {
-    method,seed,selected,groupA,groupB,randomStart,
-    size:selected.length,
-    proportionA:100*groupA/selected.length,
-    proportionB:100*groupB/selected.length
-  };
+  if(!Object.hasOwn(SAMPLING_METHODS,method))throw Error('Unknown sampling method');
+  const result=sampleSelection(SAMPLING_VISUAL,method,seed);
+  const [groupA,groupB]=result.counts;
+  return {method,seed,selected:result.selected,groupA,groupB,randomStart:result.randomStart,
+    size:result.size,proportionA:100*groupA/result.size,proportionB:100*groupB/result.size};
 }
+const omitKind=({kind,...model})=>({...model});
 export const GRAPH_DEFAULTS={
-  shape:{magnitude:1,h:0,k:0,sign:1},
-  position:{magnitude:1,h:0,k:-2,sign:1}
+  shape:omitKind(quadraticVisuals.explorers.shape.initial),
+  position:omitKind(quadraticVisuals.explorers.position.initial)
 };
-export function quadraticProperties({magnitude,h,k,sign}){
-  if(!Number.isFinite(magnitude)||magnitude<=0||![1,-1].includes(sign)||
-     !Number.isFinite(h)||!Number.isFinite(k))throw new Error('Invalid quadratic parameters');
-  const a=magnitude*sign;
-  return {
-    a,h,k,vertex:[h,k],axis:h,
-    turningType:a>0?'minimum':'maximum',
-    opening:a>0?'upwards':'downwards',
-    steepness:magnitude===1?'the same steepness as y = x²':
-      magnitude>1?'narrower than y = x²':'wider than y = x²'
-  };
-}
-export function quadraticValue(x,model){
-  const {a,h,k}=quadraticProperties(model);
-  return a*(x-h)*(x-h)+k;
-}
-export function quadraticEquation(model){
-  const {a,h,k}=quadraticProperties(model);
-  const square=h===0?'x²':'(x '+(h>0?'− '+h:'+ '+Math.abs(h))+')²';
-  return 'y = '+(a===1?'':a===-1?'−':a<0?'−'+Math.abs(a):String(a))+square+
-    (k===0?'':(k>0?' + ':' − ')+Math.abs(k));
-}
 export function validateUnderstandContent(sections){
   const problems=[];
   const ids=['big-idea','how-it-works','visual-explanations','worked-examples'];
@@ -89,13 +30,11 @@ export function validateUnderstandContent(sections){
   for(const section of sections||[]){
     if(!Array.isArray(section.pages)||!section.pages.length)continue;
     for(const page of section.pages){
-      if(!['lesson','graph','sampling-lab','workshop'].includes(page.type))
+      if(!['lesson','graph','sampling-lab','visual','workshop'].includes(page.type))
         problems.push('Unsupported Understand page type: '+page.type);
-      if(page.type==='graph'&&!['shape','position'].includes(page.id))problems.push('Unknown graph experiment');
-      if(page.type==='sampling-lab'){
-        if(!Array.isArray(page.methods)||page.methods.length<2||page.methods.some(m=>!SAMPLING_METHODS[m]))
-          problems.push('Sampling experiment requires supported methods');
-      }
+      // Page IDs no longer imply a particular quadratic graph or sampling experiment.
+      // Topic pack visual definitions and their mathematical contracts are validated
+      // separately by validateVisualLibrary.
       if(page.type==='workshop'){
         if(!page.model?.prompt||!page.model?.steps?.length||
           !page.guided?.prompt||!page.guided?.choices?.length||

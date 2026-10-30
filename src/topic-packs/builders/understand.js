@@ -10,3 +10,6 @@ export const method=(id,prompt,steps)=>({kind:'stepper',id,prompt,steps});
 export const workshop=(id,model,guided,independent)=>({id,type:'workshop',model,guided,independent});
 export const graph=(id,focus)=>({id,type:'graph',focus});
 export const samplingLab=(id,focus,methods)=>({id,type:'sampling-lab',focus,methods});
+
+// Generic visual page: choose an explorer definition by key from the topic visual pack.
+export const visual=(id,focus,visualId=id)=>({id,type:'visual',focus,visualId});

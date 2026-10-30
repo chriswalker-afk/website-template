@@ -23,8 +23,10 @@ import {renderFlashcards as memoryFlashcards,renderMatch as memoryMatch,
   renderCloze as memoryCloze,renderSpeedRecall as memorySpeedRecall,
   renderReviewAll as memoryReviewAll,renderReviewList} from './memorise-ui.js';
 import {generateWorksheet,generateWorksheetFromFluencySet,supportsWorksheets,worksheetSkills} from './worksheet-generator.js';
-import {GRAPH_DEFAULTS,quadraticProperties,quadraticValue,quadraticEquation} from './understand-engine.js';
-import {understandKey,renderSteps,renderConceptCheck,renderWalkthrough,renderSamplingLab,renderWorkshop} from './understand-ui.js';
+import {understandKey,renderSteps,renderConceptCheck,renderWalkthrough,renderWorkshop} from './understand-ui.js';
+import {renderDiagram} from './visuals/diagrams.js';
+import {diagramFor,explorerFor} from './visuals/registry.js';
+import {renderVisualExplorer,refreshGraphExplorer,resetGraphModel,toggleGraphModel,updateGraphParameter} from './visuals/explorer-ui.js';
 import {chaptersFor,sectionsFor,pagesFor,chapterFor,routeHref,resolveRoute,topicSwitchHref,escapeHTML as e,normaliseAnswer,cardForIndex,sampleMatchCards,validateTopics} from './logic.js';
 
 const app=document.querySelector('#app');
@@ -273,16 +275,6 @@ function pagePaper(route){
   if(['memorise','games'].includes(route.chapterId))return 'plain';
   return TOPICS[route.topicId]?.paper||'ruled';
 }
-function displayNumber(n){return Number.isInteger(n)?String(n):String(Number(n.toFixed(2)));}
-function graphState(route=state.route){
-  const id=route?.pageId==='position'?'position':'shape';
-  if(!state.understand.graphs[id])
-    state.understand.graphs[id]={...GRAPH_DEFAULTS[id]};
-  return state.understand.graphs[id];
-}
-function mathCurveLabel(model=graphState()){
-  return quadraticEquation(model);
-}
 function renderCoverArt(){
   return '<svg class="cover-illustration" viewBox="0 0 320 220" fill="none" aria-hidden="true">'+
     '<circle cx="160" cy="110" r="91" stroke="currentColor" opacity=".5"/><circle cx="160" cy="110" r="69" stroke="currentColor" opacity=".3"/>'+
@@ -400,30 +392,6 @@ function renderWorksheetGenerator(topic){
     '</form><div class="worksheet-preview">'+preview+'</div></div>';
 }
 
-function renderDots(){
-  const dots=Array.from({length:40},(_,i)=>'<span class="dot'+([2,6,11,15,19,26,30,36].includes(i)?' dot--chosen':'')+'"></span>').join('');
-  return '<div class="dot-field" aria-hidden="true">'+dots+'</div>';
-}
-function renderSmallGraph(){
-  const X=x=>42+(x+3)*31,Y=y=>105-y*16;
-  const path=Array.from({length:101},(_,i)=>{
-    const x=-3+i*.075, y=(x-1)**2-3;
-    return (i===0?'M':'L')+X(x).toFixed(1)+','+Y(y).toFixed(1);
-  }).join(' ');
-  return '<svg class="mini-curve" viewBox="0 0 300 220" role="img" '+
-    'aria-label="Graph y equals open bracket x minus 1 close bracket squared minus 3; upward parabola with turning point 1, minus 3.">'+
-    '<defs><clipPath id="small-quad-clip"><rect x="19" y="14" width="262" height="186"/></clipPath></defs>'+
-    '<g stroke="#dce6df" stroke-width="1"><line x1="19" y1="'+Y(-3)+'" x2="281" y2="'+Y(-3)+'"/>'+
-    '<line x1="'+X(1)+'" y1="14" x2="'+X(1)+'" y2="200" stroke-dasharray="3 5"/></g>'+
-    '<line x1="19" y1="'+Y(0)+'" x2="281" y2="'+Y(0)+'" stroke="#7b998a" stroke-width="1.5"/>'+
-    '<line x1="'+X(0)+'" y1="14" x2="'+X(0)+'" y2="200" stroke="#7b998a" stroke-width="1.5"/>'+
-    '<g clip-path="url(#small-quad-clip)"><path d="'+path+'" stroke="#367664" stroke-width="3.5" fill="none"/></g>'+
-    '<circle cx="'+X(1)+'" cy="'+Y(-3)+'" r="5" fill="#c79756" stroke="white" stroke-width="2"/>'+
-    '<text x="'+(X(1)+11)+'" y="'+(Y(-3)+16)+'" font-size="13" font-family="Georgia" fill="#315b47">(1, −3)</text>'+
-    '<text x="283" y="'+(Y(0)-7)+'" font-size="13" fill="#355b48">x</text>'+
-    '<text x="'+(X(0)+9)+'" y="22" font-size="13" fill="#355b48">y</text>'+
-  '</svg>';
-}
 function heading(title,description){
   return '<h1 class="page-title" id="page-title" tabindex="-1">'+e(title)+'</h1>'+
     '<p class="page-subtitle">'+e(description)+'</p>';
@@ -435,7 +403,8 @@ function renderLessonPage(page,topic,route){
     if(block.kind==='example')return '<div class="lesson-small"><p><strong>Example:</strong> '+
       e(block.prompt)+'</p><ol class="worked-steps">'+block.steps.map(step=>'<li>'+e(step)+'</li>').join('')+'</ol></div>';
     if(block.kind==='diagram'){
-      const graphic=block.variant==='sampling-dots'?renderDots():renderSmallGraph();
+      const config=diagramFor(topic.id,block);
+      const graphic=config?renderDiagram(config):'<p>Diagram unavailable.</p>';
       return '<figure class="math-figure">'+graphic+'<figcaption class="figure-caption">'+e(block.caption)+'</figcaption></figure>';
     }
     if(block.kind==='comparison'){
@@ -492,72 +461,6 @@ function renderFlashcards(topic){return memoryFlashcards(topic,memoryFor(topic),
 function renderMatch(topic){return memoryMatch(topic,memoryFor(topic),state.match);}
 function renderCloze(topic){return memoryCloze(topic,memoryFor(topic),state.cloze);}
 
-function renderGraphSvg(model){
-  const {h,k}=quadraticProperties(model);
-  const X=x=>60+(x+5)*55,Y=y=>210-y*22;
-  const gridX=Array.from({length:11},(_,i)=>i-5).map(x=>
-    '<line x1="'+X(x)+'" y1="34" x2="'+X(x)+'" y2="386" stroke="#e4ece6" stroke-width="1"/>').join('');
-  const gridY=Array.from({length:17},(_,i)=>i-8).map(y=>
-    '<line x1="60" y1="'+Y(y)+'" x2="610" y2="'+Y(y)+'" stroke="#e4ece6" stroke-width="1"/>').join('');
-  const xLabels=[-4,-2,0,2,4].map(x=>
-    '<text x="'+X(x)+'" y="'+(Y(0)+19)+'" text-anchor="middle" font-size="13" fill="#667c6d">'+x+'</text>').join('');
-  const yLabels=[-6,-3,3,6].map(y=>
-    '<text x="'+(X(0)-10)+'" y="'+(Y(y)+4)+'" text-anchor="end" font-size="13" fill="#667c6d">'+y+'</text>').join('');
-  const curve=fn=>Array.from({length:221},(_,i)=>{
-    const x=-5+i/22;
-    return (i===0?'M':'L')+X(x).toFixed(1)+' '+Y(fn(x)).toFixed(1);
-  }).join(' ');
-  const reference=curve(x=>x*x);
-  const current=curve(x=>quadraticValue(x,model));
-  return '<svg id="graph-svg" class="graph-svg" viewBox="0 0 640 420" role="img" '+
-    'aria-label="'+e('Graph of '+quadraticEquation(model)+
-      '. Turning point ('+h+', '+k+'); dotted reference curve y = x squared.')+'">'+
-    '<rect x="0" y="0" width="640" height="420" rx="7" fill="#fdfefd"/>'+
-    '<defs><clipPath id="graph-clip"><rect x="60" y="34" width="550" height="352"/></clipPath></defs>'+
-    gridX+gridY+
-    '<line x1="'+X(0)+'" y1="34" x2="'+X(0)+'" y2="386" stroke="#647f71" stroke-width="1.9"/>'+
-    '<line x1="60" y1="'+Y(0)+'" x2="610" y2="'+Y(0)+'" stroke="#647f71" stroke-width="1.9"/>'+
-    xLabels+yLabels+
-    '<text x="611" y="'+(Y(0)-10)+'" font-family="Georgia" font-size="16" fill="#355b48">x</text>'+
-    '<text x="'+(X(0)+12)+'" y="28" font-family="Georgia" font-size="16" fill="#355b48">y</text>'+
-    '<g clip-path="url(#graph-clip)">'+
-      '<path d="'+reference+'" stroke="#9caaa3" stroke-width="2.5" fill="none" stroke-dasharray="6 7"/>'+
-      '<line x1="'+X(h)+'" y1="34" x2="'+X(h)+'" y2="386" stroke="#c69b64" stroke-dasharray="5 6" stroke-width="1.6"/>'+
-      '<path d="'+current+'" stroke="#2d755f" stroke-width="4" fill="none" stroke-linecap="round"/>'+
-      '<circle cx="'+X(h)+'" cy="'+Y(k)+'" r="6" fill="#d5a665" stroke="#fff" stroke-width="2"/>'+
-    '</g></svg>';
-}
-function graphObservation(model){
-  const props=quadraticProperties(model);
-  return 'Opens '+props.opening+'; '+props.steepness+
-    '. Turning point ('+props.h+', '+props.k+'); symmetry line x = '+props.h+'.';
-}
-function renderGraphLab(page,route){
-  const model=graphState(route);
-  const shape=page.id==='shape';
-  const readout=(key,label,value,min,max,step)=>
-    '<label class="graph-control"><span class="graph-control__label"><span>'+label+'</span>'+
-      '<output id="out-'+key+'">'+value+'</output></span>'+
-      '<input type="range" data-graph="'+key+'" min="'+min+'" max="'+max+'" step="'+step+
-        '" value="'+value+'"></label>';
-  return '<div class="math-lab">'+
-      '<div class="graph-card">'+renderGraphSvg(model)+
-        '<div class="graph-legend"><span><i class="graph-legend__current"></i>Your function</span>'+
-          '<span><i class="graph-legend__reference"></i>Reference: y = x²</span></div>'+
-      '</div>'+
-      '<div class="graph-controls">'+
-        '<div class="equation-card"><span>Function</span><strong id="equation-display">'+
-          e(mathCurveLabel(model))+'</strong></div>'+
-        (shape?readout('magnitude','Steepness |a|',displayNumber(model.magnitude),'.5','2.5','.5')+
-          '<button class="quiet-button" type="button" data-action="graph-reflect">'+icon('refresh')+
-          ' Flip opening direction</button>':
-          readout('h','Horizontal shift h',model.h,'-3','3','1')+
-          readout('k','Vertical shift k',model.k,'-5','4','1'))+
-        '<p class="graph-property" id="graph-observation">'+e(graphObservation(model))+'</p>'+
-        '<button class="quiet-button graph-reset" type="button" data-action="graph-reset">Reset graph</button>'+
-      '</div></div>'+
-      '<div class="callout graph-prompt" aria-label="Question to consider"><p>'+e(page.focus)+'</p></div>';
-}
 function renderPageContent(route,topic){
   const {chapterId,sectionId,pageId}=route;
   if(chapterId==='home')return renderContents(topic);
@@ -573,8 +476,9 @@ function renderPageContent(route,topic){
     reasoning:()=>renderReasoningPage(page,topic,route,reasoningSession(route),reasoningProgressFor(topic)),
     'problem-solving':()=>renderProblemSolvingPage(page,topic,route,problemSession(route),problemProgressFor(topic)),
     modelling:()=>renderModellingPage(page,topic,route,modellingSession(route),modellingProgressFor(topic)),
-    graph:()=>renderGraphLab(page,route),
-    'sampling-lab':()=>renderSamplingLab(page,route,state.understand.labs),
+    graph:()=>renderVisualExplorer(page,route,state.understand),
+    'sampling-lab':()=>renderVisualExplorer(page,route,state.understand),
+    visual:()=>renderVisualExplorer(page,route,state.understand),
     workshop:()=>renderWorkshop(page,route,state.understand.steppers,state.understand.workshops),
     flashcards:()=>renderFlashcards(topic),
     'match-up':()=>renderMatch(topic),
@@ -723,17 +627,8 @@ function updateFlashFlip(){
   document.querySelector('#ratings').hidden=!f.flipped;
 }
 function updateGraph(){
-  const svg=document.querySelector('#graph-svg');
-  if(!svg)return;
-  const model=graphState(state.route);
-  svg.outerHTML=renderGraphSvg(model);
-  document.querySelector('#equation-display').textContent=mathCurveLabel(model);
-  document.querySelector('#graph-observation').textContent=graphObservation(model);
+  refreshGraphExplorer(app,state.route,state.understand.graphs);
   typesetSiteMath(app);
-  for(const [key,id] of [['magnitude','out-magnitude'],['h','out-h'],['k','out-k']]){
-    const output=document.getElementById(id);
-    if(output)output.textContent=displayNumber(model[key]);
-  }
 }
 
 app.addEventListener('click',ev=>{
@@ -1305,10 +1200,13 @@ app.addEventListener('click',ev=>{
   }else if(action==='sampling-method'||action==='sampling-redraw'){
     const route=state.route,key=button.dataset.key;
     const page=pagesFor(topic,route.chapterId,route.sectionId).find(p=>p.id===route.pageId);
-    if(page?.type!=='sampling-lab')return;
-    const prior=state.understand.labs[key]||{method:page.methods[0],run:1};
+    const explorer=page&&explorerFor(route.topicId,page);
+    if(explorer?.type!=='sampling-selection')return;
+    const available=page.methods?.length?page.methods:Object.keys(explorer.methods);
+    if(key!==[route.topicId,route.sectionId,route.pageId,'sampling'].join(':'))return;
+    const prior=state.understand.labs[key]||{method:available[0],run:1};
     const method=action==='sampling-method'?button.dataset.method:prior.method;
-    if(!page.methods.includes(method))return;
+    if(!available.includes(method))return;
     state.understand.labs[key]={method,run:action==='sampling-method'?1:prior.run+1};
     rerender();
     const focus=action==='sampling-method'?
@@ -1345,18 +1243,18 @@ app.addEventListener('click',ev=>{
       ?.focus({preventScroll:true});
     announce(rating==='ready'?'Marked as confident for this session.':'Marked for review in this session.');
   }else if(action==='graph-reset'){
-    const id=state.route.pageId;
-    if(!GRAPH_DEFAULTS[id])return;
-    state.understand.graphs[id]={...GRAPH_DEFAULTS[id]};
+    const route=state.route;
+    const page=pagesFor(topic,route.chapterId,route.sectionId).find(p=>p.id===route.pageId);
+    if(!resetGraphModel(route,state.understand.graphs,page&&explorerFor(topic.id,page)))return;
     rerender();
     document.querySelector('button[data-action="graph-reset"]')?.focus({preventScroll:true});
     announce('Graph reset to its starting position.');
   }else if(action==='graph-reflect'){
-    const model=graphState(state.route);
-    if(state.route.pageId!=='shape')return;
-    model.sign*=-1;
+    const route=state.route;
+    const page=pagesFor(topic,route.chapterId,route.sectionId).find(p=>p.id===route.pageId);
+    if(!toggleGraphModel(route,state.understand.graphs,page&&explorerFor(topic.id,page)))return;
     updateGraph();
-    announce('Parabola now opens '+quadraticProperties(model).opening+'.');
+    announce('Graph control updated.');
   }else if(action==='worksheet-regenerate'){
     const input=document.querySelector('#worksheet-seed');
     const previous=Number(input?.value)||20261028;
@@ -1538,13 +1436,10 @@ app.addEventListener('input',ev=>{
       memoryFor(TOPICS[state.route.topicId]),state.review);
   }
   if(target.matches('input[data-graph]')){
-    const key=target.dataset.graph,id=state.route?.pageId;
-    const permitted=id==='shape'?['magnitude']:id==='position'?['h','k']:[];
-    const number=Number(target.value);
-    if(permitted.includes(key)&&Number.isFinite(number)){
-      graphState(state.route)[key]=number;
-      updateGraph();
-    }
+    const route=state.route,topic=TOPICS[route.topicId];
+    const page=pagesFor(topic,route.chapterId,route.sectionId).find(p=>p.id===route.pageId);
+    if(updateGraphParameter(route,state.understand.graphs,page&&explorerFor(topic.id,page),
+      target.dataset.graph,Number(target.value)))updateGraph();
   }
 });
 app.addEventListener('submit',ev=>{
