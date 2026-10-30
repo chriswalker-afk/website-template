@@ -1,5 +1,5 @@
 import {test,expect} from '@playwright/test';
-import {expectReadingContains} from './math-assertions.js';
+import {expectReadingContains,expectReadingText} from './math-assertions.js';
 import {TOPICS} from '../src/topics.js';
 
 test('Contents, top modes and right-hand subsections are separate navigation levels',async({page})=>{
@@ -95,10 +95,10 @@ test('the quadratic graph teaches shape separately from translations',async({pag
   const updated=await page.locator('#graph-svg path[stroke="#2d755f"]').getAttribute('d');
   expect(updated).not.toBe(original);
   await page.getByRole('button',{name:'Flip opening direction'}).click();
-  await expect(page.locator('#equation-display')).toContainText('−2x²');
+  await expectReadingContains(page.locator('#equation-display'),'−2x²');
   await expect(page.locator('#graph-observation')).toContainText('Opens downwards');
   await page.getByRole('button',{name:'Reset graph'}).click();
-  await expect(page.locator('#equation-display')).toHaveText('y = x²');
+  await expectReadingText(page.locator('#equation-display'),'y = x²');
   await page.getByRole('link',{name:'Next page'}).click();
   await expect(page).toHaveURL(/#\/quadratics\/understand\/visual-explanations\/position/);
   await expect(page.locator('.side-tab[aria-current="page"]')).toContainText('Visual explanations');
