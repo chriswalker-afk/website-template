@@ -59,11 +59,11 @@ function renderBlock(block,index,length){
     (isMath?
       '<div class="working-book__math-wrap">'+
         '<textarea data-book-value="'+e(block.id)+'" data-book-kind="math" rows="2"'+
-          ' aria-label="'+label+' in LaTeX" spellcheck="false" '+
+          ' aria-label="'+label+' in LaTeX" maxlength="1200" spellcheck="false" '+
           'placeholder="e.g. \\frac{1}{2}x^2">'+e(block.value)+'</textarea>'+
       '</div>':
       '<textarea data-book-value="'+e(block.id)+'" data-book-kind="text" rows="3"'+
-        ' aria-label="'+label+'" placeholder="Explain your method or decisions">'+
+        ' aria-label="'+label+'" maxlength="5000" placeholder="Explain your method or decisions">'+
         e(block.value)+'</textarea>')+
     '</div>';
 }
