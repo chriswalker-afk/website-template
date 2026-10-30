@@ -2,7 +2,7 @@
 
 A reusable, topic-configurable foundation for high-quality Maths learning websites across age groups, curricula and qualifications.
 
-**Current status:** Interactive notebook prototype with quality-upgraded **Understand, Memorise, Fluency, Reasoning, Problem Solving and Modelling** modes, three-level navigation and a reusable LaTeX Worksheet Generator. The two sample topics demonstrate the content architecture rather than complete curriculum coverage.
+**Current status:** Interactive notebook prototype with a reusable Pass 2 typed/drawn working notebook (piloted in Fluency), quality-upgraded **Understand, Memorise, Fluency, Reasoning, Problem Solving and Modelling** modes, three-level navigation and a reusable LaTeX Worksheet Generator. The two sample topics demonstrate the content architecture rather than complete curriculum coverage.
 
 ## Try the book prototype
 
@@ -11,6 +11,8 @@ The static application starts at **index.html** and includes two contrasting sam
 - **Quadratic Functions:** Understand includes concept diagnostics, completing-square walkthroughs, interactive graph explorations and Show me → Help me → My turn worked examples. Memorise has the same twelve-card adaptive retrieval system; Fluency has generated question practice, Reasoning includes 16 written arguments, and Problem Solving adds 16 unfamiliar multi-step questions with optional graduated support. Modelling adds 16 four-stage investigations with quantitative model evaluation; Games previews remain.
 
 Open **Contents → Worksheet Generator** in either sample topic. Choose skills, difficulty, number of questions, style and solution depth. It creates an on-screen question preview and downloads editable `worksheet.tex` and a matching `worked-solutions.tex` (or `answers.tex`). The optional scaffolded style includes an early worked model and hints. Questions are reproducible from a numerical seed. Compile the source in Overleaf or a local TeX installation; **the website does not compile PDFs directly**.
+
+Fluency now includes an expandable **Working notebook** alongside its existing quick-notes box. Students can combine typeset maths, explanations, stylus/mouse drawing and multiple working pages, undo or redo edits, autosave locally, and export printable HTML or a data backup. The notebook does not mark mathematical working. See [Working notebook — Pass 2](docs/WORKING_NOTEBOOK_PASS2.md).
 
 The book uses **top tabs for learning modes**, **right-edge tabs for distinct subsections**, and **Previous/Next page controls within multi-page subsections**. Page turns do not switch the active subsection. On smaller screens, labelled mode/subsection selectors replace the physical tabs. Flashcards and Games use their own internal activity navigation. Motion follows reduced-motion preferences, with a manual off setting.
 
@@ -37,6 +39,7 @@ A modern, tabbed reference-book aesthetic built into the reusable shell: **chapt
 - [Modes, subsections and pages](docs/MODE_SUBSECTION_PAGE_SYSTEM.md) — navigation hierarchy, default tabs, rules separating learning modes and deep links.
 - [Understand mode quality guide](docs/UNDERSTAND_MODE_GUIDE.md) — reusable components, mathematics/diagram checks and Show me → Help me → My turn educational sequence.
 - [Memorise mode quality guide](docs/MEMORISE_MODE_GUIDE.md) — reusable retrieval activities, saved per-card progress, review intervals, conservative terminology checks and privacy limitations.
+- [Working notebook — Pass 2](docs/WORKING_NOTEBOOK_PASS2.md) — reusable typed and drawn working, storage, privacy, exports and limits.
 - [Fluency mode quality guide](docs/FLUENCY_MODE_GUIDE.md) — four levels, generated questions, numerical feedback, worked solutions and exact LaTeX export.
 - [Reasoning mode quality guide](docs/REASONING_MODE_GUIDE.md) — distinctive written prompts, model arguments, criteria-based self-review, targeted practice and local privacy.
 - [Problem Solving mode quality guide](docs/PROBLEM_SOLVING_MODE_GUIDE.md) — genuinely non-routine tasks, independent planning, graduated help, complete mathematical working and review evidence.
@@ -64,7 +67,8 @@ A modern, tabbed reference-book aesthetic built into the reusable shell: **chapt
 2. **Pass 1A — Notebook visual prototype (implemented):** Contents, chapter and subsection tabs, page variants, transitions, two sample topics, interactive flashcards and graph workspace.
 3. **Pass 1B — Reusable production shell (navigation prototype in place; remaining authoring work next):** mode/subsection/page routing, validated example content, deep links, responsive navigation and bookmarks now work. A generalised content-authoring workflow, persistent learning progress and cross-topic publishing pipeline remain future work.
 4. **Pass 2 — Memorise experience (quality upgrade implemented):** reusable flashcards, multi-round matching, contextual Missing Words, typed recall, locally saved adaptive review and card review dashboard. Broader curriculum banks and optional future sync remain separate tasks.
-5. **Pass 3 — Other learning modes:** Understand, Memorise, Fluency, Reasoning, Problem Solving and Modelling prototypes completed. Next expand the Games arcade and establish an efficient, teacher-reviewed content-authoring workflow.
+5. **Pass 2W — Working notebook (implemented):** mixed mathematical typing, explanation and vector ink, local autosave, multi-page editing and printable export. First demonstrated in Fluency; other modes will reuse it after review.
+6. **Pass 3 — Other learning modes:** Understand, Memorise, Fluency, Reasoning, Problem Solving and Modelling prototypes completed. Next expand the Games arcade and establish an efficient, teacher-reviewed content-authoring workflow.
 6. **Pass 4 — Games arcade:** reusable challenges with optional special topic modules.
 7. **Pass 5 — Assessment, authoring and deployment:** examination practice, validation, tests, GitHub Pages guides; plan a separate **Pass 5A Worksheet Generator** and **Pass 5B worksheet expansion** once the question engine exists.
 8. **Pass 6 — Prove the template:** two very different topics; refine the authoring process.
