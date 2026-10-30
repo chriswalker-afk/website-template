@@ -1,6 +1,7 @@
 // Typed mathematics, explanations and vector ink share one versioned notebook
 // contract. This module is pure: no DOM, network, storage, eval or automated marks.
 import {escapeHTML} from './logic.js';
+import {TOOL_KINDS,defaultToolData,validToolData,renderToolPreview,TOOL_LABELS} from './math-toolkit.js';
 
 export const WORKING_NOTEBOOK_VERSION=1;
 export const WORKING_NOTEBOOK_PREFIX='maths-notebook:working:v1:';
@@ -42,7 +43,10 @@ export function isWorkingNotebook(value){
     ids.add(page.id);
     for(const block of page.blocks){
       if(!block||typeof block.id!=='string'||!idPattern.test(block.id)||
-        ids.has(block.id)||!['math','text'].includes(block.kind)||
+        ids.has(block.id))return false;
+      if(TOOL_KINDS.includes(block.kind)){
+        if(!validToolData(block.kind,block.data))return false;
+      }else if(!['math','text'].includes(block.kind)||
         typeof block.value!=='string'||block.value.length>(block.kind==='math'?1200:5000))
         return false;
       ids.add(block.id);
@@ -68,7 +72,8 @@ export function hydrateWorkingNotebook(raw){
 }
 export function hasWorkingContent(book){
   return isWorkingNotebook(book)&&book.pages.some(page=>
-    page.strokes.length>0||page.blocks.some(block=>block.value.trim().length>0));
+    page.strokes.length>0||page.blocks.some(block=>TOOL_KINDS.includes(block.kind)||
+      block.value.trim().length>0));
 }
 const clone=book=>JSON.parse(JSON.stringify(book));
 
@@ -101,13 +106,22 @@ export function editWorkingNotebook(previous,action){
       break;
     case 'add-block':
       if(page.blocks.length>=MAX_NOTEBOOK_BLOCKS)return book;
-      if(!['math','text'].includes(action.kind))throw new TypeError('Invalid block type');
-      page.blocks.push({id:freshId('block'),kind:action.kind,value:''});
+      if(!['math','text',...TOOL_KINDS].includes(action.kind))
+        throw new TypeError('Invalid block type');
+      page.blocks.push(TOOL_KINDS.includes(action.kind)?
+        {id:freshId('block'),kind:action.kind,data:defaultToolData(action.kind)}:
+        {id:freshId('block'),kind:action.kind,value:''});
       break;
     case 'set-block':
-      if(index<0||typeof action.value!=='string'||action.value.length>
+      if(index<0||!['math','text'].includes(page.blocks[index].kind)||
+        typeof action.value!=='string'||action.value.length>
         (page.blocks[index].kind==='math'?1200:5000))throw new TypeError('Invalid block value');
       page.blocks[index].value=action.value;break;
+    case 'set-tool':
+      if(index<0||!TOOL_KINDS.includes(page.blocks[index].kind)||
+        !validToolData(page.blocks[index].kind,action.data))
+        throw new TypeError('Invalid mathematical tool data');
+      page.blocks[index].data=clone(action.data);break;
     case 'move-block':{
       if(index<0||![-1,1].includes(action.direction))throw new TypeError('Invalid block move');
       const destination=index+action.direction;
@@ -173,10 +187,16 @@ export function exportWorkingHTML(input,{title='My mathematics working'}={}){
   const book=hydrateWorkingNotebook(input);
   const safeTitle=escapeHTML(String(title).slice(0,160));
   const pages=book.pages.map((page,index)=>{
-    const blocks=page.blocks.map(block=>block.kind==='math'?
-      '<div class="equation" aria-label="Mathematical expression">'+
-        '<span>\\('+escapeHTML(block.value)+'\\)</span></div>':
-      '<p class="note">'+escapeHTML(block.value).replace(/\n/g,'<br>')+'</p>').join('');
+    const blocks=page.blocks.map(block=>{
+      if(TOOL_KINDS.includes(block.kind))
+        return '<figure class="math-tool"><figcaption>'+
+          escapeHTML(TOOL_LABELS[block.kind])+'</figcaption>'+
+          renderToolPreview(block.kind,block.data,{id:block.id})+'</figure>';
+      if(block.kind==='math')
+        return '<div class="equation" aria-label="Mathematical expression">'+
+          '<span>\\('+escapeHTML(block.value)+'\\)</span></div>';
+      return '<p class="note">'+escapeHTML(block.value).replace(/\n/g,'<br>')+'</p>';
+    }).join('');
     return '<section class="page"><h2>Page '+(index+1)+'</h2>'+blocks+
       (page.strokes.length?'<div class="drawing">'+inkSVG(page.strokes)+'</div>':'')+'</section>';
   }).join('');
@@ -190,6 +210,14 @@ export function exportWorkingHTML(input,{title='My mathematics working'}={}){
     '.page{margin:28px 0 46px;break-after:page}.note{white-space:normal;overflow-wrap:anywhere}'+
     '.equation{padding:14px 0;font:18px Georgia,serif;overflow-wrap:anywhere}'+
     '.drawing{border:1px solid #cbd9cc;background:#fff}.drawing svg{display:block;width:100%;height:auto}'+
+    '.math-tool{break-inside:avoid;margin:18px 0;border:1px solid #cbd9cc;padding:12px;border-radius:8px}'+
+    '.math-tool figcaption{font:600 15px system-ui,sans-serif;margin-bottom:8px}'+
+    '.math-tool svg{display:block;width:100%;height:auto;max-height:340px}'+
+    '.working-tool__table-scroll{max-width:100%;overflow-x:auto}'+
+    '.working-tool__table{border-collapse:collapse;width:100%}'+
+    '.working-tool__table caption{padding:6px}'+
+    '.working-tool__table :is(td,th){padding:8px;border:1px solid #abc1ad;text-align:left}'+
+    '.working-tool__tree-check{font-size:12px;color:#526f58}'+
     '@media print{body{margin:0;max-width:none}.page{break-after:page}}'+
     '</style><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>'+
     '</head><body><h1>'+safeTitle+'</h1><p>Typed mathematics and freehand working</p>'+
