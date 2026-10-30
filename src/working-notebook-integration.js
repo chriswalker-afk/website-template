@@ -32,10 +32,10 @@ export function workingScope(topicId,mode,sectionId,pageId,taskId){
   workingStorageKey(scope);
   return scope;
 }
-export function modeWorkingNotebook(topicId,mode,sectionId,pageId,taskId){
+export function modeWorkingNotebook(topicId,mode,sectionId,pageId,taskId,{initialOpen=true}={}){
   const copy=MODE_NOTEBOOK_COPY[mode];
   const scope=workingScope(topicId,mode,sectionId,pageId,taskId);
-  return workingNotebookMarkup({scope,label:copy.label,guidance:copy.guidance});
+  return workingNotebookMarkup({scope,label:copy.label,guidance:copy.guidance,initialOpen});
 }
 export function archivedWorkingNotebooks({topicId,mode,sectionId,pageId,items}){
   if(!Array.isArray(items)||!items.length)return '';
@@ -47,7 +47,7 @@ export function archivedWorkingNotebooks({topicId,mode,sectionId,pageId,items}){
       items.map((item,i)=>{
         const title=String(item.title||'Task '+(i+1));
         return '<section class="working-notebook-archive__item"><h3>'+e(title)+'</h3>'+
-          modeWorkingNotebook(topicId,mode,sectionId,pageId,item.id)+'</section>';
+          modeWorkingNotebook(topicId,mode,sectionId,pageId,item.id,{initialOpen:false})+'</section>';
       }).join('')+
     '</div></details>';
 }
