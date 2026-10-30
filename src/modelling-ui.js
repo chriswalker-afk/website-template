@@ -5,6 +5,7 @@ import {MODELLING_PHASES} from './modelling-content.js';
 import {modeWorkingNotebook,workingScope,archivedWorkingNotebooks}
   from './working-notebook-integration.js';
 import {hasSavedWorking} from './working-notebook.js';
+import {effectiveModellingAttempt} from './working-notebook-evidence.js';
 import {blankModellingEntry,attemptedModelling,canSelfRateModel,
   modellingTask,modellingRecord,modellingLevelSummary} from './modelling-engine.js';
 const ratingLabel=x=>x==='independent'?'Modelled independently (self-rated)':
@@ -72,11 +73,9 @@ function stageView(task,session,entry,notebook){
         (isLast?'Review the whole model':'Continue to '+e(task.phases[i+1].label))+'</button></div></section>';
 }
 function taskView(topic,route,session){
-  const task=current(topic,route,session),entry={...entryFor(session,task)};
+  const task=current(topic,route,session);
   const scope=workingScope(topic.id,'modelling',route.sectionId,route.pageId,task.id);
-  const hasNotebook=hasSavedWorking(scope);
-  entry.notebookStages=Object.fromEntries(MODELLING_PHASES.map(([id])=>
-    [id,Boolean(hasNotebook&&entry.notebookStages?.[id])]));
+  const entry=effectiveModellingAttempt(entryFor(session,task),hasSavedWorking(scope));
   const notebook=modeWorkingNotebook(topic.id,'modelling',route.sectionId,route.pageId,task.id);
   const locked=Boolean(entry.rating);
   return '<section class="mdl-case" aria-label="Modelling investigation">'+
