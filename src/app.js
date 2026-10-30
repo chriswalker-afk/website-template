@@ -750,7 +750,7 @@ app.addEventListener('click',ev=>{
     }else session.stage=Math.min(4,session.stage+1);
     session.maxStage=Math.max(session.maxStage,session.stage);
     rerender();
-    document.querySelector(session.stage===4?'input[data-mdl-check="0"]':'#mdl-answer')
+    document.querySelector(session.stage===4?'input[data-mdl-check="0"]':'details[data-working-notebook] > summary')
       ?.focus({preventScroll:true});
     announce(session.stage===4?'The model comparison and review are shown.':
       MODELLING_PHASES[session.stage][1]+' stage.');
@@ -759,7 +759,7 @@ app.addEventListener('click',ev=>{
     if(!current||session.complete||current.entry.rating||!Number.isInteger(index)||
       index<0||index>=4||index>session.maxStage)return;
     session.stage=index;rerender();
-    document.querySelector('#mdl-answer')?.focus({preventScroll:true});
+    document.querySelector('details[data-working-notebook] > summary')?.focus({preventScroll:true});
     announce(MODELLING_PHASES[index][1]+' stage selected.');
   }else if(action==='mdl-rate'){
     const session=modellingSession(),current=currentModelling(session),rating=button.dataset.rating;
@@ -782,7 +782,7 @@ app.addEventListener('click',ev=>{
       announce('This modelling page is reviewed.');
     }else{
       session.index++;session.stage=0;session.maxStage=0;
-      rerender();document.querySelector('#mdl-answer')?.focus({preventScroll:true});
+      rerender();document.querySelector('details[data-working-notebook] > summary')?.focus({preventScroll:true});
       announce('Next modelling scenario.');
     }
   }else if(action==='mdl-selection'){
@@ -804,7 +804,7 @@ app.addEventListener('click',ev=>{
   }else if(action==='mdl-cancel'){
     const session=modellingSession();if(!session)return;
     session.confirmSwitch=false;session.pendingSelection=null;
-    rerender();document.querySelector('#mdl-answer')?.focus({preventScroll:true});
+    rerender();document.querySelector('details[data-working-notebook] > summary')?.focus({preventScroll:true});
     announce('Your modelling work has been preserved.');
   }else if(action==='mdl-confirm'){
     const session=modellingSession();
@@ -817,7 +817,7 @@ app.addEventListener('click',ev=>{
     const session=modellingSession(),selected=button.dataset.selection;
     if(!session?.complete||!['all','focus'].includes(selected))return;
     selectModellingSet(selected);rerender();
-    document.querySelector('#mdl-answer,button[data-action="mdl-selection"]')
+    document.querySelector('details[data-working-notebook] > summary,button[data-action="mdl-selection"]')
       ?.focus({preventScroll:true});
     announce('Modelling practice restarted.');
   }else if(action==='ps-strategies'){
@@ -887,7 +887,7 @@ app.addEventListener('click',ev=>{
     }else{
       session.index++;
       rerender();
-      document.querySelector('#ps-plan')?.focus({preventScroll:true});
+      document.querySelector('details[data-working-notebook] > summary')?.focus({preventScroll:true});
       announce('Next problem.');
     }
   }else if(action==='ps-selection'){
@@ -922,13 +922,13 @@ app.addEventListener('click',ev=>{
     if(!session)return;
     session.confirmSwitch=false;session.pendingSelection=null;
     rerender();
-    document.querySelector('#ps-plan')?.focus({preventScroll:true});
+    document.querySelector('details[data-working-notebook] > summary')?.focus({preventScroll:true});
     announce('Unfinished problem-solving work preserved.');
   }else if(action==='ps-repeat'){
     const session=problemSession(),selection=button.dataset.mode;
     if(!session?.complete||!['all','focus'].includes(selection))return;
     selectProblemSet(selection);rerender();
-    document.querySelector('#ps-plan,button[data-action="ps-selection"]')?.focus({preventScroll:true});
+    document.querySelector('details[data-working-notebook] > summary,button[data-action="ps-selection"]')?.focus({preventScroll:true});
     announce(selection==='focus'?'Revisiting problems needing support.':'Beginning the problem set again.');
   }else if(action==='reasoning-hint'){
     const session=reasoningSession(),current=reasoningEntry(session);
@@ -981,7 +981,7 @@ app.addEventListener('click',ev=>{
     }else{
       session.index++;
       rerender();
-      document.querySelector('#reasoning-answer')?.focus({preventScroll:true});
+      document.querySelector('details[data-working-notebook] > summary')?.focus({preventScroll:true});
       announce('Next reasoning prompt.');
     }
   }else if(action==='reasoning-mode'){
@@ -1006,7 +1006,7 @@ app.addEventListener('click',ev=>{
     if(!session)return;
     session.confirmSwitch=false;session.pendingSelection=null;
     rerender();announce('Your unfinished argument was preserved.');
-    document.querySelector('#reasoning-answer')?.focus({preventScroll:true});
+    document.querySelector('details[data-working-notebook] > summary')?.focus({preventScroll:true});
   }else if(action==='reasoning-confirm-switch'){
     const session=reasoningSession();
     if(!session?.confirmSwitch||!['all','focus'].includes(session.pendingSelection))return;
@@ -1020,7 +1020,7 @@ app.addEventListener('click',ev=>{
     if(!session?.complete||!['all','focus'].includes(selection))return;
     reasoningSelect(selection);rerender();
     announce(selection==='focus'?'Reviewing selected weaker arguments.':'Starting the full argument set again.');
-    document.querySelector('#reasoning-answer,button[data-action="reasoning-mode"]')
+    document.querySelector('details[data-working-notebook] > summary,button[data-action="reasoning-mode"]')
       ?.focus({preventScroll:true});
   }else if(action==='fluency-hint'){
     const session=fluencySession(),current=fluencyAnswer(session);
@@ -1500,34 +1500,10 @@ app.addEventListener('change',ev=>{
 });
 app.addEventListener('input',ev=>{
   const target=ev.target;
-  if(target.id==='mdl-answer'&&state.route?.chapterId==='modelling'){
-    const session=modellingSession(),current=currentModelling(session);
-    if(current&&!session.complete&&session.stage<4&&!current.entry.rating){
-      const id=MODEL_PHASE_IDS[session.stage];
-      session.entries[current.task.id]={...current.entry,
-        drafts:{...current.entry.drafts,[id]:target.value}};
-    }
-    return;
-  }  if((target.id==='ps-plan'||target.id==='ps-work')&&state.route?.chapterId==='problemSolving'){
-    const session=problemSession(),current=currentProblem(session);
-    if(current&&!session.complete&&!current.response.rating){
-      const field=target.id==='ps-plan'?'plan':'working';
-      session.entries[current.task.id]={...current.response,[field]:target.value};
-    }
-    return;
-  }
-  if(target.id==='reasoning-answer'&&state.route?.chapterId==='reasoning'){
-    const session=reasoningSession(),current=reasoningEntry(session);
-    if(current&&!current.response.rating&&!session.complete)
-      session.entries[current.task.id]={...current.response,draft:target.value};
-    return;
-  }
-  if((target.id==='fluency-answer'||target.id==='fluency-working')&&state.route?.chapterId==='fluency'){
+  if(target.id==='fluency-answer'&&state.route?.chapterId==='fluency'){
     const session=fluencySession(),current=fluencyAnswer(session);
-    if(current&&!session.complete){
-      const part=target.id==='fluency-answer'?'draft':'working';
-      session.answers[current.question.id]={...current.response,[part]:target.value};
-    }
+    if(current&&!session.complete)
+      session.answers[current.question.id]={...current.response,draft:target.value};
   }
   if(target.id==='cloze-answer'){state.cloze.value=target.value;state.cloze.checked=false;}
   if(target.id==='recall-answer'){state.recall.value=target.value;state.recall.checked=false;}
@@ -1536,12 +1512,6 @@ app.addEventListener('input',ev=>{
     const results=document.getElementById('review-results');
     if(results)results.innerHTML=renderReviewList(TOPICS[state.route.topicId],
       memoryFor(TOPICS[state.route.topicId]),state.review);
-  }
-  if(target.matches('textarea[data-understand-response]')){
-    const key=target.dataset.understandResponse;
-    if(key!==understandKey(state.route,'workshop'))return;
-    const prior=state.understand.workshops[key]||{};
-    state.understand.workshops[key]={...prior,response:target.value};
   }
   if(target.matches('input[data-graph]')){
     const key=target.dataset.graph,id=state.route?.pageId;
