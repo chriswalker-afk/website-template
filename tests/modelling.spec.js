@@ -157,7 +157,7 @@ test('stage notebooks survive internal book page turns and are saved locally',as
   await open(page,'quadratics','level-2');
   await writeWorking(page,'I have started modelling with a physical domain and stated assumptions.');
   await page.getByRole('link',{name:'Next page'}).click();
-  await expect(page.locator('#mdl-answer')).toHaveValue('');
+  await notebookEmpty(page);
   await page.getByRole('link',{name:'Previous page'}).click();
   await notebookContains(page,'physical domain');
   const storage=await page.evaluate(()=>JSON.stringify(localStorage));
@@ -188,7 +188,7 @@ test('review metadata remains separate from notebook content across refresh',asy
   const stored=await page.evaluate(()=>localStorage.getItem('maths-notebook-pass1a:modelling:sampling'));
   expect(stored).not.toContain('<script>');
   await page.reload();
-  await expect(page.locator('#mdl-answer')).toHaveValue('');
+  await notebookContains(page,'I am defining the model.');
   await expect(page.locator('.mdl-pulse')).toContainText('to revisit');
   await open(page,'quadratics','level-4');
   await expect(page.locator('.mdl-pulse')).toContainText('4');
