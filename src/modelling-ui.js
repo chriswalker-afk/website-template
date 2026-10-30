@@ -2,6 +2,9 @@
 // All authored material and transient student drafts are HTML-escaped before rendering.
 import {escapeHTML as e} from './logic.js';
 import {MODELLING_PHASES} from './modelling-content.js';
+import {modeWorkingNotebook,workingScope,archivedWorkingNotebooks}
+  from './working-notebook-integration.js';
+import {hasSavedWorking} from './working-notebook.js';
 import {blankModellingEntry,attemptedModelling,canSelfRateModel,
   modellingTask,modellingRecord,modellingLevelSummary} from './modelling-engine.js';
 const ratingLabel=x=>x==='independent'?'Modelled independently (self-rated)':
@@ -20,7 +23,8 @@ function reviewModel(task,entry,locked){
     '<div class="mdl-comparison-list">'+task.phases.map((phase,i)=>
       '<div class="mdl-comparison-stage"><div class="mdl-compare-heading"><span>'+(i+1)+'. '+e(phase.label)+'</span></div>'+
         '<div class="mdl-compare-columns"><div class="mdl-compare-own"><strong>Your response</strong><p>'+
-        (entry.drafts[phase.id]?.trim()?e(entry.drafts[phase.id]):'<em>No written response</em>')+
+        (entry.drafts[phase.id]?.trim()?e(entry.drafts[phase.id]):
+        entry.notebookStages?.[phase.id]?'<em>Mathematics recorded in the working notebook</em>':'<em>No written response</em>')+
         '</p></div><div class="mdl-compare-example"><strong>Worked example</strong><p>'+e(phase.model)+
         '</p></div></div></div>').join('')+'</div>'+
     (entry.modelFirst?'<p class="mdl-supported-notice">Some worked stages were opened before you had written an initial response. Treat those stages as supported examples, not unaided modelling.</p>':'')+
@@ -38,7 +42,7 @@ function reviewModel(task,entry,locked){
     '<p class="mdl-rate-note">These are self-reported judgements. A solved rating requires a written response at all four stages and every criterion selected. The independent option is unavailable after opening guidance or a model before attempting that stage.</p>'+
     '</section>';
 }
-function stageView(task,session,entry){
+function stageView(task,session,entry,notebook){
   const i=session.stage,phase=task.phases[i],isLast=i===task.phases.length-1;
   return '<section class="mdl-stage" aria-label="'+e(phase.label)+' stage">'+
     '<div class="mdl-stage-heading"><span>Stage '+(i+1)+' of 4</span><span>'+e(phase.label)+'</span></div>'+
@@ -46,6 +50,14 @@ function stageView(task,session,entry){
     '<label class="mdl-draft-label" for="mdl-answer">Your '+e(phase.label.toLowerCase())+' response</label>'+
     '<textarea id="mdl-answer" rows="6" maxlength="2500" placeholder="Record your mathematical decisions and evidence. This is not automatically marked.">'+
       e(entry.drafts[phase.id]||'')+'</textarea>'+
+    notebook+
+    '<label class="working-notebook-evidence"><input type="checkbox" '+
+      'data-mdl-notebook-evidence="'+e(phase.id)+'" '+
+      (entry.notebookStages?.[phase.id]?'checked':'')+
+      '><span>I recorded my '+e(phase.label.toLowerCase())+
+      ' mathematics or explanation in the notebook. '+
+      '<span class="working-notebook-evidence__note">Confirm once your working for this stage is present. '+
+      'This is a self-declaration, not an automatic assessment.</span></span></label>'+
     '<div class="mdl-stage-tools">'+
       '<button class="quiet-button" type="button" data-action="mdl-hint" aria-expanded="'+
         entry.hints[phase.id]+'">'+(entry.hints[phase.id]?'Hide nudge':'Need a modelling nudge?')+'</button>'+
@@ -60,13 +72,19 @@ function stageView(task,session,entry){
         (isLast?'Review the whole model':'Continue to '+e(task.phases[i+1].label))+'</button></div></section>';
 }
 function taskView(topic,route,session){
-  const task=current(topic,route,session),entry=entryFor(session,task),locked=Boolean(entry.rating);
+  const task=current(topic,route,session),entry={...entryFor(session,task)};
+  const scope=workingScope(topic.id,'modelling',route.sectionId,route.pageId,task.id);
+  const hasNotebook=hasSavedWorking(scope);
+  entry.notebookStages=Object.fromEntries(MODELLING_PHASES.map(([id])=>
+    [id,Boolean(hasNotebook&&entry.notebookStages?.[id])]));
+  const notebook=modeWorkingNotebook(topic.id,'modelling',route.sectionId,route.pageId,task.id);
+  const locked=Boolean(entry.rating);
   return '<section class="mdl-case" aria-label="Modelling investigation">'+
     '<div class="mdl-case-meta"><span>Scenario '+(session.index+1)+' of '+session.ids.length+'</span>'+ 
       '<span>'+e(topic.title)+'</span></div>'+
     '<p class="mdl-scenario">'+e(task.scenario)+'</p>'+
     phaseButtons(session,entry)+
-    (session.stage<4?stageView(task,session,entry):reviewModel(task,entry,locked))+
+    (session.stage<4?stageView(task,session,entry,notebook):reviewModel(task,entry,locked)+notebook)+
     (locked?'<div class="mdl-saved" role="status"><strong>Saved:</strong> '+
       e(ratingLabel(entry.rating))+'. This is your own review, not an automatically awarded grade.</div>'+
       '<button type="button" class="action-button mdl-next-case" data-action="mdl-next-case">'+
@@ -89,7 +107,11 @@ function completedView(topic,route,session,progress){
       session.ids.map(id=>{const task=modellingTask(topic.id,route.sectionId,route.pageId,id),
         r=modellingRecord(progress,route.sectionId,route.pageId,id);
         return '<li><p>'+e(task.scenario)+'</p><strong>'+e(ratingLabel(r?.rating))+'</strong></li>';}).join('')+
-      '</ol></details></section>';
+      '</ol></details>'+
+    archivedWorkingNotebooks({topicId:topic.id,mode:'modelling',sectionId:route.sectionId,
+      pageId:route.pageId,
+      items:session.ids.map((id,i)=>({id,title:'Investigation '+(i+1)}))})+
+    '</section>';
 }
 export function renderModellingPage(page,topic,route,session,progress){
   if(!session)return '<p>This modelling page is unavailable.</p>';
