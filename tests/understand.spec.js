@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {expectReadingText,expectReadingContains} from './math-assertions.js';
 import {writeWorking,notebookContains} from './notebook-helpers.js';
 
 test('Big idea concept checks give specific feedback without duplicate headings',async({page})=>{
@@ -40,7 +41,7 @@ test('How it works reveals and resets meaningful mathematical steps',async({page
   await expect(page.locator('.explain-steps__meta')).toContainText('0 of 4');
   await page.getByRole('link',{name:'Next page'}).click();
   await expect(page.locator('.page-navigation__count')).toHaveText('Page 2 of 2');
-  await expect(page.locator('.method-walkthrough')).toContainText('150 Year 10');
+  await expectReadingContains(page.locator('.method-walkthrough'),'150 Year 10');
   await expect(page.locator('.side-tab[aria-current="page"]')).toContainText('How it works');
 });
 test('quadratics How it works uses completed-square reasoning and avoids a graph editor',async({page})=>{
@@ -49,7 +50,7 @@ test('quadratics How it works uses completed-square reasoning and avoids a graph
   await page.locator('button[data-action="understand-check"][data-choice="square"]').click();
   await expect(page.locator('.concept-check__feedback')).toContainText('Correct.');
   await page.getByRole('link',{name:'Next page'}).click();
-  await expect(page.locator('.method-walkthrough')).toContainText('x² + 6x + 5');
+  await expectReadingContains(page.locator('.method-walkthrough'),'x² + 6x + 5');
   await page.getByRole('button',{name:'Show first step'}).click();
   await expect(page.locator('.explain-steps__list')).toContainText('Take half of 6');
   await expect(page.locator('#graph-svg')).toHaveCount(0);
@@ -123,8 +124,8 @@ test('Sampling worked examples support qualitative written responses without fal
   await expect(page.locator('.workshop-stage')).toHaveCount(3);
   await writeWorking(page,'The sample excludes students who do not attend.');
   await page.getByRole('button',{name:'Compare with model solution'}).click();
-  await expect(page.locator('.workshop-stage__model')).toContainText('The sample excludes students');
-  await expect(page.locator('.workshop-stage__model')).toContainText('Compare each step with your notebook');
+  await expectReadingContains(page.locator('.workshop-stage__model'),'The sample excludes students');
+  await expectReadingContains(page.locator('.workshop-stage__model'),'Compare each step with your notebook');
   await expect(page.locator('.workshop-stage__model')).not.toContainText('Correct answer');
   await page.getByRole('button',{name:'I need more practice'}).click();
   await expect(page.locator('.workshop-stage__rating-note')).toContainText('review');
