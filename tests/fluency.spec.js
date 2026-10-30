@@ -85,7 +85,7 @@ test('length choice and regeneration protect an unfinished practice set',async({
   await writeWorking(page,'My first calculation');
   await page.locator('#fluency-answer').fill('Need to calculate');
   await page.locator('#fluency-count').selectOption('10');
-  await expect(page.locator('.fluency-confirm')).toContainText('Replace this unfinished set');
+  await expect(page.locator('.fluency-confirm')).toContainText('Replace the unfinished question responses');
   await page.getByRole('button',{name:'Keep practising'}).click();
   await expect(page.locator('.fluency-question__prompt')).toHaveText(original.questions[0].prompt);
   await notebookContains(page,'My first calculation');
