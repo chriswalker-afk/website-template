@@ -44,7 +44,7 @@ test('Structured shows a short method checklist and no automatic hints',async({p
     const guide=fluencyQuestionScaffold('level-2',q.family);
     await expect(page.locator('.fluency-scaffold--structured')).toBeVisible();
     await expect(page.locator('.fluency-scaffold li')).toHaveCount(3);
-    await expect(page.locator('.fluency-scaffold')).toContainText(guide.steps[1]);
+    await expectReadingContains(page.locator('.fluency-scaffold'),guide.steps[1]);
     await expect(page.locator('.practice-question__hint')).toHaveCount(0);
     await page.getByRole('button',{name:'Show hint'}).click();
     await expectReadingContains(page.locator('.practice-question__hint'),q.hint);
