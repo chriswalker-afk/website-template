@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {expectReadingText,expectReadingContains} from './math-assertions.js';
 import {FLUENCY_LEVELS,fluencyQuestionScaffold} from '../src/fluency-levels.js';
 import {buildFluencySet} from '../src/fluency-engine.js';
 
@@ -27,10 +28,10 @@ test('Guided shows a relevant start without revealing numerical worked steps',as
     const q=await currentQuestion(page,topic,'level-1',pageId);
     const scaffold=fluencyQuestionScaffold('level-1',q.family);
     await expect(page.locator('.fluency-level-intro')).toContainText('Guided practice');
-    await expect(page.locator('.fluency-scaffold--guided')).toContainText(scaffold.steps[0]);
+    await expectReadingContains(page.locator('.fluency-scaffold--guided'),scaffold.steps[0]);
     await expect(page.locator('.fluency-question__skill')).toHaveText(q.skill);
     await expect(page.locator('.fluency-solution')).toHaveCount(0);
-    await expect(page.locator('.fluency-question__prompt')).toHaveText(q.prompt);
+    await expectReadingText(page.locator('.fluency-question__prompt'),q.prompt);
     await expect(page.locator('details[data-working-notebook]')).toHaveCount(1);
     await expect(page.locator('#fluency-answer')).toBeEnabled();
   }
@@ -43,10 +44,10 @@ test('Structured shows a short method checklist and no automatic hints',async({p
     const guide=fluencyQuestionScaffold('level-2',q.family);
     await expect(page.locator('.fluency-scaffold--structured')).toBeVisible();
     await expect(page.locator('.fluency-scaffold li')).toHaveCount(3);
-    await expect(page.locator('.fluency-scaffold')).toContainText(guide.steps[1]);
+    await expectReadingContains(page.locator('.fluency-scaffold'),guide.steps[1]);
     await expect(page.locator('.practice-question__hint')).toHaveCount(0);
     await page.getByRole('button',{name:'Show hint'}).click();
-    await expect(page.locator('.practice-question__hint')).toContainText(q.hint);
+    await expectReadingContains(page.locator('.practice-question__hint'),q.hint);
   }
 });
 test('Independent and Challenge conceal technique until answer is checked or revealed',async({page})=>{
@@ -60,10 +61,10 @@ test('Independent and Challenge conceal technique until answer is checked or rev
     const q=await currentQuestion(page,topic,level,pageId);
     await expect(page.locator('.fluency-scaffold')).toHaveCount(0);
     await expect(page.locator('.fluency-question__skill')).toHaveText('Choose the method');
-    await expect(page.locator('.fluency-question__prompt')).toHaveText(q.prompt);
+    await expectReadingText(page.locator('.fluency-question__prompt'),q.prompt);
     await page.locator('[data-action="fluency-reveal"]').click();
     await expect(page.locator('.fluency-question__skill')).toHaveText(q.skill);
-    await expect(page.locator('.fluency-solution')).toContainText(q.steps[0]);
+    await expectReadingContains(page.locator('.fluency-solution'),q.steps[0]);
     await expect(page.locator('.fluency-next')).toBeEnabled();
   }
 });

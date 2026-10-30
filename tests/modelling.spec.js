@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {expectReadingText,expectReadingContains} from './math-assertions.js';
 import {MODELLING_CHAPTERS} from '../src/modelling-content.js';
 import {writeWorking,notebookContains,notebookEmpty,confirmStage,openNotebook} from './notebook-helpers.js';
 const phases=['Formulate','Calculate','Interpret','Evaluate'];
@@ -40,14 +41,14 @@ test('both topics have all four distinct modelling levels with two internal book
       await expect(page.locator('.side-tab[aria-current="page"]')).toContainText(chapter.label);
       await expect(page.locator('.page-navigation__count')).toHaveText('Page 1 of 2');
       await expect(page.locator('.mdl-case')).toBeVisible();
-      await expect(page.locator('.mdl-scenario')).toHaveText(chapter.pages[0].tasks[0].scenario);
+      await expectReadingText(page.locator('.mdl-scenario'),chapter.pages[0].tasks[0].scenario);
       await expect(page.locator('.practice-question')).toHaveCount(0);
       await expect(page.locator('.fluency-question')).toHaveCount(0);
       await expect(page.locator('.reasoning-task')).toHaveCount(0);
       await expect(page.locator('.ps-case')).toHaveCount(0);
       await page.getByRole('link',{name:'Next page'}).click();
       await expect(page.locator('.page-navigation__count')).toHaveText('Page 2 of 2');
-      await expect(page.locator('.mdl-scenario')).toHaveText(chapter.pages[1].tasks[0].scenario);
+      await expectReadingText(page.locator('.mdl-scenario'),chapter.pages[1].tasks[0].scenario);
       await expect(page.locator('.side-tab[aria-current="page"]')).toContainText(chapter.label);
     }
   }
@@ -68,9 +69,9 @@ test('nudge and stage comparison preserve writing and correctly record support',
   const task=tasks('sampling','level-1','population-estimates')[0];
   await answerStage(page,texts.formulate);
   await page.getByRole('button',{name:'Need a modelling nudge?'}).click();
-  await expect(page.locator('.mdl-hint')).toContainText(task.phases[0].nudge);
+  await expectReadingContains(page.locator('.mdl-hint'),task.phases[0].nudge);
   await page.getByRole('button',{name:'Compare this stage'}).click();
-  await expect(page.locator('.mdl-example')).toContainText(task.phases[0].model);
+  await expectReadingContains(page.locator('.mdl-example'),task.phases[0].model);
   await notebookContains(page,texts.formulate);
   await page.getByRole('button',{name:'Hide nudge'}).click();
   await page.getByRole('button',{name:'Hide worked stage'}).click();
@@ -98,8 +99,8 @@ test('complete unaided writing supports an honest independent self-rating',async
   const task=tasks('quadratics','level-1','shapes')[0];
   await advance(page);
   await expect(page.locator('.mdl-comparison-stage')).toHaveCount(4);
-  await expect(page.locator('.mdl-comparison-stage').first()).toContainText(task.phases[0].model);
-  await expect(page.locator('.mdl-comparison')).toContainText(task.phases[3].model);
+  await expectReadingContains(page.locator('.mdl-comparison-stage').first(),task.phases[0].model);
+  await expectReadingContains(page.locator('.mdl-comparison'),task.phases[3].model);
   await expect(page.getByRole('button',{name:'Modelled independently'})).toBeDisabled();
   await allChecks(page);
   await expect(page.getByRole('button',{name:'Modelled independently'})).toBeEnabled();
@@ -108,7 +109,7 @@ test('complete unaided writing supports an honest independent self-rating',async
   await expect(page.locator('.mdl-pulse')).toContainText('self-rated independent');
   await page.getByRole('button',{name:'Next scenario'}).click();
   await expect(page.locator('.mdl-case-meta')).toContainText('Scenario 2 of 2');
-  await expect(page.locator('.mdl-scenario')).toHaveText(tasks('quadratics','level-1','shapes')[1].scenario);
+  await expectReadingText(page.locator('.mdl-scenario'),tasks('quadratics','level-1','shapes')[1].scenario);
   await expect(page).toHaveURL(/quadratics\/modelling\/level-1$/);
 });
 test('revealing model stages before writing is accurately classified as supported',async({page})=>{
@@ -176,7 +177,7 @@ test('completed scenarios replay weaker tasks or show an informative empty revie
   await expect(page.locator('.mdl-complete-stats')).toContainText('For another look');
   await page.getByRole('button',{name:'Revisit weaker scenarios'}).click();
   await expect(page.locator('.mdl-case-meta')).toContainText('Scenario 1 of 1');
-  await expect(page.locator('.mdl-scenario')).toHaveText(tasks('sampling','level-1','population-estimates')[1].scenario);
+  await expectReadingText(page.locator('.mdl-scenario'),tasks('sampling','level-1','population-estimates')[1].scenario);
   await expect(page.locator('.page-navigation__count')).toHaveText('Page 1 of 2');
 });
 test('review metadata remains separate from notebook content across refresh',async({page})=>{

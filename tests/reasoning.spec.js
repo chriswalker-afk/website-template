@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {expectReadingText,expectReadingContains} from './math-assertions.js';
 import {REASONING_CHAPTERS} from '../src/reasoning-content.js';
 import {writeWorking,notebookContains,confirmReasoning,openNotebook} from './notebook-helpers.js';
 
@@ -30,7 +31,7 @@ test('Reasoning has four distinct subsections, one introduction and its own inte
       await expect(page.locator('.fluency-question')).toHaveCount(0);
       await expect(page.locator('#graph-svg')).toHaveCount(0);
       await expect(page.locator('.reasoning-task')).toBeVisible();
-      await expect(page.locator('.reasoning-task-prompt')).toHaveText(current.pages[0].tasks[0].prompt);
+      await expectReadingText(page.locator('.reasoning-task-prompt'),current.pages[0].tasks[0].prompt);
       await expect(page.locator('.reasoning-task-meta')).toContainText('Prompt 1 of 4');
       await expect(page.locator('.side-tab[aria-current="page"]')).toContainText(current.label);
       await expect(page.locator('.reasoning-review-panel')).toHaveCount(0);
@@ -45,20 +46,20 @@ test('student writes, gets optional nudge, compares mathematical argument, then 
     'The library-only sample excludes pupils elsewhere, who might prefer different meals.');
   await confirmReasoning(page);
   await page.getByRole('button',{name:'Need a nudge?'}).click();
-  await expect(page.locator('.reasoning-hint')).toContainText(task.hint);
-  await expect(page.locator('.reasoning-hint')).toContainText(task.starter);
+  await expectReadingContains(page.locator('.reasoning-hint'),task.hint);
+  await expectReadingContains(page.locator('.reasoning-hint'),task.starter);
   await notebookContains(page,'The library-only sample');
   await page.getByRole('button',{name:'Hide nudge'}).click();
   await notebookContains(page,'The library-only sample');
   await compare(page);
   await expect(page.locator('.reasoning-model-steps li')).toHaveCount(3);
-  await expect(page.locator('.reasoning-model-steps')).toContainText(task.model[0]);
+  await expectReadingContains(page.locator('.reasoning-model-steps'),task.model[0]);
   await expect(page.locator('.reasoning-criterion')).toHaveCount(3);
-  await expect(page.locator('.reasoning-next-steps')).toContainText(task.criteria[0].next);
+  await expectReadingContains(page.locator('.reasoning-next-steps'),task.criteria[0].next);
   await expect(page.getByRole('button',{name:'Ready to move on'})).toBeDisabled();
   await page.locator('input[data-reasoning-criterion="0"]').check();
   await expect(page.locator('.reasoning-check-heading')).toContainText('1 of 3');
-  await expect(page.locator('.reasoning-next-steps')).toContainText(task.criteria[1].next);
+  await expectReadingContains(page.locator('.reasoning-next-steps'),task.criteria[1].next);
   await page.locator('input[data-reasoning-criterion="1"]').check();
   await page.locator('input[data-reasoning-criterion="2"]').check();
   await expect(page.getByRole('button',{name:'Ready to move on'})).toBeEnabled();
@@ -75,7 +76,7 @@ test('student writes, gets optional nudge, compares mathematical argument, then 
   expect(saved).not.toContain('library-only sample excludes');
   await page.getByRole('button',{name:'Next prompt'}).click();
   await expect(page.locator('.reasoning-task-meta')).toContainText('Prompt 2 of 4');
-  await expect(page.locator('.reasoning-task-prompt')).toHaveText(
+  await expectReadingText(page.locator('.reasoning-task-prompt'),
     REASONING_CHAPTERS.sampling[0].pages[0].tasks[1].prompt);
   await expect(page).toHaveURL(/sampling\/reasoning\/explain$/);
 });
@@ -94,7 +95,7 @@ test('students can view a model without an attempt but cannot claim independent 
     rating:'revisit',attempted:false,modelFirst:true
   });
   await page.getByRole('button',{name:'Next prompt'}).click();
-  await expect(page.locator('.reasoning-task-prompt')).toContainText('x² − 6x + 9');
+  await expectReadingContains(page.locator('.reasoning-task-prompt'),'x² − 6x + 9');
 });
 test('self-review distinguishes developing from ready and supports targeted corrections',async({page})=>{
   await open(page,'quadratics','critique');
@@ -103,9 +104,9 @@ test('self-review distinguishes developing from ready and supports targeted corr
     'The horizontal coordinate is negative three, not positive three, because the bracket is x plus three.');
   await confirmReasoning(page);
   await compare(page);
-  await expect(page.locator('.reasoning-model-steps')).toContainText('(−3, −2)');
+  await expectReadingContains(page.locator('.reasoning-model-steps'),'(−3, −2)');
   await page.locator('input[data-reasoning-criterion="0"]').check();
-  await expect(page.locator('.reasoning-next-steps')).toContainText(task.criteria[1].next);
+  await expectReadingContains(page.locator('.reasoning-next-steps'),task.criteria[1].next);
   await page.getByRole('button',{name:'Still developing'}).click();
   await expect(page.locator('.reasoning-saved')).toContainText('Still developing');
   const storage=await page.evaluate(()=>JSON.parse(localStorage.getItem('maths-notebook-pass1a:reasoning:quadratics')));
@@ -145,7 +146,7 @@ test('students can finish, see a self-review summary and retry weaker tasks',asy
   await expect(page.locator('.reasoning-review-list li')).toHaveCount(4);
   await page.getByRole('button',{name:'Revisit weaker prompts'}).click();
   await expect(page.locator('.reasoning-task-meta')).toContainText('Prompt 1 of 3');
-  await expect(page.locator('.reasoning-task-prompt')).toHaveText(
+  await expectReadingText(page.locator('.reasoning-task-prompt'),
     REASONING_CHAPTERS.sampling[2].pages[0].tasks[1].prompt);
   const stored=await page.evaluate(()=>JSON.parse(localStorage.getItem('maths-notebook-pass1a:reasoning:sampling')));
   expect(stored.records['critique:'+ids[0]].rating).toBe('ready');
@@ -182,7 +183,7 @@ test('saved self-review stays separate from locally saved mathematical notebook 
   await notebookContains(page,'student answer');
   await expect(page.locator('.reasoning-pulse')).toContainText('1 / 4 reviewed');
   await page.getByRole('button',{name:'Needs another look'}).click();
-  await expect(page.locator('.reasoning-task-prompt')).toContainText('For strata of sizes');
+  await expectReadingContains(page.locator('.reasoning-task-prompt'),'For strata of sizes');
   await open(page,'quadratics','generalise');
   await expect(page.locator('.reasoning-pulse')).toContainText('0 / 4 reviewed');
 });

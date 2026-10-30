@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {expectReadingContains,expectReadingText} from './math-assertions.js';
 import {TOPICS} from '../src/topics.js';
 
 test('Contents, top modes and right-hand subsections are separate navigation levels',async({page})=>{
@@ -90,14 +91,14 @@ test('the quadratic graph teaches shape separately from translations',async({pag
   await page.locator('input[data-graph="magnitude"]').evaluate(el=>{
     el.value='2';el.dispatchEvent(new Event('input',{bubbles:true}));
   });
-  await expect(page.locator('#graph-observation')).toContainText('narrower than y = x²');
+  await expectReadingContains(page.locator('#graph-observation'),'narrower than y = x²');
   const updated=await page.locator('#graph-svg path[stroke="#2d755f"]').getAttribute('d');
   expect(updated).not.toBe(original);
   await page.getByRole('button',{name:'Flip opening direction'}).click();
-  await expect(page.locator('#equation-display')).toContainText('−2x²');
+  await expectReadingContains(page.locator('#equation-display'),'−2x²');
   await expect(page.locator('#graph-observation')).toContainText('Opens downwards');
   await page.getByRole('button',{name:'Reset graph'}).click();
-  await expect(page.locator('#equation-display')).toHaveText('y = x²');
+  await expectReadingText(page.locator('#equation-display'),'y = x²');
   await page.getByRole('link',{name:'Next page'}).click();
   await expect(page).toHaveURL(/#\/quadratics\/understand\/visual-explanations\/position/);
   await expect(page.locator('.side-tab[aria-current="page"]')).toContainText('Visual explanations');
@@ -107,7 +108,7 @@ test('the quadratic graph teaches shape separately from translations',async({pag
   await page.locator('input[data-graph="h"]').evaluate(el=>{
     el.value='2';el.dispatchEvent(new Event('input',{bubbles:true}));
   });
-  await expect(page.locator('#graph-observation')).toContainText('Turning point (2, -2)');
+  await expectReadingContains(page.locator('#graph-observation'),'Turning point (2, -2)');
   await page.goto('/#/quadratics/fluency/level-1');
   await expect(page.locator('#graph-svg')).toHaveCount(0);
   await expect(page.locator('.fluency-question')).toHaveCount(1);
