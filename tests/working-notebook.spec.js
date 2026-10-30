@@ -42,6 +42,7 @@ test('drawing, mixed mode, eraser, undo and redo preserve vector strokes',async(
   await openNotebook(page);
   await page.locator('[data-book-mode="both"]').click();
   const canvas=page.locator('[data-book-ink]');
+  await canvas.scrollIntoViewIfNeeded();
   const box=await canvas.boundingBox();
   expect(box).not.toBeNull();
   await page.mouse.move(box.x+30,box.y+30);
@@ -58,6 +59,7 @@ test('drawing, mixed mode, eraser, undo and redo preserve vector strokes',async(
   await expect(page.locator('[data-book-mode="both"]')).toHaveAttribute('aria-pressed','true');
   await expect(page.locator('[data-book-ink] path')).toHaveCount(1);
   await page.locator('[data-book-pen="eraser"]').click();
+  await page.locator('[data-book-ink]').scrollIntoViewIfNeeded();
   const again=await page.locator('[data-book-ink]').boundingBox();
   await page.mouse.click(again.x+60,again.y+45);
   await expect(page.locator('[data-book-ink] path')).toHaveCount(0);
