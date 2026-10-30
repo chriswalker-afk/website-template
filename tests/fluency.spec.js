@@ -157,7 +157,7 @@ test('completed exact question set can be exported to matching LaTeX worksheet',
   await expect(page).toHaveURL(/quadratics\/resources\/worksheet-generator/);
   await expect(page.locator('.worksheet-questions li')).toHaveCount(6);
   for(let i=0;i<set.questions.length;i++)
-    await expect(page.locator('.worksheet-questions li').nth(i)).toContainText(set.questions[i].prompt);
+    await expectReadingContains(page.locator('.worksheet-questions li').nth(i),set.questions[i].prompt);
   await expect(page.locator('input[name="skill"][value="fluency"]')).toBeChecked();
   await expect(page.locator('#worksheet-seed')).toHaveValue(String(set.seed));
   await expect(page.locator('#worksheet-preview')).toBeVisible();
