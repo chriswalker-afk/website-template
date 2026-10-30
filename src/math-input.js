@@ -178,7 +178,7 @@ export function mathInputMarkup({targetId,active=false,disabled=false,latex=''}=
 }
 
 let loader;
-function loadMathLive(){
+export function loadMathLive(){
   if(!loader)loader=import(MATHLIVE_URL).then(module=>{
     if(typeof module.MathfieldElement!=='function')throw Error('MathLive unavailable');
     module.MathfieldElement.fontsDirectory=MATHLIVE_FONTS;
