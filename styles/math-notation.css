@@ -1,0 +1,34 @@
+/* Site-wide notation standard: native semantic MathML, not styled plain text.
+   The mathematics inherits the surrounding text size and colour, including
+   examination-style prompts, model solutions and printable lessons. */
+.page-body math {
+  font-family: "Cambria Math","STIX Two Math","Latin Modern Math",serif;
+  color: inherit;
+  font-size: 1em;
+  vertical-align: -0.03em;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.page-body math[display="block"] {
+  display: block;
+  font-size: 1.04em;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: .3em .05em;
+  margin: .32em 0;
+  text-align: left;
+}
+.page-body :is(.fluency-question__prompt,.reasoning-task-prompt,.ps-prompt,.mdl-stage-prompt,
+  .practice-question__prompt,.workshop-stage__question) math {
+  font-size: 1.03em;
+}
+.page-body :is(.fluency-solution,.ps-worked,.mdl-comparison,.reasoning-model) math {
+  font-size: 1em;
+}
+@media(max-width:530px) {
+  .page-body math {font-size:1em}
+  .page-body math[display="block"] {font-size:1em}
+}
+@media print {
+  .page-body math { break-inside: avoid; }
+}
