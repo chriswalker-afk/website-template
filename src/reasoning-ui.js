@@ -5,6 +5,7 @@ import {reasoningSummary,recordFor,taskFor} from './reasoning-engine.js';
 import {modeWorkingNotebook,workingScope,archivedWorkingNotebooks}
   from './working-notebook-integration.js';
 import {hasSavedWorking} from './working-notebook.js';
+import {reasoningAttempt} from './working-notebook-evidence.js';
 const icon=name=>'<svg class="icon" aria-hidden="true"><use href="#i-'+name+'"></use></svg>';
 const labelFor=rating=>rating==='ready'?'Ready to move on':
   rating==='developing'?'Still developing':rating==='revisit'?'Review again':'Not reviewed';
@@ -80,7 +81,7 @@ function taskView(topic,route,session){
   if(!task)return '<div class="reasoning-empty">There are no prompts in this selection. Choose All prompts to practise the full set.</div>';
   const entry=currentEntry(task,session),rating=entry.rating;
   const scope=workingScope(topic.id,'reasoning',route.sectionId,route.pageId,task.id);
-  const notebookAttempt=Boolean(entry.notebookConfirmed&&hasSavedWorking(scope));
+  const notebookAttempt=reasoningAttempt({draft:'',notebookConfirmed:entry.notebookConfirmed},hasSavedWorking(scope));
   const compare='<button class="quiet-button" type="button" data-action="reasoning-model" '+
     'aria-expanded="'+entry.model+'" '+(rating?'disabled':'')+'>'+
     (entry.model?'Hide worked argument':'Compare with worked argument')+'</button>';
