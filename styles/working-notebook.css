@@ -68,7 +68,7 @@
 .working-book__drawing[data-paper="ruled"] { background-image:
   repeating-linear-gradient(to bottom,transparent 0,transparent 31px,#dfe9de 32px); }
 .working-book__ink { display:block; width:100%; height:auto; aspect-ratio:720/320;
-  touch-action:none; cursor:crosshair; user-select:none; -webkit-user-select:none; }
+  touch-action:none; pointer-events:all; cursor:crosshair; user-select:none; -webkit-user-select:none; }
 .working-book__draw-help { margin:8px 0 0; font-size:11px; color:#62786a; line-height:1.6; }
 .working-book__footer { display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between;
   padding:15px 0 0; margin-top:18px; border-top:1px solid #d8e3d7; }
