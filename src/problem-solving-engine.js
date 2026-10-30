@@ -44,7 +44,10 @@ export function hydrateProblemSolvingProgress(raw,topicId){
   return progress;
 }
 export function attemptedProblem(entry){
-  return Boolean(entry?.plan?.trim().length>=10&&entry?.working?.trim().length>=20);
+  // Notebook evidence must be explicitly confirmed by the student.
+  // The caller must reject stale confirmations if the notebook was cleared.
+  return Boolean((entry?.plan?.trim().length>=10||entry?.notebookPlan===true)&&
+    (entry?.working?.trim().length>=20||entry?.notebookWorking===true));
 }
 export function canRateProblem(entry,kind){
   if(!PROBLEM_SOLVING_RATINGS.includes(kind)||!entry?.modelComplete||entry.rating)return false;
