@@ -24,7 +24,7 @@ const numberPattern=/^(?:\d+(?:\.\d*)?|\.\d+)/;
 const operatorChars=new Set('+-−×÷=≤≥<>≈≠±*/^_%,:|πΔ∞√²³⁰¹⁴⁵⁶⁷⁸⁹⁻⁺');
 const skipSelector=[
   'math','svg','script','style','pre','code','textarea','input','select','option',
-  'button','summary','[contenteditable]','[data-math-input]','[data-working-notebook]',
+  '[contenteditable]','[data-math-input]','[data-working-notebook]',
   '.working-book','.math-tool','.working-tool'
 ].join(',');
 
