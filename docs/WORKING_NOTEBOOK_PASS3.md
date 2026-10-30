@@ -31,7 +31,7 @@ Existing scoring/review rules are preserved:
 - Modelling still requires evidence at **all four stages** and all three
   evaluation checks; guided/model-first work cannot be self-rated independent.
 
-Previously, those attempts could only be recognised from the plain-text
+Previously, those attempts could only be recognised from the separate plain-text
 response fields. A student who used proper typed mathematics or handwritten
 working in the notebook would otherwise be blocked from self-review.
 Pass 3 therefore adds **explicit student confirmation** controls:
@@ -48,16 +48,20 @@ of handwriting, auto-assessment of equations or a teacher mark. A student
 must affirm that the content actually addresses the task/stage; the site
 does not pretend to verify semantic correctness.
 
-The short plain-text response boxes are still available and still work
-exactly as before. A learner can mix them with notebook evidence.
+The duplicated plain-text working/response boxes have now been removed. The
+notebook is the single working surface: students can add explanation blocks,
+typeset equations and hand-drawn annotations in the same place. Fluency retains
+its distinct final-answer input because the answer is checked numerically.
+In extended modes the notebook opens by default, while its expand/collapse
+preference can still be changed.
 
 ## Safeguards and privacy
 
 - Every task has its own notebook; **no answer leaks into another question**.
 - In Modelling, evidence is confirmed per stage, but the visual notebook is
   shared so a student can refer back to assumptions/calculations.
-- Textarea drafts and the stage self-review confirmations remain ephemeral
-  session state; **mathematical notebook content** is separately autosaved in
+- Student stage self-review confirmations remain ephemeral session state;
+  **mathematical notebook content** is separately autosaved in
   browser-local storage. Saved progress contains only previous rating/status
   aggregates, not the written mathematics or handwritten strokes.
 - The notebook can be exported as printable HTML (with SVG pen strokes) or
