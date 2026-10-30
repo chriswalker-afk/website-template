@@ -56,8 +56,8 @@ function worked(q,open){
     '<ol class="fluency-solution__steps">'+q.steps.map(step=>'<li>'+e(step)+'</li>').join('')+'</ol>'+
     '</div>':'';
 }
-function scaffoldMarkup(levelId,q){
-  const scaffold=fluencyQuestionScaffold(levelId,q.family);
+function scaffoldMarkup(levelId,q,topicId){
+  const scaffold=fluencyQuestionScaffold(levelId,q.family,topicId);
   if(!scaffold)return '';
   const guidance=scaffold.steps.length===1?
     '<p>'+e(scaffold.steps[0])+'</p>':
@@ -87,7 +87,7 @@ function activeQuestion(session,scope){
       (showFluencySkill(session.set.levelId,checked)?e(q.skill):
         'Choose the method')+'</div>'+
     '<p class="fluency-question__prompt">'+e(q.prompt)+'</p>'+
-    scaffoldMarkup(session.set.levelId,q)+
+    scaffoldMarkup(session.set.levelId,q,session.set.topicId)+
     // The notebook replaces the former plain-text working textarea.
 
     workingNotebookMarkup({scope,label:'Fluency mathematical working'})+
