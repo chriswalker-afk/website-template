@@ -44,7 +44,7 @@ test('dot grids, number lines and probability trees are reusable and accessible'
   const dots={type:'dot-grid',count:24,columns:6,selected:[0,5,13],label:'Three chosen'};
   assert.deepEqual(validateDiagram(dots),[]);
   const html=renderDiagram(dots);
-  assert.equal((html.match(/class="dot/g)||[]).length,24);
+  assert.equal((html.match(/<span class="dot/g)||[]).length,24);
   assert.equal((html.match(/dot--chosen/g)||[]).length,3);
   const line={type:'number-line',min:-3,max:5,intervals:[{from:1,to:5,openFrom:true}],
     points:[{value:-2,label:'A'}]};

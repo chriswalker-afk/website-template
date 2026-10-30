@@ -31,7 +31,7 @@ export function linearValue(x,model){
 }
 export function linearEquation(model){
   const {m,b}=linearProperties(model);
-  const gradient=m===0?'':m===1?'x':m===-1?'−x':m+'x';
+  const gradient=m===0?'':m===1?'x':m===-1?'−x':m<0?'−'+Math.abs(m)+'x':m+'x';
   const offset=b===0?'':gradient?(b>0?' + ':' − ')+Math.abs(b):String(b);
   return 'y = '+(gradient+offset||'0');
 }
