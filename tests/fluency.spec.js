@@ -1,5 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {buildFluencySet,answerText} from '../src/fluency-engine.js';
+import {writeWorking,notebookContains} from './notebook-helpers.js';
 
 async function activeSet(page,topic,level,pageId,count=6){
   const label=await page.locator('.fluency-seed').textContent();
@@ -42,18 +43,18 @@ test('generated questions have repeatable answer checking and full worked soluti
   await enterAnswer(page,q.answer.values.map((n,i)=>String(n+(i===0?999:0))).join(', '));
   await expect(page.locator('#fluency-feedback')).toContainText('Not quite');
   await expect(page.locator('.fluency-next')).toHaveCount(0);
-  await page.locator('#fluency-working').fill('I substitute the chosen x value.');
+  await writeWorking(page,'I substitute the chosen x value.');
   await page.getByRole('button',{name:'Show hint'}).click();
   await expect(page.locator('.practice-question__hint')).toContainText(q.hint);
-  await expect(page.locator('#fluency-working')).toHaveValue('I substitute the chosen x value.');
+  await notebookContains(page,'I substitute the chosen x value.');
   await page.getByRole('button',{name:'Hide hint'}).click();
-  await expect(page.locator('#fluency-working')).toHaveValue('I substitute the chosen x value.');
+  await notebookContains(page,'I substitute the chosen x value.');
   await enterAnswer(page,answerText(q.answer));
   await expect(page.locator('#fluency-feedback')).toContainText('Correct');
   await page.getByRole('button',{name:'View worked solution'}).click();
   await expect(page.locator('.fluency-solution__steps li')).toHaveCount(q.steps.length);
   await expect(page.locator('.fluency-solution')).toContainText(q.steps[0]);
-  await expect(page.locator('#fluency-working')).toHaveValue('I substitute the chosen x value.');
+  await notebookContains(page,'I substitute the chosen x value.');
   await page.getByRole('button',{name:'Next question'}).click();
   await expect(page.locator('.fluency-question__meta')).toContainText('Question 2 of 6');
   await expect(page.locator('.fluency-round-summary')).toContainText('with support');
@@ -81,18 +82,19 @@ test('typed answer formats check ordered allocations and unordered quadratic roo
 test('length choice and regeneration protect an unfinished practice set',async({page})=>{
   await page.goto('/#/sampling/fluency/level-1');
   const original=await activeSet(page,'sampling','level-1','counts');
-  await page.locator('#fluency-working').fill('My first calculation');
+  await writeWorking(page,'My first calculation');
+  await page.locator('#fluency-answer').fill('Need to calculate');
   await page.locator('#fluency-count').selectOption('10');
   await expect(page.locator('.fluency-confirm')).toContainText('Replace this unfinished set');
   await page.getByRole('button',{name:'Keep practising'}).click();
   await expect(page.locator('.fluency-question__prompt')).toHaveText(original.questions[0].prompt);
-  await expect(page.locator('#fluency-working')).toHaveValue('My first calculation');
+  await notebookContains(page,'My first calculation');
   await page.getByRole('button',{name:'New questions'}).click();
   await expect(page.locator('.fluency-confirm')).toBeVisible();
   await page.getByRole('button',{name:'Replace set'}).click();
   const changed=await activeSet(page,'sampling','level-1','counts');
   expect(changed.seed).not.toBe(original.seed);
-  await expect(page.locator('#fluency-working')).toHaveValue('');
+  await notebookContains(page,'My first calculation');
   await page.locator('#fluency-count').selectOption('10');
   await expect(page.locator('.fluency-question__meta')).toContainText('Question 1 of 10');
   const ten=await activeSet(page,'sampling','level-1','counts',10);
