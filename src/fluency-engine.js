@@ -259,7 +259,7 @@ const QUADRATICS={
     if(s===r)s=r===6?-5:r+1;
     const b=-a*(r+s),c=a*r*s;
     return question({family:'scaled-roots',signature:[a,...[r,s].sort((x,y)=>x-y)].join(':'),skill:'Non-monic factorising',
-      prompt:'Solve '+poly(a,b,c)+' = 0 by factorising.',
+      prompt:'Solve '+poly(a,b,c)+' = 0.',
       values:[r,s],kind:'unordered',
       steps:['Extract the common coefficient '+a+' where appropriate, or identify the factorised form.',
         poly(a,b,c)+' = '+factored(a,r,s)+'.',
