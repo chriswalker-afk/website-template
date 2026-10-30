@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {writeWorking,confirmReasoning,confirmProblem,confirmStage} from './notebook-helpers.js';
 import {mkdir} from 'node:fs/promises';
 import {buildFluencySet,answerText} from '../src/fluency-engine.js';
 
@@ -126,8 +127,9 @@ test('render Reasoning writing, model, checklist, review and mobile screenshots'
   await expect(page.locator('.reasoning-task')).toBeVisible();
   await page.screenshot({path:'visual-review/28-reasoning-write-desktop.png',
     fullPage:true,animations:'disabled'});
-  await page.locator('#reasoning-answer').fill(
+  await writeWorking(page,
     'The library-only sampling frame excludes students outside the library. The results may therefore be biased.');
+  await confirmReasoning(page);
   await page.getByRole('button',{name:'Need a nudge?'}).click();
   await page.screenshot({path:'visual-review/29-reasoning-nudge-desktop.png',
     fullPage:true,animations:'disabled'});
@@ -170,8 +172,8 @@ test('render Problem Solving strategy, hint, solution, review and mobile screens
   await page.goto('/#/quadratics/problemSolving/level-1');
   await expect(page.locator('.ps-case')).toBeVisible();
   await page.screenshot({path:'visual-review/36-ps-guided-desktop.png',fullPage:true,animations:'disabled'});
-  await page.locator('#ps-plan').fill('I should begin from the known roots and use the given intercept.');
-  await page.locator('#ps-work').fill('Use a(x − 2)(x − 5), substitute x = 0 and calculate a.');
+  await writeWorking(page,'I should begin from the known roots and use the given intercept.\nUse a(x − 2)(x − 5), substitute x = 0 and calculate a.');
+  await confirmProblem(page);
   await page.getByRole('button',{name:'Compare possible strategies'}).click();
   await page.locator('[data-action="ps-choice"][data-choice="s1"]').click();
   await page.screenshot({path:'visual-review/37-ps-strategy-feedback-desktop.png',
@@ -216,7 +218,8 @@ test('render Modelling stages, comparisons and narrow-screen notebook screenshot
   await expect(page.locator('.mdl-case')).toBeVisible();
   await page.screenshot({path:'visual-review/43-modelling-formulate-desktop.png',
     fullPage:true,animations:'disabled'});
-  await page.locator('#mdl-answer').fill('Let x measure horizontal distance in metres; I will use the supplied parabola within the arch opening.');
+  await writeWorking(page,'Let x measure horizontal distance in metres; I will use the supplied parabola within the arch opening.');
+  await confirmStage(page);
   await page.getByRole('button',{name:'Need a modelling nudge?'}).click();
   await page.getByRole('button',{name:'Compare this stage'}).click();
   await page.screenshot({path:'visual-review/44-modelling-guided-desktop.png',
