@@ -134,6 +134,6 @@ export function renderModellingPage(page,topic,route,session,progress){
     (session.complete?completedView(topic,route,session,progress):session.ids.length?
       taskView(topic,route,session):'<div class="mdl-empty">No new or supported scenarios remain on this page. '+
       'Choose All scenarios to practise them again.</div>')+
-    '<p class="mdl-privacy">Your modelling work stays in this browser session and disappears after a refresh. '+
-      'Only chosen self-review ratings and support flags are saved on this device. Written responses are never automatically graded.</p></div>';
+    '<p class="mdl-privacy">The written-response boxes stay in this browser session, while the shared mathematical notebook is saved locally for each investigation. '+
+      'The four stages and your review criteria remain self-assessed; no working is automatically graded.</p></div>';
 }
