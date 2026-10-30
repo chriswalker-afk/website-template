@@ -124,7 +124,7 @@ test('Sampling worked examples support qualitative written responses without fal
   await writeWorking(page,'The sample excludes students who do not attend.');
   await page.getByRole('button',{name:'Compare with model solution'}).click();
   await expect(page.locator('.workshop-stage__model')).toContainText('The sample excludes students');
-  await expect(page.locator('.workshop-stage__model')).toContainText('Compare your working');
+  await expect(page.locator('.workshop-stage__model')).toContainText('Compare each step with your notebook');
   await expect(page.locator('.workshop-stage__model')).not.toContainText('Correct answer');
   await page.getByRole('button',{name:'I need more practice'}).click();
   await expect(page.locator('.workshop-stage__rating-note')).toContainText('review');
