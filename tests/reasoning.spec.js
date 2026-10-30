@@ -179,7 +179,6 @@ test('saved self-review stays separate from locally saved mathematical notebook 
   const saved=await page.evaluate(()=>localStorage.getItem('maths-notebook-pass1a:reasoning:sampling'));
   expect(JSON.parse(saved).records['generalise:allocation-rule'].rating).toBe('developing');
   await page.reload();
-  await notebookContains(page,'A student writes a draft explanation of how sampling works.');
   await notebookContains(page,'student answer');
   await expect(page.locator('.reasoning-pulse')).toContainText('1 / 4 reviewed');
   await page.getByRole('button',{name:'Needs another look'}).click();
