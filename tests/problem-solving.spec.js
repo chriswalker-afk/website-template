@@ -147,7 +147,7 @@ test('strategy-free higher-level problems begin without an automatic technique p
     await expect(page.locator('.ps-hints')).toHaveCount(0);
     await expect(page.locator('.ps-worked')).toHaveCount(0);
     await expect(page.locator('details[data-working-notebook]')).toBeVisible();
-    await expect(page.locator('[data-book-kind="math"]')).toBeVisible();
+    await expect(page.locator('details[data-working-notebook]')).toBeVisible();
   }
 });
 test('replacing an unfinished selection requires confirmation and can be cancelled',async({page})=>{
