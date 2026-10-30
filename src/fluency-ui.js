@@ -3,6 +3,7 @@
 import {escapeHTML as e} from './logic.js';
 import {answerText} from './fluency-engine.js';
 import {mathInputMarkup} from './math-input.js';
+import {workingNotebookMarkup} from './working-notebook.js';
 const escape=v=>e(String(v??''));
 const icon=name=>'<svg class="icon" aria-hidden="true"><use href="#i-'+name+'"></use></svg>';
 const plural=(n,s)=>n+' '+s+(n===1?'':'s');
@@ -54,7 +55,7 @@ function worked(q,open){
     '<ol class="fluency-solution__steps">'+q.steps.map(step=>'<li>'+e(step)+'</li>').join('')+'</ol>'+
     '</div>':'';
 }
-function activeQuestion(session){
+function activeQuestion(session,scope){
   const q=session.set.questions[session.index],a=session.answers[q.id]||{};
   const checked=Boolean(a.correct||a.revealed);
   const score=roundScores(session);
@@ -67,6 +68,7 @@ function activeQuestion(session){
     '<textarea id="fluency-working" class="fluency-working" rows="3" '+
       'placeholder="Use this space to plan your calculations. It is not marked or saved.">'+
        escape(a.working||'')+'</textarea>'+
+    workingNotebookMarkup({scope,label:'Fluency mathematical working'})+
     answerForm(q,a)+
     '<div class="fluency-assistance">'+
       '<button type="button" class="quiet-button" data-action="fluency-hint" '+
@@ -134,8 +136,9 @@ export function renderFluencyPage(page,topic,route,session,progress){
       '<button type="button" class="quiet-button" data-action="fluency-cancel-new">Keep practising</button>'+
       '<button type="button" class="action-button" data-action="fluency-confirm-new">Replace set</button></div>':'')+
     roundProgressMarkup(session)+
-    (session.complete?recap(session):activeQuestion(session))+
+    (session.complete?recap(session):activeQuestion(session,
+      [topic.id,'fluency',route.sectionId,route.pageId].join(':')))+
     '<p class="fluency-privacy">Answers are checked numerically, with equivalent root orders and suitable fractions accepted. '+
-    'Only completed-round summaries are saved locally on this device; working notes are not saved.</p>'+
+    'Completed-round summaries and notebook pages are saved separately on this device; the quick notes box is session-only.</p>'+
     '</div>';
 }
