@@ -6,7 +6,7 @@ import {validateFluencyChapters} from './fluency-engine.js';
 import {validateReasoningContent} from './reasoning-engine.js';
 import {validateProblemSolvingChapters} from './problem-solving-engine.js';
 import {validateModellingChapters} from './modelling-engine.js';
-import {validateQuestionBank} from './question-bank.js';
+import {validateQuestionBank,fluencyFamiliesFor} from './question-bank.js';
 
 export const CHAPTER_BY_ID=Object.fromEntries(CHAPTER_LIBRARY.map(c=>[c.id,c]));
 export const KNOWN_CHAPTER_IDS=CHAPTER_LIBRARY.map(c=>c.id);
@@ -164,7 +164,7 @@ export function validateTopics(topics=TOPICS){
     if(enabled('memorise'))
       issues.push(...validateMemoriseContent(topic).map(message=>key+': '+message));
     if(enabled('fluency'))
-      issues.push(...validateFluencyChapters({[key]:topic.chapters.fluency},{[key]:topic.questionBank?.fluency||{}}).map(message=>'Fluency: '+message));
+      issues.push(...validateFluencyChapters({[key]:topic.chapters.fluency},{[key]:topic.questionBank?.fluency||fluencyFamiliesFor(key)}).map(message=>'Fluency: '+message));
     if(enabled('reasoning'))
       issues.push(...validateReasoningContent({[key]:topic.chapters.reasoning}).map(message=>'Reasoning: '+message));
     if(enabled('problemSolving'))
