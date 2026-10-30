@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {expectReadingText,expectReadingContains} from './math-assertions.js';
 import {PROBLEM_SOLVING_CHAPTERS} from '../src/problem-solving-content.js';
 import {writeWorking,notebookContains,notebookEmpty,confirmProblem,openNotebook} from './notebook-helpers.js';
 const plan='The known conditions suggest using a suitable form, then substituting to find an unknown.';
@@ -31,7 +32,7 @@ test('Problem Solving is available for both topics with four right tabs and book
       await expect(page.locator('.page-subtitle')).toHaveCount(1);
       await expect(page.locator('.page-navigation__count')).toHaveText('Page 1 of 2');
       await expect(page.locator('.ps-case')).toBeVisible();
-      await expect(page.locator('.ps-prompt')).toHaveText(section.pages[0].tasks[0].prompt);
+      await expectReadingText(page.locator('.ps-prompt'),section.pages[0].tasks[0].prompt);
       await expect(page.locator('.practice-question')).toHaveCount(0);
       await expect(page.locator('.fluency-question')).toHaveCount(0);
       await expect(page.locator('.reasoning-task')).toHaveCount(0);
@@ -39,7 +40,7 @@ test('Problem Solving is available for both topics with four right tabs and book
       await page.getByRole('link',{name:'Next page'}).click();
       await expect(page.locator('.page-navigation__count')).toHaveText('Page 2 of 2');
       await expect(page.locator('.side-tab[aria-current="page"]')).toContainText(section.label);
-      await expect(page.locator('.ps-prompt')).toHaveText(section.pages[1].tasks[0].prompt);
+      await expectReadingText(page.locator('.ps-prompt'),section.pages[1].tasks[0].prompt);
     }
   }
 });
@@ -55,10 +56,10 @@ test('guided start, strategy feedback and staged hints preserve planning notes',
   await notebookContains(page,plan);
   await notebookContains(page,working);
   await page.getByRole('button',{name:'Get a nudge'}).click();
-  await expect(page.locator('.ps-hints')).toContainText(first.hints[0]);
+  await expectReadingContains(page.locator('.ps-hints'),first.hints[0]);
   await page.getByRole('button',{name:'Get a stronger hint'}).click();
   await expect(page.locator('.ps-hints p')).toHaveCount(2);
-  await expect(page.locator('.ps-hints')).toContainText(first.hints[1]);
+  await expectReadingContains(page.locator('.ps-hints'),first.hints[1]);
   await notebookContains(page,working);
   await expect(page.getByRole('button',{name:'Both hints shown'})).toBeDisabled();
   await revealAll(page,first);
@@ -99,7 +100,7 @@ test('unattempted problem can be revealed and self-rated for retry without false
   await page.getByRole('button',{name:'Reveal first worked step'}).click();
   await expect(page.locator('.ps-model-warning')).toContainText('before completing a written attempt');
   await expect(page.locator('.ps-worked li')).toHaveCount(1);
-  await expect(page.locator('.ps-worked')).toContainText(first.steps[0]);
+  await expectReadingContains(page.locator('.ps-worked'),first.steps[0]);
   await expect(page.getByRole('button',{name:'Solved independently'})).toHaveCount(0);
   for(let i=1;i<first.steps.length;i++){
     await page.getByRole('button',{name:'Reveal next worked step'}).click();
@@ -123,7 +124,7 @@ test('full independent work, step comparison and three checks allow self-rating 
   await revealAll(page,problem);
   await expect(page.locator('.ps-model-warning')).toHaveCount(0);
   await expect(page.locator('.ps-worked li')).toHaveCount(problem.steps.length);
-  await expect(page.locator('.ps-worked')).toContainText(problem.steps.at(-1));
+  await expectReadingContains(page.locator('.ps-worked'),problem.steps.at(-1));
   await expect(page.getByRole('button',{name:'Solved independently'})).toBeDisabled();
   await page.locator('input[data-ps-criterion="0"]').check();
   await expect(page.locator('.ps-review-next')).toContainText(problem.checks[1]);
@@ -136,7 +137,7 @@ test('full independent work, step comparison and three checks allow self-rating 
   await page.getByRole('button',{name:'Next problem'}).click();
   await expect(page.locator('.ps-meta')).toContainText('Problem 2 of 2');
   await expect(page.locator('.ps-pulse')).toContainText('self-rated independent');
-  await expect(page.locator('.ps-prompt')).toHaveText(
+  await expectReadingText(page.locator('.ps-prompt'),
     tasks('quadratics','level-2','form-choice')[1].prompt);
 });
 test('strategy-free higher-level problems begin without an automatic technique prompt',async({page})=>{
@@ -159,7 +160,7 @@ test('replacing an unfinished selection requires confirmation and can be cancell
   await expect(page.locator('.ps-confirm')).toContainText('Notebook pages are saved');
   await page.getByRole('button',{name:'Keep my work'}).click();
   await notebookContains(page,'My original plan will be kept if I cancel the warning.');
-  await expect(page.locator('.ps-prompt')).toHaveText(first.prompt);
+  await expectReadingText(page.locator('.ps-prompt'),first.prompt);
   await page.getByRole('button',{name:'Revisit weaker problems'}).click();
   await page.getByRole('button',{name:'Replace practice'}).click();
   await notebookContains(page,'My original plan will be kept if I cancel the warning.');
@@ -184,7 +185,7 @@ test('finish the page, revisit weak work and keep the book tab/page unchanged',a
   await expect(page.locator('.ps-review-list li')).toHaveCount(2);
   await page.getByRole('button',{name:'Revisit weaker problems'}).click();
   await expect(page.locator('.ps-meta')).toContainText('Problem 1 of 1');
-  await expect(page.locator('.ps-prompt')).toHaveText(list[1].prompt);
+  await expectReadingText(page.locator('.ps-prompt'),list[1].prompt);
   await expect(page.locator('.page-navigation__count')).toHaveText('Page 1 of 2');
   await expect(page).toHaveURL(/sampling\/problemSolving\/level-4$/);
   await page.getByRole('link',{name:'Next page'}).click();
@@ -204,7 +205,7 @@ test('all independently completed problems have a helpful empty focus state',asy
   await page.getByRole('button',{name:'Revisit weaker problems'}).click();
   await expect(page.locator('.ps-empty')).toContainText('no unfinished or supported problems');
   await page.getByRole('button',{name:'All problems'}).click();
-  await expect(page.locator('.ps-prompt')).toHaveText(list[0].prompt);
+  await expectReadingText(page.locator('.ps-prompt'),list[0].prompt);
 });
 test('draft strategy and working survive changing internal book pages',async({page})=>{
   await open(page,'quadratics','level-1');
