@@ -8,16 +8,17 @@ import {DRAW_WIDTH,DRAW_HEIGHT,MAX_NOTEBOOK_PAGES,MAX_NOTEBOOK_BLOCKS,
   from './working-notebook-model.js';
 
 const openScopes=new Set();
+const closedScopes=new Set();
 const controllers=new Map();
 const item=(value,label,selected)=>'<option value="'+value+'"'+
   (value===selected?' selected':'')+'>'+label+'</option>';
 const actionButton=(name,label,disabled=false)=>'<button type="button" data-book-action="'+name+
   '"'+(disabled?' disabled':'')+'>'+label+'</button>';
 
-export function workingNotebookMarkup({scope,label='Working notebook',guidance=''}={}){
+export function workingNotebookMarkup({scope,label='Working notebook',guidance='',initialOpen=false}={}){
   workingStorageKey(scope);
   return '<details class="working-notebook" data-working-notebook data-scope="'+e(scope)+
-    '" data-label="'+e(label)+'"'+(openScopes.has(scope)?' open':'')+'>'+
+    '" data-label="'+e(label)+'"'+(openScopes.has(scope)||(initialOpen&&!closedScopes.has(scope))?' open':'')+'>'+
     '<summary><span class="working-notebook__summary-title">Working notebook</span>'+
       '<span class="working-notebook__summary-note">Type maths, draw, or combine both · saved on this device</span>'+
     '</summary>'+(guidance?'<p class="working-notebook__guidance">'+e(guidance)+'</p>':'')+
@@ -384,9 +385,11 @@ export function mountWorkingNotebooks(root){
       if(!details.isConnected)return;
       if(details.open){
         openScopes.add(scope);
+        closedScopes.delete(scope);
         renderWorkspace(host,scope,storeFor(scope));
       }else{
         openScopes.delete(scope);
+        closedScopes.add(scope);
         if(document.body.classList.contains('working-book-expanded'))
           document.body.classList.remove('working-book-expanded');
       }
