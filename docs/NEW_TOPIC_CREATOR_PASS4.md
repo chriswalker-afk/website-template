@@ -10,7 +10,7 @@ Run the guided wizard in a terminal:
 
 Or provide the answers at once:
 
-    npm run new-topic -- --id gradient-and-midpoint --title "Gradient and Midpoint" --subject "Coordinate Geometry" --qualification "4MA1" --level "Foundation" --paper squared --modes understand,memorise,fluency,reasoning,problemSolving,modelling,games
+    npm run new-topic -- --id percentage-change --title "Percentage Change" --subject "Coordinate Geometry" --qualification "4MA1" --level "Foundation" --paper squared --modes understand,memorise,fluency,reasoning,problemSolving,modelling,games
 
 For a quick dry run, add --dry-run. The creator validates IDs to prevent path traversal, refuses existing topics, generates the required files and registers the pack. You do not edit the shared engines, routing, selector, mathematical renderers or tests to add the topic.
 
@@ -44,15 +44,15 @@ The normal CI check also prevents an incomplete topic marked ready from being me
 
 Inspect a draft:
 
-    npm run audit:topic -- --topic gradient-and-midpoint
+    npm run audit:topic -- --topic percentage-change
 
 Get a machine-readable report:
 
-    npm run audit:topic -- --topic gradient-and-midpoint --json
+    npm run audit:topic -- --topic percentage-change --json
 
 Check publication readiness:
 
-    npm run audit:topic -- --topic gradient-and-midpoint --strict
+    npm run audit:topic -- --topic percentage-change --strict
 
 Audit all registered packs:
 
@@ -72,22 +72,22 @@ The existing npm run check command now also audits every pack structurally. Draf
 
 ## Preview a topic as a standalone website
 
-    npm run preview:topic -- --topic gradient-and-midpoint
+    npm run preview:topic -- --topic percentage-change
 
-This exports the selected topic to dist/preview/gradient-and-midpoint/ and starts a local HTTP server at http://127.0.0.1:4173. It uses the same application as the hub but with a single-topic configuration, no topic selector, the topic title in the header, a DRAFT PREVIEW banner and noindex metadata. The preview is intentionally isolated from the published hub.
+This exports the selected topic to dist/preview/percentage-change/ and starts a local HTTP server at http://127.0.0.1:4173. It uses the same application as the hub but with a single-topic configuration, no topic selector, the topic title in the header, a DRAFT PREVIEW banner and noindex metadata. The preview is intentionally isolated from the published hub.
 
 Run the command again after changes to regenerate the snapshot. You may choose another port with --port 4180.
 
 To generate a draft without starting a server:
 
-    npm run build:site -- --topic gradient-and-midpoint --draft --out dist/gradient-preview
+    npm run build:site -- --topic percentage-change --draft --out dist/gradient-preview
 
 ## Build and publish
 
 Once the full audit passes and authoring.status='ready':
 
-    npm run audit:topic -- --topic gradient-and-midpoint --strict
-    npm run build:site -- --topic gradient-and-midpoint --out dist/gradient-and-midpoint
+    npm run audit:topic -- --topic percentage-change --strict
+    npm run build:site -- --topic percentage-change --out dist/percentage-change
 
 A production build refuses incomplete or draft topics and will never remove or overwrite source folders. Build outputs are restricted to subdirectories of dist/. The generated site has index.html, src/, styles/, favicon.svg, .nojekyll and a short site-build.json manifest. It uses existing hash routes for deep links and is ready for static hosting.
 
@@ -106,6 +106,10 @@ Note that the source-based build copies shared JavaScript and installed topic-pa
 5. Verify student navigation, keyboard access, narrow-screen presentation, worksheet output and a published build in a local browser.
 6. Run npm run check, npm run test:latex, and the browser suite before merging.
 
-## Next — Pass 5
+## Pass 5 — Gradient is complete
 
-Prove the workflow by creating a genuinely different topic, such as Gradient and Midpoint, entirely through the authoring workflow. Populate all desired modes, question generators and visuals, publish a standalone preview, and record every shared-code change needed. The ideal outcome is **zero** changes to src/app.js or the reusable core. Afterwards, assess the site's teacher experience and any remaining bottlenecks for future topic creation.
+Prove the workflow by creating a genuinely different topic, such as Percentage Change, entirely through the authoring workflow. Populate all desired modes, question generators and visuals, publish a standalone preview, and record every shared-code change needed. The ideal outcome is **zero** changes to src/app.js or the reusable core. Afterwards, assess the site's teacher experience and any remaining bottlenecks for future topic creation.
+
+## Proven reuse
+
+The first complete new topic is **Gradient (4MA1 Foundation)**. It demonstrates topic-owned curricula, question generators, visuals and standalone publication without changes to shared maths engines. See [Pass 5 — Gradient](PASS_5_GRADIENT.md).

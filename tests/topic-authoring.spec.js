@@ -21,10 +21,10 @@ test('a standalone preview only exposes the selected topic, with explicit draft 
   await expect(page).toHaveURL(/#\/quadratics\/home/);
   await expect(page.locator('.contents-cover')).toContainText('Quadratic Functions');
 });
-test('the hub still offers both published topics and has no draft warning',async({page})=>{
+test('the hub lists all three published topics and has no draft warning',async({page})=>{
   await page.goto('/#/sampling/home');
   await expect(page.locator('.authoring-banner')).toHaveCount(0);
-  await expect(page.locator('#topic-switcher option')).toHaveCount(2);
+  await expect(page.locator('#topic-switcher option')).toHaveCount(3);
   await page.locator('#topic-switcher').selectOption('quadratics');
   await expect(page).toHaveURL(/#\/quadratics\/home/);
 });

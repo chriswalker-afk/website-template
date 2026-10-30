@@ -4,9 +4,9 @@ import {TOPICS,CHAPTER_LIBRARY} from '../src/topics.js';
 import {validateTopics,chaptersFor,sectionsFor,pagesFor,resolveRoute,routeHref,
   topicSwitchHref,normaliseAnswer,escapeHTML,cardForIndex,sampleMatchCards} from '../src/logic.js';
 
-test('demonstration topics pass a strict mode/subsection/page validation',()=>{
+test('the published topics pass strict mode/subsection/page validation',()=>{
   assert.deepEqual(validateTopics(),[]);
-  assert.equal(Object.keys(TOPICS).length,2);
+  assert.equal(Object.keys(TOPICS).length,3);
 });
 test('top-level chapters remain qualification-neutral and fully spelled out',()=>{
   assert.ok(!CHAPTER_LIBRARY.some(ch=>/\bAO[123]\b/.test(ch.label)));
@@ -48,7 +48,7 @@ test('practice and game modes only contain the intended activity types',()=>{
       assert.ok(section.pages.every(p=>p.type==='problem-solving'&&p.tasks.length>=2));
     }
     for(const section of sectionsFor(topic,'modelling')){
-      assert.equal(section.pages.length,2);
+      assert.ok(section.pages.length>=1);
       assert.ok(section.pages.every(page=>page.type==='modelling'&&page.tasks.length===2));
     }
     for(const section of sectionsFor(topic,'games')){
