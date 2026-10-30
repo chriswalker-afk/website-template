@@ -1280,3 +1280,8 @@ body.motion-off, body.motion-off * { scroll-behavior: auto !important; animation
 .visual-diagram--probability-tree { max-width:720px; }
 .population-person--c { background:#9c83b8; }
 .population-person--d { background:#809bba; }
+
+/* Only a deliberately generated draft preview shows this publication warning. */
+.authoring-banner { background:#fff4d9; color:#6e5020; border-bottom:1px solid #e9d1a5;
+  padding:11px max(16px,calc((100vw - 1280px)/2)); text-align:center; font-size:13px;
+  font-weight:760; line-height:1.5; }

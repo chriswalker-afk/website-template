@@ -1,4 +1,5 @@
 import {CHAPTER_LIBRARY,TOPICS,DEFAULT_TOPIC} from './topics.js';
+import {SITE_CONFIG} from './site-config.js';
 import {buildFluencySet,checkFluencyAnswer,PRACTICE_LENGTHS} from './fluency-engine.js';
 import {emptyFluencyProgress,hydrateFluencyProgress,saveFluencyRound} from './fluency-progress.js';
 import {renderFluencyPage,roundScores} from './fluency-ui.js';
@@ -39,6 +40,18 @@ topicSwitch.innerHTML=installedTopics.map(topic=>
 topicSwitch.closest('.topic-switcher').hidden=installedTopics.length<2;
 const brandLink=document.querySelector('#brand-link');
 brandLink.href='#/'+encodeURIComponent(DEFAULT_TOPIC)+'/home';
+if(SITE_CONFIG.mode==='standalone'){
+  const wordmark=document.querySelector('.brand__wordmark strong');
+  if(wordmark)wordmark.textContent=TOPICS[DEFAULT_TOPIC]?.title||'THE MATHS NOTEBOOK';
+}
+if(SITE_CONFIG.previewDraft){
+  const note=document.createElement('div');
+  note.className='authoring-banner';
+  note.setAttribute('role','status');
+  note.textContent='DRAFT PREVIEW — Teaching material is incomplete. Do not share this build with students.';
+  document.querySelector('.sitebar')?.after(note);
+}
+
 const motionToggle=document.querySelector('#motion-toggle');
 const motionLabel=document.querySelector('#motion-label');
 const STORAGE='maths-notebook-pass1a:';
