@@ -210,13 +210,13 @@ test('draft strategy and working survive changing internal book pages',async({pa
   await open(page,'quadratics','level-1');
   await writeWorking(page,'Use factorised form because both roots are given.\nI begin with y = a(x − 2)(x − 5), then use the y-intercept to find a.');
   await page.getByRole('link',{name:'Next page'}).click();
-  await notebookContains(page,'Use the correct fraction.');
+  await notebookEmpty(page);
   await page.getByRole('link',{name:'Previous page'}).click();
   await notebookContains(page,'Use factorised form because both roots are given.');
   await notebookContains(page,'a(x − 2)(x − 5)');
   await expect(page.locator('.side-tab[aria-current="page"]')).toContainText('Level 1');
 });
-test('progress survives reload, does not retain working and is isolated across topics and pages',async({page})=>{
+test('progress and locally saved notebooks remain separate across topics and pages',async({page})=>{
   await open(page,'sampling','level-1');
   await writeWorking(page,'<script>window.unsafe=true</script> Use the correct fraction.\nWrite the complete calculations and use evidence from the question.');
   await expect(page.locator('.ps-workspace script')).toHaveCount(0);
@@ -226,7 +226,7 @@ test('progress survives reload, does not retain working and is isolated across t
   expect(saved).not.toContain('<script>');
   expect(saved).not.toContain('complete calculations');
   await page.reload();
-  await expect(page.locator('#ps-plan')).toHaveValue('');
+  await notebookContains(page,'Use the correct fraction.');
   await expect(page.locator('.ps-pulse')).toContainText('for retry');
   await open(page,'quadratics','level-1');
   await expect(page.locator('.ps-pulse')).toContainText('0');
