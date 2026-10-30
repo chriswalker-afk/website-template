@@ -42,7 +42,7 @@ A modern, tabbed reference-book aesthetic built into the reusable shell: **chapt
 - [Working notebook — Pass 2](docs/WORKING_NOTEBOOK_PASS2.md) — reusable typed and drawn working, storage, privacy, exports and limits.
 - [Working notebook — Pass 3](docs/WORKING_NOTEBOOK_PASS3.md)
 - [Mathematical toolkit — Pass 4](docs/MATH_TOOLKIT_PASS4.md) — editable coordinate graphs, tables, number lines, geometry and probability trees. — stable mode/task scopes, shared four-stage modelling working and student-confirmed self-review evidence.
-- [Fluency mode quality guide](docs/FLUENCY_MODE_GUIDE.md) — four levels, generated questions, numerical feedback, worked solutions and exact LaTeX export.
+- [Fluency mode quality guide](docs/FLUENCY_MODE_GUIDE.md) — Guided → Structured → Independent → Challenge, generated calculations, numerical checking, worked solutions and LaTeX export.
 - [Reasoning mode quality guide](docs/REASONING_MODE_GUIDE.md) — distinctive written prompts, model arguments, criteria-based self-review, targeted practice and local privacy.
 - [Problem Solving mode quality guide](docs/PROBLEM_SOLVING_MODE_GUIDE.md) — genuinely non-routine tasks, independent planning, graduated help, complete mathematical working and review evidence.
 - [Modelling mode quality guide](docs/MODELLING_MODE_GUIDE.md) — authentic contexts, staged formulation, mathematical predictions, quantitative evaluation and private self-review.
@@ -55,7 +55,7 @@ A modern, tabbed reference-book aesthetic built into the reusable shell: **chapt
 - **Printable resources:** the optional, topic-aware Worksheet Generator prototype exports editable LaTeX student worksheets and matching worked solutions from vetted, reproducible example question families.
 - **Modular:** no empty or disabled sections for a topic that does not need them; no right-hand tab for each page. Each subsection can contain one or several pages.
 - **Mathematically careful:** distinguish recall from exposure, support symbols and graphs, require reviewed answers and worked solutions. Understand uses real mathematical/selection models rather than illustrations that merely resemble mathematical diagrams.
-- **Generated Fluency:** question families provide six/ten distinct questions per round, strict numerical checking, hints, fully worked methods, review of weak attempts, local aggregate progress and exact printable LaTeX sets.
+- **Generated Fluency:** four levels matching Problem Solving (Guided → Structured → Independent → Challenge), with progressively faded method scaffolds; question families produce six/ten distinct questions per round, strict numerical checking, optional hints, fully worked methods, review of weak attempts, local aggregate progress and printable LaTeX sets.
 - **Written Reasoning:** Explain, Justify, Critique and Generalise have dedicated authored question banks, optional hints, three-step model arguments, specific self-check criteria and no misleading automatic free-text scores.
 - **Problem Solving:** Four levels of original two-stage or multi-condition questions. Plan → work → optional strategy/hints → step-by-step solution → specific self-checks; no fake automatic marks.
 - **Modelling:** Four-stage Formulate → Calculate → Interpret → Evaluate investigations, with mathematical sensitivity or validation checks, optional guidance and honest student self-review.

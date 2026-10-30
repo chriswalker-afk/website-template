@@ -1,0 +1,75 @@
+/* Fluent mathematical practice: four-stage Guided -> Challenge progression.
+   Scaffolds are short method cues, not worked examples or automatic marks. */
+.fluency-level-intro {
+  display: grid;
+  grid-template-columns: minmax(125px,auto) 1fr;
+  align-items: center;
+  gap: 6px 16px;
+  padding: 13px 16px;
+  border: 1px solid #cbdacb;
+  border-left: 4px solid #638a74;
+  background: #f2f7ef;
+  border-radius: 9px;
+  color: #345747;
+}
+.fluency-level-intro strong {
+  font: 700 15px/1.4 Georgia,serif;
+  color: #2c5644;
+}
+.fluency-level-intro p {
+  font-size: 12px;
+  line-height: 1.55;
+  margin: 0;
+}
+.fluency-level-intro small {
+  color: #637669;
+  font-size: 11px;
+  line-height: 1.45;
+  grid-column: 1 / -1;
+}
+.fluency-scaffold {
+  margin: 13px 0 20px;
+  padding: 12px 15px;
+  background: #f8f8f0;
+  border: 1px solid #d9dfcf;
+  border-left: 3px solid #829c79;
+  border-radius: 8px;
+  min-width: 0;
+}
+.fluency-scaffold strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .01em;
+  color: #365d46;
+  margin-bottom: 5px;
+}
+.fluency-scaffold :is(p,li) {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #445d4b;
+}
+.fluency-scaffold ol {
+  display: grid;
+  gap: 5px;
+  padding: 0 0 0 20px;
+  margin: 0;
+}
+.fluency-scaffold--structured {
+  background: #f6f8f3;
+  border-left-color: #819b99;
+}
+@media (max-width: 640px) {
+  .fluency-level-intro {
+    display: block;
+    padding: 12px;
+  }
+  .fluency-level-intro p { margin-top: 5px; }
+  .fluency-level-intro small { display: block; margin-top: 7px; }
+  .fluency-scaffold { padding: 11px; margin-bottom: 14px; }
+}
+@media print {
+  .fluency-level-intro { break-inside: avoid; }
+  .fluency-scaffold { break-inside: avoid; }
+}

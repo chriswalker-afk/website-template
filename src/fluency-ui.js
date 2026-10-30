@@ -2,6 +2,7 @@
 // and all student-originated strings are escaped before inserting in HTML.
 import {escapeHTML as e} from './logic.js';
 import {answerText} from './fluency-engine.js';
+import {fluencyLevel,fluencyQuestionScaffold,showFluencySkill} from './fluency-levels.js';
 import {mathInputMarkup} from './math-input.js';
 import {workingNotebookMarkup} from './working-notebook.js';
 const escape=v=>e(String(v??''));
@@ -55,6 +56,26 @@ function worked(q,open){
     '<ol class="fluency-solution__steps">'+q.steps.map(step=>'<li>'+e(step)+'</li>').join('')+'</ol>'+
     '</div>':'';
 }
+function scaffoldMarkup(levelId,q){
+  const scaffold=fluencyQuestionScaffold(levelId,q.family);
+  if(!scaffold)return '';
+  const guidance=scaffold.steps.length===1?
+    '<p>'+e(scaffold.steps[0])+'</p>':
+    '<ol>'+scaffold.steps.map(step=>'<li>'+e(step)+'</li>').join('')+'</ol>';
+  return '<aside class="fluency-scaffold fluency-scaffold--'+
+    (levelId==='level-1'?'guided':'structured')+
+    '" aria-label="'+e(scaffold.label)+'">'+
+    '<strong>'+e(scaffold.label)+'</strong>'+guidance+'</aside>';
+}
+function levelIntroduction(levelId){
+  const level=fluencyLevel(levelId);
+  if(!level)return '';
+  return '<div class="fluency-level-intro" aria-label="Fluency level approach">'+
+    '<strong>'+e(level.name)+' practice</strong>'+
+    '<p>'+e(level.overview)+'</p>'+
+    '<small>Hints are optional and count as supported practice. First-try accuracy is tracked within each level.</small>'+
+    '</div>';
+}
 function activeQuestion(session,scope){
   const q=session.set.questions[session.index],a=session.answers[q.id]||{};
   const checked=Boolean(a.correct||a.revealed);
@@ -62,8 +83,11 @@ function activeQuestion(session,scope){
   return '<section class="fluency-question" aria-label="Fluency question '+(session.index+1)+'">'+
     '<div class="fluency-question__meta"><span>Question '+(session.index+1)+' of '+session.set.questions.length+
       '</span><span>'+q.marks+' marks</span></div>'+
-    '<div class="fluency-question__skill">'+e(q.skill)+'</div>'+
+    '<div class="fluency-question__skill">'+
+      (showFluencySkill(session.set.levelId,checked)?e(q.skill):
+        'Choose the method')+'</div>'+
     '<p class="fluency-question__prompt">'+e(q.prompt)+'</p>'+
+    scaffoldMarkup(session.set.levelId,q)+
     // The notebook replaces the former plain-text working textarea.
 
     workingNotebookMarkup({scope,label:'Fluency mathematical working'})+
@@ -122,6 +146,7 @@ export function renderFluencyPage(page,topic,route,session,progress){
   if(!session?.set)return '<p>Fluency practice is not available for this page.</p>';
   const count=session.configCount||6;
   return '<div class="fluency-workspace">'+
+    levelIntroduction(route.sectionId)+
     completedStats(progress,route.sectionId)+
     '<div class="fluency-settings"><label for="fluency-count">Questions per set</label>'+
       '<select id="fluency-count"><option value="6"'+(count===6?' selected':'')+'>6 questions</option>'+
