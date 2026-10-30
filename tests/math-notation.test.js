@@ -91,3 +91,44 @@ test('sample authored content across the other modes is safely typeset',()=>{
     }
   }
 });
+
+
+test('parenthesised powers attach to the entire bracketed expression',()=>{
+  const sample='State the turning point (h, k) of y = 2(x − 1)² + 2.';
+  const html=renderMathematicalText(sample);
+  assert.equal((html.match(/<math /g)||[]).length,2,html);
+  assert.match(html,/aria-label="\((?:h, k)\)"/);
+  assert.match(html,/aria-label="y = 2\(x − 1\)² \+ 2"/);
+  // The base of the exponent is a group containing BOTH brackets and its
+  // contents, not merely a closing parenthesis (the reported visual bug).
+  assert.match(html,/<msup><mrow><mo fence="true" stretchy="false">\(<\/mo>[\s\S]*?<mo fence="true" stretchy="false">\)<\/mo><\/mrow><mn>2<\/mn><\/msup>/);
+  assert.doesNotMatch(html,/<msup><mo[^>]*>\)<\/mo>/);
+  assert.match(html,/aria-label="\((?:h, k)\)"/);
+});
+test('nested, negative and explicit LaTeX bracketed powers remain grouped',()=>{
+  for(const sample of [
+    '(-3)^2',
+    '2(x-1)^2+4',
+    '3((x+2)^2-5)^2',
+    'f(-4)^2',
+    '2(x+1)³'
+  ]){
+    const html=renderMathML(sample);
+    assert.match(html,/<msup><mrow><mo fence="true" stretchy="false">\(<\/mo>/,sample);
+    assert.doesNotMatch(html,/<msup><mo[^>]*>\)<\/mo>/,sample);
+  }
+  const sample='Rewrite (x − 1)² as \\((x-1)^2\\).';
+  const html=renderMathematicalText(sample);
+  assert.match(html,/<msup><mrow><mo fence="true" stretchy="false">\(<\/mo>/);
+  assert.match(renderMathML('√(x²+1)'),/<msqrt>/);
+  assert.match(renderMathML('2[x+1]^2'),/<msup><mrow><mo fence="true" stretchy="false">\[<\/mo>/);
+});
+test('standalone symbolic coordinates and powers are maths without absorbing prose',()=>{
+  const html=renderMathematicalText(
+    'The turning point (h, k) is (−1, 2). Complete (x − 3)² before answering.');
+  assert.equal((html.match(/<math /g)||[]).length,3,html);
+  assert.ok(html.includes('turning point '));
+  assert.ok(html.includes(' before answering.'));
+  assert.match(html, /aria-label="\(\s*h, k\)"/);
+  assert.match(html, /<msup><mrow>/);
+});
