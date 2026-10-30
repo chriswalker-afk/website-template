@@ -136,7 +136,9 @@ export function renderFluencyPage(page,topic,route,session,progress){
       '<button type="button" class="quiet-button" data-action="fluency-cancel-new">Keep practising</button>'+
       '<button type="button" class="action-button" data-action="fluency-confirm-new">Replace set</button></div>':'')+
     roundProgressMarkup(session)+
-    (session.complete?recap(session):activeQuestion(session,
+    (session.complete?recap(session)+workingNotebookMarkup({
+      scope:[topic.id,'fluency',route.sectionId,route.pageId].join(':'),
+      label:'Fluency mathematical working'}):activeQuestion(session,
       [topic.id,'fluency',route.sectionId,route.pageId].join(':')))+
     '<p class="fluency-privacy">Answers are checked numerically, with equivalent root orders and suitable fractions accepted. '+
     'Completed-round summaries and notebook pages are saved separately on this device; the quick notes box is session-only.</p>'+
