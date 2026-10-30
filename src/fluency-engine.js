@@ -1,5 +1,5 @@
 import {FLUENCY_LEVELS} from './fluency-levels.js';
-import {int} from './topic-packs/builders/fluency-question.js';
+import {int,fmt} from './topic-packs/builders/fluency-question.js';
 import {fluencyFamiliesFor} from './question-bank.js';
 import {TOPIC_PACKS} from './topic-packs/registry.js';
 // Reusable, deterministic Fluency question generator and strict response verifier.

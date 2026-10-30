@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {TOPICS} from '../src/topics.js';
+import {QUESTION_BANKS} from '../src/topic-packs/registry.js';
 import {questionBankFor,fluencyFamiliesFor,worksheetFamiliesFor,
   worksheetSkillOptionsFor,validateQuestionBank} from '../src/question-bank.js';
 import {buildFluencySet,rngFromSeed,makeFluencyQuestion,checkFluencyAnswer,
@@ -11,7 +12,8 @@ import {fluencyQuestionScaffold} from '../src/fluency-levels.js';
 for(const id of ['sampling','quadratics']){
   test(id+' question bank registers checked interactive and printable families',()=>{
     const topic=TOPICS[id],bank=questionBankFor(id);
-    assert.strictEqual(bank,topic.questionBank);
+    assert.strictEqual(bank,QUESTION_BANKS[id]);
+    assert.doesNotThrow(()=>structuredClone(topic));
     assert.equal(bank.schemaVersion,1);
     assert.deepEqual(validateQuestionBank(topic),[]);
     assert.ok(Object.keys(fluencyFamiliesFor(id)).length>=10);

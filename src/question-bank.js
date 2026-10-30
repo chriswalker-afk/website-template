@@ -1,10 +1,10 @@
 // Shared, read-only topic question registry for interactive practice and printable work.
 // All authored mathematical families belong to topic packs; no topic switch statements here.
-import {TOPICS} from './topics.js';
+import {TOPICS,QUESTION_BANKS} from './topic-packs/registry.js';
 
 const EMPTY=Object.freeze({fluency:Object.freeze({}),worksheet:Object.freeze([]),scaffolds:Object.freeze({})});
 const slug=value=>typeof value==='string'&&/^[a-z][a-z0-9-]*$/.test(value);
-export function questionBankFor(topicId){return TOPICS[topicId]?.questionBank||EMPTY;}
+export function questionBankFor(topicId){return QUESTION_BANKS[topicId]||EMPTY;}
 export function fluencyFamiliesFor(topicId){return questionBankFor(topicId).fluency||EMPTY.fluency;}
 export function worksheetFamiliesFor(topicId){return questionBankFor(topicId).worksheet||EMPTY.worksheet;}
 export function fluencyScaffoldsFor(topicId){return questionBankFor(topicId).scaffolds||EMPTY.scaffolds;}
@@ -18,7 +18,7 @@ export function worksheetSkillOptionsFor(topicId){
 // This validator also accepts an unregistered pack, so a new topic can be checked
 // independently before adding it to the app registry.
 export function validateQuestionBank(topic){
-  const errors=[],bank=topic?.questionBank||EMPTY;
+  const errors=[],bank=topic?.questionBank||QUESTION_BANKS[topic?.id]||EMPTY;
   const fluency=bank.fluency||{},worksheet=bank.worksheet||[];
   if(topic?.questionBank&&bank.schemaVersion!==1)errors.push('unsupported question-bank schema version');
   if(!fluency||typeof fluency!=='object'||Array.isArray(fluency))

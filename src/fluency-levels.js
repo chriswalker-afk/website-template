@@ -1,4 +1,5 @@
 import {TOPICS,TOPIC_PACKS} from './topics.js';
+import {fluencyFamiliesFor,fluencyScaffoldsFor} from './question-bank.js';
 // Reusable four-level practice contract, aligned with Problem Solving.
 // Fluency focuses on accuracy and method selection rather than extended
 // reasoning. Cues contain no generated answers or worked numerical steps.
@@ -34,9 +35,10 @@ export function fluencyQuestionScaffold(levelId,familyId,topicId){
   // A topic ID avoids collisions when two topic packs use the same family name.
   // Two-argument calls remain supported for existing integrations and tests.
   const topic=topicId?TOPICS[topicId]:TOPIC_PACKS.find(t=>
-    Object.prototype.hasOwnProperty.call(t.questionBank?.fluency||{},familyId));
-  const guided=topic?.questionBank?.scaffolds?.guided||{};
-  const structured=topic?.questionBank?.scaffolds?.structured||{};
+    Object.prototype.hasOwnProperty.call(fluencyFamiliesFor(t.id),familyId));
+  const scaffolds=fluencyScaffoldsFor(topic?.id);
+  const guided=scaffolds.guided||{};
+  const structured=scaffolds.structured||{};
   if(levelId==='level-1')return {
     label:level.cueLabel,
     steps:[guided[familyId]||
