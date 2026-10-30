@@ -127,7 +127,7 @@ test('full independent work, step comparison and three checks allow self-rating 
   await expectReadingContains(page.locator('.ps-worked'),problem.steps.at(-1));
   await expect(page.getByRole('button',{name:'Solved independently'})).toBeDisabled();
   await page.locator('input[data-ps-criterion="0"]').check();
-  await expect(page.locator('.ps-review-next')).toContainText(problem.checks[1]);
+  await expectReadingContains(page.locator('.ps-review-next'),problem.checks[1]);
   await page.locator('input[data-ps-criterion="1"]').check();
   await page.locator('input[data-ps-criterion="2"]').check();
   await expect(page.getByRole('button',{name:'Solved independently'})).toBeEnabled();
