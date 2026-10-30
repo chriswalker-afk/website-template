@@ -1,4 +1,5 @@
 import {samplingExperiment,SAMPLING_METHODS,POPULATION_SIZE,STRATUM_A,STRATUM_B} from './understand-engine.js';
+import {modeWorkingNotebook} from './working-notebook-integration.js';
 
 const e=value=>String(value??'').replace(/[&<>"']/g,ch=>({
   '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
@@ -129,6 +130,7 @@ export function renderWorkshop(page,route,steppers,workshops){
       '<textarea id="own-response" data-understand-response="'+e(key)+'" rows="4" '+
         'placeholder="Write your method or key steps here. This answer is not automatically marked.">'+
         e(own.response||'')+'</textarea>'+
+      modeWorkingNotebook(route.topicId,'understand',route.sectionId,route.pageId,'my-turn')+
       '<div class="workshop-stage__actions">'+
         '<button type="button" class="quiet-button" data-action="understand-own-hint" data-key="'+e(key)+
           '" aria-expanded="'+Boolean(own.hint)+'">'+(own.hint?'Hide hint':'Show hint')+'</button>'+
@@ -138,7 +140,7 @@ export function renderWorkshop(page,route,steppers,workshops){
       (own.hint?'<p class="practice-question__hint">'+e(tryIt.hint)+'</p>':'')+
       (own.solution?'<div class="workshop-stage__model"><ol>'+tryIt.steps.map(step=>
         '<li>'+e(step)+'</li>').join('')+'</ol>'+
-        '<p>Compare your working with each step; checking the method matters as much as the final answer.</p>'+
+        '<p>Compare your working with each step; checking the method matters as much as the final answer. Your notebook stays on this device even if you navigate away.</p>'+
         '<div class="workshop-stage__rating" role="group" aria-label="Self-assess your attempt">'+
           '<button type="button" data-action="understand-self-rate" data-key="'+e(key)+
             '" data-rating="ready" aria-pressed="'+(own.rating==='ready')+'">I can do this</button>'+
