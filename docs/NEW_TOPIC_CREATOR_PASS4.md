@@ -38,6 +38,8 @@ The --modes argument is a **planning list**, not permission to switch unfinished
 
 When all requested content has been reviewed, change authoring.status to 'ready' in manifest.js. A ready topic becomes visible in the public hub once committed. Do not mark it ready until the strict audit passes.
 
+The normal CI check also prevents an incomplete topic marked ready from being merged. Draft packs are still allowed in the repository while work continues.
+
 ## Content and mathematical notation checks
 
 Inspect a draft:

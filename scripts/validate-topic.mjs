@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Review one or all topic packs. Draft warnings do not fail structural CI.
-import {auditTopic,topicIds,reportText} from './lib/topic-audit.mjs';
+import {auditTopic,topicIds,reportText,failsPublicationGate} from './lib/topic-audit.mjs';
 function flags(argv){
   const out={};
   for(let i=0;i<argv.length;i++){
@@ -20,7 +20,7 @@ try{
   if(args.help||!args.topic&&!args.all){
     console.log('Usage: npm run audit:topic -- --topic <id> [--strict] [--json]\n'+
       '       npm run audit:topic -- --all [--structural]\n'+
-      'For CI, --all --structural fails only if a topic has invalid code/content schema.\n'+
+      'For CI, --all --structural allows drafts but blocks incomplete ready topics.\n'+
       'Use --strict to enforce publication readiness, including pedagogy and notation.');
     process.exitCode=args.help?0:2;
   }else{
@@ -34,7 +34,7 @@ try{
     }
     if(args.json)console.log(JSON.stringify(results.length===1?results[0]:results,null,2));
     else for(const result of results)console.log(reportText(result)+'\n');
-    if(results.some(r=>r.structuralErrors.length||(args.strict&&!r.publicationReady)))
+    if(results.some(r=>failsPublicationGate(r,{strict:args.strict})))
       process.exitCode=1;
   }
 }catch(error){console.error('Topic audit: '+error.message);process.exitCode=1;}

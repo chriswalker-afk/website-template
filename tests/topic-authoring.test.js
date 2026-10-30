@@ -7,7 +7,7 @@ import {pathToFileURL} from 'node:url';
 import {randomUUID} from 'node:crypto';
 import {validateOptions,requestedModes,templateFiles,registerTopic,scaffoldTopic}
   from '../scripts/lib/topic-scaffold.mjs';
-import {auditTopic,auditTopicRecord,topicIds} from '../scripts/lib/topic-audit.mjs';
+import {auditTopic,auditTopicRecord,topicIds,failsPublicationGate} from '../scripts/lib/topic-audit.mjs';
 import {buildSite,PROJECT_ROOT} from '../scripts/build-site.mjs';
 import {TOPICS} from '../src/topics.js';
 import {QUESTION_BANKS,VISUAL_LIBRARIES} from '../src/topic-packs/registry.js';
@@ -163,4 +163,14 @@ test('static build isolates one topic, labels drafts and never writes into sourc
     await assert.rejects(buildSite({topicId:'missing',
       outputDirectory:join(PROJECT_ROOT,'dist','bad'),draft:true}),/Cannot find module|ENOENT/);
   }finally{await rm(path,{recursive:true,force:true});}
+});
+
+test('ready topics with quality blockers cannot pass CI; valid drafts remain editable',()=>{
+  const incomplete={status:'ready',structuralErrors:[],blockers:['Missing worked example'],publicationReady:false};
+  assert.equal(failsPublicationGate(incomplete),true);
+  assert.equal(failsPublicationGate({...incomplete,status:'draft'}),false);
+  assert.equal(failsPublicationGate({...incomplete,status:'draft'},{strict:true}),true);
+  assert.equal(failsPublicationGate({...incomplete,status:'ready',publicationReady:true}),false);
+  assert.equal(failsPublicationGate({...incomplete,status:'draft',
+    structuralErrors:['Unknown page type']}),true);
 });

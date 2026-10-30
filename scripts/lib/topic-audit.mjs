@@ -175,3 +175,10 @@ export function reportText(report){
     for(const message of items)lines.push('  '+heading+': '+message);
   return lines.filter(Boolean).join('\n');
 }
+
+// Draft packs are safe to commit, but a published-ready pack must pass the same
+// readiness gate as a standalone production build, including during normal CI.
+export function failsPublicationGate(report,{strict=false}={}){
+  return Boolean(report.structuralErrors?.length||
+    (strict||report.status==='ready')&&!report.publicationReady);
+}
