@@ -76,3 +76,41 @@ test('notation remains printable, accessible and inside a 320px page',async({pag
     expect(scroll.page,route).toBeLessThanOrEqual(scroll.width+1);
   }
 });
+
+
+test('turning-point powers remain visually attached to their full brackets',async({page})=>{
+  await page.route('https://cdn.jsdelivr.net/**',route=>route.abort());
+  await page.goto('/#/quadratics/fluency/level-1');
+  const prompt=page.locator('.fluency-question__prompt');
+  const example='State the turning point (h, k) of y = 2(x − 1)² + 2.';
+  // Use the exact reported question so random question seeds cannot mask it.
+  await prompt.evaluate(async(element,source)=>{
+    const {renderMathematicalText}=await import('/src/math-notation.js');
+    element.innerHTML=renderMathematicalText(source);
+  },example);
+  await expect(prompt.locator('math')).toHaveCount(2);
+  await expect(prompt.locator('math').first()).toHaveAttribute('aria-label','(h, k)');
+  await expect(prompt.locator('math').last()).toHaveAttribute('aria-label','y = 2(x − 1)² + 2');
+  const base=prompt.locator('math').last().locator('msup > mrow');
+  await expect(base).toBeVisible();
+  await expect(base.locator('mo[fence=true]')).toHaveCount(2);
+  const position=await prompt.locator('math msup').evaluate(element=>{
+    const [group,exponent]=Array.from(element.children);
+    return {
+      gap:exponent.getBoundingClientRect().left-group.getBoundingClientRect().right,
+      groupWidth:group.getBoundingClientRect().width,
+      exponentAboveBase:exponent.getBoundingClientRect().top<group.getBoundingClientRect().top+6
+    };
+  });
+  expect(position.groupWidth).toBeGreaterThan(25);
+  expect(position.gap).toBeLessThan(12);
+  expect(position.exponentAboveBase).toBe(true);
+  // Check the corresponding scaffold expression uses the same grouped base.
+  const cue=page.locator('.fluency-scaffold p');
+  await cue.evaluate(async(element)=>{
+    const {renderMathematicalText}=await import('/src/math-notation.js');
+    element.innerHTML=renderMathematicalText(
+      'Compare with y = a(x − h)² + k. What are h and k?');
+  });
+  await expect(cue.locator('math msup > mrow')).toBeVisible();
+});
