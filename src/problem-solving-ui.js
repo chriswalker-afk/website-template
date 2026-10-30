@@ -29,7 +29,7 @@ export function renderProblemSolvingPage(page,topic,route,session,progress){
       (session.selection==='focus')+'">Revisit weaker problems</button></div>';
   return '<div class="ps-workspace">'+counts+(session.complete?'':select)+
     (session.confirmSwitch?'<div class="ps-confirm" role="alert">'+
-      '<p>Replace your unfinished practice on this page? Unsaved plans and working will be lost.</p>'+
+      '<p>Change your practice selection? Notebook pages are saved; self-review confirmations for the current attempt will reset.</p>'+
       '<button type="button" class="quiet-button" data-action="ps-cancel">Keep my work</button>'+
       '<button type="button" class="action-button" data-action="ps-confirm">Replace practice</button>'+
       '</div>':'')+
@@ -53,14 +53,7 @@ function renderCurrent(topic,route,session,level){
       '<span>Level '+level+'</span></div>'+
     '<p class="ps-prompt">'+e(problem.prompt)+'</p>'+
     (level<=2?'<p class="ps-first-decision"><strong>First decision:</strong> '+e(problem.plan)+'</p>':'')+
-    '<div class="ps-writing-grid">'+
-      '<div><label for="ps-plan">My strategy</label>'+
-      '<textarea id="ps-plan" rows="3" maxlength="900" '+(locked?'disabled':'')+
-        ' placeholder="What is known? Which approach might connect the facts?">'+e(entry.plan)+'</textarea></div>'+
-      '<div><label for="ps-work">My working and result</label>'+
-      '<textarea id="ps-work" rows="6" maxlength="3500" '+(locked?'disabled':'')+
-        ' placeholder="Work through the mathematics and check your answer.">'+e(entry.working)+'</textarea></div>'+
-    '</div>'+
+    '<p class="ps-working-intro"><strong>My strategy and working</strong> — plan, calculate and check your answer in the notebook.</p>'+
     modeWorkingNotebook(topic.id,'problemSolving',route.sectionId,route.pageId,problem.id)+
     '<div class="ps-notebook-confirm" role="group" aria-label="Notebook evidence for self-review">'+
       '<p>Using the notebook instead of these text boxes? Confirm which parts you completed there.</p>'+
