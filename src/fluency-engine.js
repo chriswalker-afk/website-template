@@ -1,37 +1,11 @@
 import {FLUENCY_LEVELS} from './fluency-levels.js';
+import {TOPIC_PACKS} from './topic-packs/registry.js';
 // Reusable, deterministic Fluency question generator and strict response verifier.
 // No DOM, network, eval, AI grading or external dependencies. Questions carry their
 // own numerical answer contract and fully authored, parameter-derived working.
 export const FLUENCY_VERSION=1;
 export const PRACTICE_LENGTHS=Object.freeze([6,10]);
-const level=(n,label,description,pages)=>({
-  id:'level-'+n,label:'Level '+n+': '+label,description,
-  pages:pages.map(([id,focus,families])=>({id,type:'fluency',focus,families}))
-});
-export const FLUENCY_CHAPTERS=Object.freeze({
-  sampling:[
-    level(1,'Guided','Use a visible starting cue to practise sample percentages, sample sizes and systematic intervals accurately.',[
-      ['counts','Practise calculating sample sizes and percentages.',['sample-percent','sample-count']],
-      ['intervals','Practise systematic sampling intervals and sample sizes.',['interval','sample-size']]]),
-    level(2,'Structured','Follow a short method checklist for proportional allocations and systematic selections.',[
-      ['allocation','Practise two-stratum allocations and listing systematic selections.',['stratified-two','positions','interval']]]),
-    level(3,'Independent','Choose independently between familiar sampling calculations in a mixed set.',[
-      ['mixed','Combine three-stratum allocations, positions and percentages.',['stratified-three','last-position','sample-percent','stratified-two']]]),
-    level(4,'Challenge','Challenge your fluency with reverse and combined sampling calculations.',[
-      ['advanced','Find missing group sizes and combine proportional and systematic calculations.',['reverse-population','reverse-sample','within-stratum-interval','stratified-three']]])
-  ],
-  quadratics:[
-    level(1,'Guided','Use a visible starting cue to practise substitution, turning points and factorised roots.',[
-      ['values','Calculate function values and read completed-square turning points.',['evaluate','vertex']],
-      ['roots','Solve factorised equations and find y-intercepts.',['factor-roots','intercept']]]),
-    level(2,'Structured','Follow a short method checklist while practising factorising, discriminants and completing the square.',[
-      ['factorise','Solve monic quadratic equations, calculate discriminants and find turning points.',['monic-roots','discriminant','monic-vertex']]]),
-    level(3,'Independent','Select the method independently for non-monic factorising, discriminants and turning points.',[
-      ['mixed','Use more than one familiar quadratic technique in a mixed sequence.',['scaled-roots','expanded-vertex','discriminant','monic-roots']]]),
-    level(4,'Challenge','Challenge your accuracy with more demanding quadratic calculations and reverse problems.',[
-      ['advanced','Apply the quadratic formula, recover a coefficient and find extreme values.',['formula-roots','unknown-coefficient','extreme-value','scaled-roots']]])
-  ]
-});
+export const FLUENCY_CHAPTERS=Object.freeze(Object.fromEntries(TOPIC_PACKS.filter(topic=>topic.chapters?.fluency?.length).map(topic=>[topic.id,topic.chapters.fluency])));
 
 const int=(rng,min,max)=>min+Math.floor(rng()*(max-min+1));
 const pick=(rng,items)=>items[int(rng,0,items.length-1)];
