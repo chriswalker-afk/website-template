@@ -13,7 +13,7 @@ async function enterAnswer(page,text){
 }
 test('Fluency preserves the book hierarchy, distinct pages and no extra teaching mode',async({page})=>{
   await page.goto('/#/quadratics/fluency/level-1');
-  await expect(page.getByRole('heading',{name:'Level 1: Foundations'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Level 1: Guided'})).toBeVisible();
   await expect(page.locator('.side-tab')).toHaveCount(4);
   await expect(page.locator('.page-navigation__count')).toHaveText('Page 1 of 2');
   await expect(page.locator('.fluency-question')).toBeVisible();
@@ -28,7 +28,7 @@ test('Fluency preserves the book hierarchy, distinct pages and no extra teaching
   await expect(page.locator('.fluency-question__skill')).toBeVisible();
   await page.locator('.side-tabs a[href$="level-4"]').click();
   await expect(page.locator('.page-navigation')).toHaveCount(0);
-  await expect(page.getByRole('heading',{name:'Level 4: Advanced'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Level 4: Challenge'})).toBeVisible();
   await expect(page.locator('.fluency-question')).toBeVisible();
 });
 test('generated questions have repeatable answer checking and full worked solutions',async({page})=>{
