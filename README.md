@@ -10,6 +10,21 @@ The original Sampling and Quadratics content is now organised as independent `sr
 
 See **[Pass 1 — Topic pack authoring guide](docs/TOPIC_PACKS_PASS1.md)**, **[Pass 2 — Shared question banks and skills](docs/QUESTION_BANK_PASS2.md)** and **[Pass 3 — Reusable mathematical visuals](docs/VISUAL_PACK_PASS3.md)** for the folder contract, constraints and next passes. Fluency generators, worksheet families and per-family method cues now live inside each topic pack; the shared engines use a versioned question-bank contract. New Fluency topics must provide reviewed answer generators and worked solutions.
 
+## Start a new maths topic
+
+**Pass 4 — New Topic Creator** now provides a one-command topic pack, an authoring-readiness audit and a draft-safe standalone preview. In a terminal, run:
+
+    npm run new-topic -- --id gradient-and-midpoint --title "Gradient and Midpoint" --qualification 4MA1 --level Foundation --modes understand,memorise,fluency
+
+Then use:
+
+    npm run audit:topic -- --topic gradient-and-midpoint
+    npm run preview:topic -- --topic gradient-and-midpoint
+
+Drafts remain hidden from the published hub. Only fully reviewed, ready topics can be exported with npm run build:site. The standalone build retains the notebook but hides the topic switcher.
+
+See **[Pass 4 — New Topic Creator and publishing guide](docs/NEW_TOPIC_CREATOR_PASS4.md)** for modes, teaching-content requirements, notation checks, preview and GitHub Pages export. The next step, Pass 5, is a complete new topic built without changing the shared application.
+
 ## Try the book prototype
 
 The static application starts at **index.html** and includes two contrasting sample books:

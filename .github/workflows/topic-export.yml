@@ -1,0 +1,33 @@
+name: Export standalone topic website
+# Export a publishable website artifact without replacing the example hub.
+on:
+  workflow_dispatch:
+    inputs:
+      topic_id:
+        description: 'Registered, reviewed and ready topic ID'
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  export:
+    name: Validate and export topic
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check readiness and build independent website
+        env:
+          TOPIC_ID: ${{ inputs.topic_id }}
+        run: |
+          npm run audit:topic -- --topic "$TOPIC_ID" --strict
+          npm run build:site -- --topic "$TOPIC_ID" --out dist/export
+      - uses: actions/upload-artifact@v4
+        with:
+          name: standalone-maths-topic
+          path: dist/export/
+          if-no-files-found: error
+          retention-days: 14
