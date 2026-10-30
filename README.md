@@ -12,7 +12,7 @@ See **[Pass 1 — Topic pack authoring guide](docs/TOPIC_PACKS_PASS1.md)**, **[P
 
 ## First complete reuse example: Gradient (4MA1 Foundation)
 
-The **Gradient** topic now includes 15 Understand pages, 15 vocabulary flashcards, four Fluency levels and 16 question families, 16 Reasoning tasks, 16 Problem Solving tasks, eight Modelling investigations, interactive straight-line plots and four printable worksheet skills with worked solutions. The content concentrates on gradient from a graph, signed rise/run, straight-line equations and rates of change. Coordinate-pair gradient calculation is labelled as optional stretch.
+The **Gradient** topic now includes 15 Understand pages, 15 vocabulary flashcards, four Fluency levels and 16 question families, 16 Reasoning tasks, 16 Problem Solving tasks, 16 Modelling investigations, interactive straight-line plots and four printable worksheet skills with worked solutions. The content concentrates on gradient from a graph, signed rise/run, straight-line equations and rates of change. Coordinate-pair gradient calculation is labelled as optional stretch.
 
 Open [the Gradient topic](https://chriswalker-afk.github.io/website-template/#/gradient/home) inside the template hub, or export a separate standalone site using the manual **Export standalone topic website** GitHub Actions workflow with topic ID `gradient`. See [Pass 5 — Gradient](docs/PASS_5_GRADIENT.md) for the content scope and verification.
 

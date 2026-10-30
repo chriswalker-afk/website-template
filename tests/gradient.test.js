@@ -51,7 +51,7 @@ test('publication readiness is independently verified for the complete gradient 
   assert.equal(report.counts.modes.fluency.pages,8);
   assert.equal(report.counts.modes.reasoning.pages,4);
   assert.equal(report.counts.modes.problemSolving.pages,8);
-  assert.equal(report.counts.modes.modelling.pages,4);
+  assert.equal(report.counts.modes.modelling.pages,8);
   assert.equal(report.counts.modes.games.enabled,false);
   assert.equal(report.counts.modes.examPractice.enabled,false);
   assert.deepEqual(validateQuestionBank(topic),[]);

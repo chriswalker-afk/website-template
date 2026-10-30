@@ -15,7 +15,7 @@ Mathematical inputs remain numeric where the common checker reliably supports th
 - **Fluency:** four difficulty levels, eight distinct pages, 16 deterministic question generators, guided and structured method prompts, signed/fractional gradients and full numerical working.
 - **Reasoning:** four subsections (Explain, Justify, Critique, Generalise), four unique tasks per subsection, specific hints, full mathematical arguments and self-review criteria.
 - **Problem Solving:** four levels with two pages and two multistep problems per page (16 problems), including complete worked answers and review.
-- **Modelling:** eight complete Formulate → Calculate → Interpret → Evaluate investigations, with measured rises, rates and assumptions.
+- **Modelling:** sixteen complete Formulate → Calculate → Interpret → Evaluate investigations, with measured rises, rates and assumptions.
 - **Worksheet Generator:** four independent printable question groups plus exact exports from generated Fluency rounds, with editable LaTeX and separate worked solutions.
 - **Visuals:** four data-defined straight-line diagrams and three interactive explorers (gradient sign, steepness and parallel gradients).
 
