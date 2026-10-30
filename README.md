@@ -41,6 +41,7 @@ A modern, tabbed reference-book aesthetic built into the reusable shell: **chapt
 - [Memorise mode quality guide](docs/MEMORISE_MODE_GUIDE.md) — reusable retrieval activities, saved per-card progress, review intervals, conservative terminology checks and privacy limitations.
 - [Working notebook — Pass 2](docs/WORKING_NOTEBOOK_PASS2.md) — reusable typed and drawn working, storage, privacy, exports and limits.
 - [Working notebook — Pass 3](docs/WORKING_NOTEBOOK_PASS3.md)
+- [Site-wide mathematical notation](docs/SITE_WIDE_MATH_NOTATION.md) — semantic MathML in questions, worked solutions and explanations, plus an explicit LaTeX convention for future topics.
 - [Mathematical toolkit — Pass 4](docs/MATH_TOOLKIT_PASS4.md) — editable coordinate graphs, tables, number lines, geometry and probability trees. — stable mode/task scopes, shared four-stage modelling working and student-confirmed self-review evidence.
 - [Fluency mode quality guide](docs/FLUENCY_MODE_GUIDE.md) — Guided → Structured → Independent → Challenge, generated calculations, numerical checking, worked solutions and LaTeX export.
 - [Reasoning mode quality guide](docs/REASONING_MODE_GUIDE.md) — distinctive written prompts, model arguments, criteria-based self-review, targeted practice and local privacy.
