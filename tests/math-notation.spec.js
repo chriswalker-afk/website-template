@@ -56,9 +56,9 @@ test('Sampling slash fractions become semantic fractions and retain exact value'
   const fractions=page.locator('.page-body mfrac');
   // Some first prompts may not use fractions; opening different prompt should
   // never cause inline source or student input to be rewritten.
-  await expect(page.locator('textarea')).toHaveCount(0);
+  await expect(page.locator('#reasoning-answer')).toHaveCount(0);
   await expect(page.locator('details[data-working-notebook]')).toHaveCount(1);
-  expect(await fractions.count()).toBeGreaterThanOrEqual(0);
+  expect(await fractions.count()).toBeGreaterThan(0);
 });
 test('notation remains printable, accessible and inside a 320px page',async({page})=>{
   await page.route('https://cdn.jsdelivr.net/**',route=>route.abort());
