@@ -1,4 +1,4 @@
-import {CHAPTER_LIBRARY,TOPICS} from './topics.js';
+import {CHAPTER_LIBRARY,TOPICS,DEFAULT_TOPIC} from './topics.js';
 import {buildFluencySet,checkFluencyAnswer,PRACTICE_LENGTHS} from './fluency-engine.js';
 import {emptyFluencyProgress,hydrateFluencyProgress,saveFluencyRound} from './fluency-progress.js';
 import {renderFluencyPage,roundScores} from './fluency-ui.js';
@@ -30,6 +30,13 @@ import {chaptersFor,sectionsFor,pagesFor,chapterFor,routeHref,resolveRoute,topic
 const app=document.querySelector('#app');
 const status=document.querySelector('#live-message');
 const topicSwitch=document.querySelector('#topic-switcher');
+// Populate the preview selector from the registry, never from hardcoded HTML options.
+const installedTopics=Object.values(TOPICS);
+topicSwitch.innerHTML=installedTopics.map(topic=>
+  '<option value="'+topic.id+'">'+String(topic.title).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))+'</option>').join('');
+topicSwitch.closest('.topic-switcher').hidden=installedTopics.length<2;
+const brandLink=document.querySelector('#brand-link');
+brandLink.href='#/'+encodeURIComponent(DEFAULT_TOPIC)+'/home';
 const motionToggle=document.querySelector('#motion-toggle');
 const motionLabel=document.querySelector('#motion-label');
 const STORAGE='maths-notebook-pass1a:';
@@ -98,6 +105,15 @@ function recallSession(topic,mode='all'){
     checked:false,correct:false,resultKind:null,complete:false,correctCount:0};
 }
 function resetMemoriseSessions(topic){
+  // Topics may omit Memorise entirely; no fabricated flashcards are needed.
+  if(!chaptersFor(topic).some(chapter=>chapter.id==='memorise')){
+    state.flash={ids:[],index:0,flipped:false,complete:false};
+    state.match={round:0,term:null,definition:null,matched:[],message:''};
+    state.cloze={ids:[],index:0,complete:true};
+    state.recall={ids:[],index:0,complete:true};
+    state.review={query:'',filter:'all',showDefinitions:true,confirmReset:false};
+    return;
+  }
   state.flash=flashSession(topic);
   state.match={round:0,term:null,definition:null,matched:[],message:''};
   state.cloze=clozeSession(topic);
@@ -255,7 +271,7 @@ function pagePaper(route){
   if(['fluency','modelling','problemSolving'].includes(route.chapterId))return 'squared';
   if(route.chapterId==='understand'&&route.sectionId==='visual-explanations')return 'squared';
   if(['memorise','games'].includes(route.chapterId))return 'plain';
-  return 'ruled';
+  return TOPICS[route.topicId]?.paper||'ruled';
 }
 function displayNumber(n){return Number.isInteger(n)?String(n):String(Number(n.toFixed(2)));}
 function graphState(route=state.route){
@@ -298,7 +314,7 @@ function renderContents(topic){
       icon('arrow')+'</a>':'';
   return '<div class="contents-layout">'+
     '<section class="contents-cover" aria-label="Book cover for '+e(topic.title)+'">'+
-      '<span class="cover-mark">'+e(topic.subject.toUpperCase())+'</span>'+
+      '<span class="cover-mark">'+e((topic.subject||'Mathematics').toUpperCase())+'</span>'+
       '<p class="cover-title">'+e(topic.title)+'</p><span class="cover-rule"></span>'+
       renderCoverArt()+
     '</section>'+
@@ -640,6 +656,9 @@ function renderBook(route,{animate=true}={}){
         pageNavigation+
       '</main></div>'+renderSideTabs(topic,route)+'</div></div>';
   topicSwitch.value=topic.id;
+  brandLink.href=routeHref(topic.id);
+  brandLink.setAttribute('aria-label',topic.title+': contents');
+  document.title=topic.title+' — The Maths Notebook';
   state.route=route;
   // Apply native, accessible mathematical typography to every reading mode,
   // without touching inputs, working notebooks or live editing controls.

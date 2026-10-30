@@ -4,24 +4,10 @@ import {TOPICS} from './topics.js';
 import {FLUENCY_CHAPTERS,makeFluencyQuestion,answerText,validateFluencyQuestion} from './fluency-engine.js';
 
 export const WORKSHEET_VERSION = 1;
-const SKILLS = Object.freeze({
-  sampling: [
-    {id:'terms',label:'Terminology'},
-    {id:'methods',label:'Identify methods'},
-    {id:'allocation',label:'Stratified calculations'},
-    {id:'evaluation',label:'Evaluate sampling'},
-    {id:'fluency',label:'Generated Fluency practice'}
-  ],
-  quadratics: [
-    {id:'vertex',label:'Turning points'},
-    {id:'roots',label:'Factorised equations'},
-    {id:'expanded',label:'Expanded equations'},
-    {id:'discriminant',label:'Discriminant'},
-    {id:'fluency',label:'Generated Fluency practice'}
-  ]
-});
-export function worksheetSkills(topicId){return SKILLS[topicId]||[];}
-export function supportsWorksheets(topicId){return worksheetSkills(topicId).length>0;}
+// Topic skill labels are now owned by each pack's manifest.
+export function worksheetSkills(topicId){return TOPICS[topicId]?.worksheetSkills||[];}
+// Generation remains opt-in until the pack also has a reviewed question family implementation.
+export function supportsWorksheets(topicId){return worksheetSkills(topicId).length>0&&Boolean(FAMILIES[topicId]?.length);}
 
 const latexChars={
   '\\':'\\textbackslash{}','{':'\\{','}':'\\}','$':'\\$','#':'\\#',

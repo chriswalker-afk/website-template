@@ -2,12 +2,9 @@ import {CHAPTER_LIBRARY,TOPICS,DEFAULT_TOPIC} from './topics.js';
 import {supportsWorksheets} from './worksheet-generator.js';
 import {validateUnderstandContent} from './understand-engine.js';
 import {validateMemoriseContent} from './memorise-engine.js';
-import {validateFluencyChapters,FLUENCY_CHAPTERS} from './fluency-engine.js';
+import {validateFluencyChapters} from './fluency-engine.js';
 import {validateReasoningContent} from './reasoning-engine.js';
-import {REASONING_CHAPTERS} from './reasoning-content.js';
-import {PROBLEM_SOLVING_CHAPTERS} from './problem-solving-content.js';
 import {validateProblemSolvingChapters} from './problem-solving-engine.js';
-import {MODELLING_CHAPTERS} from './modelling-content.js';
 import {validateModellingChapters} from './modelling-engine.js';
 
 export const CHAPTER_BY_ID=Object.fromEntries(CHAPTER_LIBRARY.map(c=>[c.id,c]));
@@ -42,9 +39,9 @@ const MODE_PAGE_TYPES={
   examPractice:new Set(['questions'])
 };
 export const chaptersFor=topic=>CHAPTER_LIBRARY.filter(chapter=>
-  Array.isArray(topic?.chapters?.[chapter.id])&&topic.chapters[chapter.id].length>0);
+  topic?.modes?.[chapter.id]!==false&&Array.isArray(topic?.chapters?.[chapter.id])&&topic.chapters[chapter.id].length>0);
 export const sectionsFor=(topic,chapter)=>chapter==='resources'?
-  (supportsWorksheets(topic?.id)?RESOURCE_SECTIONS:[]):(topic?.chapters?.[chapter]||[]);
+  (supportsWorksheets(topic?.id)?RESOURCE_SECTIONS:[]):topic?.modes?.[chapter]===false?[]:(topic?.chapters?.[chapter]||[]);
 export const chapterFor=id=>CHAPTER_BY_ID[id]??(id==='resources'?RESOURCE_CHAPTER:null);
 export const pagesFor=(topic,chapter,section)=>sectionsFor(topic,chapter)
   .find(item=>item.id===section)?.pages||[];
@@ -100,19 +97,29 @@ export function validateTopics(topics=TOPICS){
   for(const [key,topic] of Object.entries(topics)){
     if(!isSlug(key)||topic.id!==key)issues.push(key+': invalid topic ID');
     if(!topic.title)issues.push(key+': missing title');
-    if(!Array.isArray(topic.cards)||topic.cards.length<3)issues.push(key+': at least three flashcards required');
-    const cardIds=new Set();
-    for(const card of topic.cards||[]){
-      if(!isSlug(card.id)||cardIds.has(card.id)||!card.term||!card.definition)
-        issues.push(key+': invalid/duplicate/incomplete card '+card.id);
-      cardIds.add(card.id);
+    const enabled=mode=>topic.modes?.[mode]!==false&&Boolean(topic.chapters?.[mode]?.length);
+    if(topic.modes!==undefined&&(topic.modes===null||typeof topic.modes!=='object'||Array.isArray(topic.modes))){
+      issues.push(key+': modes must be an object of booleans');
+    }else for(const [mode,value] of Object.entries(topic.modes||{})){
+      if(!CHAPTER_BY_ID[mode]||typeof value!=='boolean')issues.push(key+': invalid mode flag '+mode);
+      if(value===true&&!topic.chapters?.[mode]?.length)issues.push(key+': enabled mode has no content '+mode);
+    }
+    if(enabled('memorise')){
+      if(!Array.isArray(topic.cards)||topic.cards.length<3)issues.push(key+': at least three flashcards required');
+      const cardIds=new Set();
+      for(const card of Array.isArray(topic.cards)?topic.cards:[]){
+        if(!isSlug(card.id)||cardIds.has(card.id)||!card.term||!card.definition)
+          issues.push(key+': invalid/duplicate/incomplete card '+card.id);
+        cardIds.add(card.id);
+      }
     }
     if(!topic.chapters||!Object.keys(topic.chapters).length)issues.push(key+': missing chapters');
     for(const [chapter,sections] of Object.entries(topic.chapters||{})){
-      if(!CHAPTER_BY_ID[chapter]||!Array.isArray(sections)||sections.length===0){
+      if(!CHAPTER_BY_ID[chapter]||!Array.isArray(sections)||(topic.modes?.[chapter]!==false&&sections.length===0)){
         issues.push(key+': invalid or empty chapter '+chapter);
         continue;
       }
+      if(topic.modes?.[chapter]===false)continue;
       const seenSections=new Set();
       for(const section of sections){
         if(!isSlug(section.id)||seenSections.has(section.id)||!section.label||
@@ -150,26 +157,18 @@ export function validateTopics(topics=TOPICS){
           issues.push(key+': activity subsection must own its internal progression '+section.id);
       }
     }
-    if(topic.chapters?.understand?.length)
+    if(enabled('understand'))
       issues.push(...validateUnderstandContent(topic.chapters.understand).map(message=>key+': '+message));
-    if(topic.chapters?.memorise?.length)
+    if(enabled('memorise'))
       issues.push(...validateMemoriseContent(topic).map(message=>key+': '+message));
-    if(topic.chapters?.fluency?.length&&
-      JSON.stringify(topic.chapters.fluency)!==JSON.stringify(FLUENCY_CHAPTERS[key]))
-      issues.push(key+': invalid Fluency level/page definitions');
-    if(topic.chapters?.reasoning?.length&&
-      JSON.stringify(topic.chapters.reasoning)!==JSON.stringify(REASONING_CHAPTERS[key]))
-      issues.push(key+': invalid Reasoning subsection/task definitions');
-    if(topic.chapters?.problemSolving?.length&&
-      JSON.stringify(topic.chapters.problemSolving)!==JSON.stringify(PROBLEM_SOLVING_CHAPTERS[key]))
-      issues.push(key+': invalid Problem Solving level/page/task definitions');
-    if(topic.chapters?.modelling?.length&&
-      JSON.stringify(topic.chapters.modelling)!==JSON.stringify(MODELLING_CHAPTERS[key]))
-      issues.push(key+': invalid Modelling level/page/task definitions');
+    if(enabled('fluency'))
+      issues.push(...validateFluencyChapters({[key]:topic.chapters.fluency}).map(message=>'Fluency: '+message));
+    if(enabled('reasoning'))
+      issues.push(...validateReasoningContent({[key]:topic.chapters.reasoning}).map(message=>'Reasoning: '+message));
+    if(enabled('problemSolving'))
+      issues.push(...validateProblemSolvingChapters({[key]:topic.chapters.problemSolving}).map(message=>'Problem Solving: '+message));
+    if(enabled('modelling'))
+      issues.push(...validateModellingChapters({[key]:topic.chapters.modelling}).map(message=>'Modelling: '+message));
   }
-  issues.push(...validateFluencyChapters().map(message=>'Fluency: '+message));
-  issues.push(...validateReasoningContent().map(message=>'Reasoning: '+message));
-  issues.push(...validateProblemSolvingChapters().map(message=>'Problem Solving: '+message));
-  issues.push(...validateModellingChapters().map(message=>'Modelling: '+message));
   return issues;
 }

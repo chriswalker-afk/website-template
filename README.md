@@ -4,6 +4,12 @@ A reusable, topic-configurable foundation for high-quality Maths learning websit
 
 **Current status:** Interactive notebook prototype with a reusable typed/drawn working notebook integrated into Fluency, Understand, Reasoning, Problem Solving and Modelling, quality-upgraded **Understand, Memorise, Fluency, Reasoning, Problem Solving and Modelling** modes, three-level navigation and a reusable LaTeX Worksheet Generator. The two sample topics demonstrate the content architecture rather than complete curriculum coverage.
 
+## Reuse: Pass 1 topic packs
+
+The original Sampling and Quadratics content is now organised as independent `src/topic-packs/sampling/` and `src/topic-packs/quadratics/` packs. To add a topic, define its content and manifest then register the pack once in `src/topic-packs/registry.js`. Modes without content can be omitted or disabled; the topic selector and Contents page are generated automatically. The shared code and student links remain unchanged.
+
+See **[Pass 1 — Topic pack authoring guide](docs/TOPIC_PACKS_PASS1.md)** for the folder contract, constraints and next passes. The Fluency and worksheet question-family generators are still topic-keyed in shared modules until Pass 2, so do not enable those features for a brand-new topic before supplying validated families.
+
 ## Try the book prototype
 
 The static application starts at **index.html** and includes two contrasting sample books:
