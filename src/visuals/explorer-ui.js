@@ -64,8 +64,8 @@ export function renderGraphLab(page,route,graphs){
       '</div></div>'+
       '<div class="callout graph-prompt" aria-label="Question to consider"><p>'+e(page.focus)+'</p></div>';
 }
-export function refreshGraphExplorer(root,route,graphs){
-  const config=explorerFor(route.topicId,{id:route.pageId});
+export function refreshGraphExplorer(root,route,graphs,page={id:route.pageId}){
+  const config=explorerFor(route.topicId,page);
   if(config?.type!=='function-graph')return;
   const svg=root.querySelector('#graph-svg');
   if(!svg)return;
@@ -84,7 +84,7 @@ const pct=n=>fmt(n)+'%';
 function summaryFor(method,result){
   if(method==='census')return 'This is a census: the entire population is included.';
   if(method==='convenience')return 'In this ordered list, the first '+result.sampleSize+
-    ' names are selected; people later in the list may be excluded.';
+    ' names are selected from '+result.groups[0].label+', so later groups may be excluded.';
   if(method==='systematic')return 'The random starting position is '+result.randomStart+'.';
   if(method==='stratified')return 'The proportional allocation is '+result.groups.map(g=>
     g.selected+' from '+g.label).join(', ')+'.';

@@ -627,7 +627,9 @@ function updateFlashFlip(){
   document.querySelector('#ratings').hidden=!f.flipped;
 }
 function updateGraph(){
-  refreshGraphExplorer(app,state.route,state.understand.graphs);
+  const route=state.route,topic=TOPICS[route.topicId];
+  const page=pagesFor(topic,route.chapterId,route.sectionId).find(p=>p.id===route.pageId);
+  refreshGraphExplorer(app,route,state.understand.graphs,page);
   typesetSiteMath(app);
 }
 

@@ -82,9 +82,9 @@ export function validateExplorer(config,label='explorer'){
       if(!allowed.includes(control.key)||used.has(control.key)||!phrase(control.label)||
         ![control.min,control.max,control.step].every(finite)||
         control.min>=control.max||control.step<=0||
-        !finite(config.initial[control.key])||
-        config.initial[control.key]<control.min||config.initial[control.key]>control.max||
-        Math.abs((config.initial[control.key]-control.min)/control.step-
+        !finite(config.initial?.[control.key])||
+        config.initial?.[control.key]<control.min||config.initial?.[control.key]>control.max||
+        Math.abs((config.initial?.[control.key]-control.min)/control.step-
           Math.round((config.initial[control.key]-control.min)/control.step))>1e-7)
         issues.push(label+': invalid slider '+control.key);
       used.add(control.key);
@@ -93,7 +93,7 @@ export function validateExplorer(config,label='explorer'){
       const t=config.toggle;
       if(!allowed.includes(t.key)||used.has(t.key)||!phrase(t.label)||
          !array(t.values)||t.values.length<2||t.values.length>5||
-         new Set(t.values).size!==t.values.length||!t.values.includes(config.initial[t.key])||
+         new Set(t.values).size!==t.values.length||!t.values.includes(config.initial?.[t.key])||
          t.values.some(v=>!finite(v)||!isMathematicalModel({...config.initial,[t.key]:v})))
         issues.push(label+': invalid toggle');
     }
