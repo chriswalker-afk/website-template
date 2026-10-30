@@ -3,7 +3,10 @@ import {buildFluencySet,checkFluencyAnswer,PRACTICE_LENGTHS} from './fluency-eng
 import {emptyFluencyProgress,hydrateFluencyProgress,saveFluencyRound} from './fluency-progress.js';
 import {renderFluencyPage,roundScores} from './fluency-ui.js';
 import {enhanceMathInputs,latexToFluencyText} from './math-input.js';
-import {mountWorkingNotebooks} from './working-notebook.js';
+import {mountWorkingNotebooks,hasSavedWorking} from './working-notebook.js';
+import {workingScope} from './working-notebook-integration.js';
+import {reasoningAttempt,effectiveProblemAttempt,effectiveModellingAttempt}
+  from './working-notebook-evidence.js';
 import {renderReasoningPage} from './reasoning-ui.js';
 import {renderProblemSolvingPage} from './problem-solving-ui.js';
 import {renderModellingPage} from './modelling-ui.js';
@@ -56,6 +59,19 @@ const state={
   modellingSessions:{},modellingProgress:{}
 };
 let lastTopic=null;
+function taskHasNotebook(mode,id){
+  const route=state.route;
+  if(!route||!id)return false;
+  return hasSavedWorking(workingScope(route.topicId,mode,route.sectionId,route.pageId,id));
+}
+function problemWithNotebook(current){
+  return effectiveProblemAttempt(current.response,
+    taskHasNotebook('problemSolving',current.task.id));
+}
+function modellingWithNotebook(current){
+  return effectiveModellingAttempt(current.entry,
+    taskHasNotebook('modelling',current.task.id));
+}
 
 function memoryFor(topic){
   if(!state.memory[topic.id])
@@ -717,7 +733,8 @@ app.addEventListener('click',ev=>{
     session.entries[current.task.id]={...current.entry,
       examples:{...current.entry.examples,[id]:open},
       modelFirst:Boolean(current.entry.modelFirst||
-        (open&&current.entry.drafts[id].trim().length<20))};
+        (open&&!((current.entry.drafts[id]?.trim().length||0)>=20||
+          modellingWithNotebook(current).notebookStages[id])))};
     rerender();
     document.querySelector('button[data-action="mdl-example"]')?.focus({preventScroll:true});
     announce(open?'Worked modelling stage shown.':'Worked modelling stage hidden.');
@@ -729,7 +746,7 @@ app.addEventListener('click',ev=>{
       if(action==='mdl-review'&&!current.entry.compared)return;
       session.stage=4;
       session.entries[current.task.id]={...current.entry,compared:true,
-        modelFirst:Boolean(current.entry.modelFirst||!attemptedModelling(current.entry))};
+        modelFirst:Boolean(current.entry.modelFirst||!attemptedModelling(modellingWithNotebook(current)))};
     }else session.stage=Math.min(4,session.stage+1);
     session.maxStage=Math.max(session.maxStage,session.stage);
     rerender();
@@ -746,9 +763,11 @@ app.addEventListener('click',ev=>{
     announce(MODELLING_PHASES[index][1]+' stage selected.');
   }else if(action==='mdl-rate'){
     const session=modellingSession(),current=currentModelling(session),rating=button.dataset.rating;
-    if(!current||session.complete||session.stage!==4||!canSelfRateModel(current.entry,rating))return;
+    if(!current||session.complete||session.stage!==4)return;
+    const response=modellingWithNotebook(current);
+    if(!canSelfRateModel(response,rating))return;
     try{persistModellingProgress(topic,saveModelReview(modellingProgressFor(topic),
-      topic.id,state.route.sectionId,state.route.pageId,current.task.id,current.entry,rating));}
+      topic.id,state.route.sectionId,state.route.pageId,current.task.id,response,rating));}
     catch(error){announce(error instanceof Error?error.message:'Modelling review not saved.');return;}
     session.entries[current.task.id]={...current.entry,rating};
     rerender();
@@ -771,7 +790,7 @@ app.addEventListener('click',ev=>{
     if(!session||!['all','focus'].includes(selection)||session.selection===selection)return;
     const current=currentModelling(session),entry=current?.entry;
     const unfinished=entry&&!entry.rating&&(MODEL_PHASE_IDS.some(id=>
-      entry.drafts[id].trim()||entry.examples[id]||entry.hints[id])||session.maxStage>0);
+      entry.drafts[id].trim()||entry.examples[id]||entry.hints[id]||entry.notebookStages?.[id])||session.maxStage>0);
     if(unfinished){
       session.confirmSwitch=true;session.pendingSelection=selection;
       rerender();document.querySelector('button[data-action="mdl-cancel"]')?.focus({preventScroll:true});
@@ -835,7 +854,7 @@ app.addEventListener('click',ev=>{
     const step=current.response.solutionStep+1;
     session.entries[current.task.id]={...current.response,solutionStep:step,
       modelFirst:Boolean(current.response.modelFirst||
-        (current.response.solutionStep===0&&!attemptedProblem(current.response))),
+        (current.response.solutionStep===0&&!attemptedProblem(problemWithNotebook(current)))),
       modelComplete:step===current.task.steps.length};
     rerender();
     document.querySelector(step===current.task.steps.length?
@@ -876,6 +895,7 @@ app.addEventListener('click',ev=>{
     const current=currentProblem(session);
     if(current&&!current.response.rating&&
       (current.response.plan.trim()||current.response.working.trim()||
+       current.response.notebookPlan||current.response.notebookWorking||
        current.response.strategy||current.response.hintCount||current.response.solutionStep)){
       session.confirmSwitch=true;session.pendingSelection=selection;
       rerender();
@@ -922,7 +942,8 @@ app.addEventListener('click',ev=>{
     if(!current||session.complete||current.response.rating)return;
     const old=current.response,show=!old.model;
     session.entries[current.task.id]={...old,model:show,
-      modelFirst:Boolean(old.modelFirst||(show&&old.draft.trim().length<20))};
+      modelFirst:Boolean(old.modelFirst||
+        (show&&!reasoningAttempt(old,taskHasNotebook('reasoning',current.task.id))))};
     rerender();
     document.querySelector('button[data-action="reasoning-model"]')?.focus({preventScroll:true});
     announce(show?'Model argument and self-review criteria shown.':'Model argument hidden.');
@@ -933,7 +954,7 @@ app.addEventListener('click',ev=>{
       !REASONING_RATINGS.includes(rating))return;
     const entry=current.response,review={
       rating,checked:entry.checks.filter(Boolean).length,
-      attempted:entry.draft.trim().length>=20,
+      attempted:reasoningAttempt(entry,taskHasNotebook('reasoning',current.task.id)),
       assisted:Boolean(entry.usedHint||entry.modelFirst),
       modelFirst:Boolean(entry.modelFirst)
     };
@@ -967,7 +988,7 @@ app.addEventListener('click',ev=>{
     if(!session||!['all','focus'].includes(selection)||session.selection===selection)return;
     const current=reasoningEntry(session);
     if(current&&!current.response.rating&&
-      (current.response.draft.trim()||current.response.model)){
+      (current.response.draft.trim()||current.response.model||current.response.notebookConfirmed)){
       session.confirmSwitch=true;
       session.pendingSelection=selection;
       rerender();
