@@ -196,8 +196,10 @@ function nextInputData(block,input){
 export function connectToolEditors(host,{getBlock,onChange,onCommand,onToggle}){
   for(const wrapper of host.querySelectorAll('[data-tool-id]')){
     const id=wrapper.dataset.toolId;
-    wrapper.querySelector('.working-tool__settings')?.addEventListener('toggle',event=>{
-      onToggle(id,event.target.open);
+    const settings=wrapper.querySelector('.working-tool__settings');
+    settings?.querySelector('summary')?.addEventListener('click',()=>{
+      // The click runs before <details> changes its open state.
+      onToggle(id,!settings.open);
     });
     wrapper.querySelectorAll('input,select').forEach(input=>{
       input.addEventListener('change',()=>{
