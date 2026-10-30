@@ -24,7 +24,7 @@ The book shell, navigation, notebook, retrieval engines, task-review engines, ma
 
 **Pass 2 — shared questions and skills (implemented):** all authored Fluency, worksheet and level-scaffold families now live inside each topic pack. The shared engines resolve families through the versioned per-topic question bank. New topics can opt into generated questions by registering reviewed families and worksheet skill labels; never invent fallback mathematical answers. See [Pass 2 guide](QUESTION_BANK_PASS2.md).
 
-**Pass 3 — reusable visuals:** the underlying quadratic graph/sampling lab algorithms still live in shared Understand modules and `src/app.js`. Their configuration and any new visual models become topic-owned in Pass 3. For now, a brand new topic can use generic lesson and concept-check blocks without adding bespoke visuals.
+**Pass 3 — reusable visuals (implemented):** each topic now configures its diagrams, quadratic/linear graph explorers, number lines, probability trees and sampling experiments. The shared app no longer hardcodes graph pages. See [Pass 3 visual guide](VISUAL_PACK_PASS3.md).
 
 **Pass 4 — Topic Creator and checks:** add a CLI for copying a starter pack, richer content-specific diagnostics, publishing help and automatic site/preview selection.
 

@@ -8,7 +8,7 @@ A reusable, topic-configurable foundation for high-quality Maths learning websit
 
 The original Sampling and Quadratics content is now organised as independent `src/topic-packs/sampling/` and `src/topic-packs/quadratics/` packs. To add a topic, define its content and manifest then register the pack once in `src/topic-packs/registry.js`. Modes without content can be omitted or disabled; the topic selector and Contents page are generated automatically. The shared code and student links remain unchanged.
 
-See **[Pass 1 — Topic pack authoring guide](docs/TOPIC_PACKS_PASS1.md)** and **[Pass 2 — Shared question banks and skills](docs/QUESTION_BANK_PASS2.md)** for the folder contract, constraints and next passes. Fluency generators, worksheet families and per-family method cues now live inside each topic pack; the shared engines use a versioned question-bank contract. New Fluency topics must provide reviewed answer generators and worked solutions.
+See **[Pass 1 — Topic pack authoring guide](docs/TOPIC_PACKS_PASS1.md)**, **[Pass 2 — Shared question banks and skills](docs/QUESTION_BANK_PASS2.md)** and **[Pass 3 — Reusable mathematical visuals](docs/VISUAL_PACK_PASS3.md)** for the folder contract, constraints and next passes. Fluency generators, worksheet families and per-family method cues now live inside each topic pack; the shared engines use a versioned question-bank contract. New Fluency topics must provide reviewed answer generators and worked solutions.
 
 ## Try the book prototype
 
