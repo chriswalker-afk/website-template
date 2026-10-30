@@ -1,6 +1,8 @@
 // Reusable mathematics working notebook. Student content remains on this device.
 import {escapeHTML as e} from './logic.js';
 import {loadMathLive,MATH_SYMBOLS} from './math-input.js';
+import {TOOL_KINDS,TOOL_LABELS} from './math-toolkit.js';
+import {renderToolEditor,connectToolEditors} from './math-toolkit-ui.js';
 import {DRAW_WIDTH,DRAW_HEIGHT,MAX_NOTEBOOK_PAGES,MAX_NOTEBOOK_BLOCKS,
   hasWorkingContent,
   blankWorkingNotebook,workingStorageKey,hydrateWorkingNotebook,
@@ -30,7 +32,8 @@ function storeFor(scope){
   try{raw=localStorage.getItem(workingStorageKey(scope));}catch{/* unavailable */}
   const entry={book:hydrateWorkingNotebook(raw),undo:[],redo:[],
     editing:null,pen:'pen',color:'#285c7c',width:2.8,
-    saveOk:true,confirmClear:false,expanded:false,activeMathId:null};
+    saveOk:true,confirmClear:false,expanded:false,activeMathId:null,
+    openToolIds:new Set(),toolboxOpen:false};
   controllers.set(scope,entry);
   return entry;
 }
@@ -50,9 +53,11 @@ function downloadText(content,filename,mime){
   link.href=url;link.download=filename;document.body.append(link);link.click();link.remove();
   setTimeout(()=>URL.revokeObjectURL(url),2500);
 }
-function renderBlock(block,index,length){
+function renderBlock(block,index,length,openToolIds){
   const isMath=block.kind==='math';
-  const label=(isMath?'Maths line':'Explanation')+' '+(index+1);
+  const isTool=TOOL_KINDS.includes(block.kind);
+  const label=(isTool?TOOL_LABELS[block.kind]:(isMath?'Maths line':'Explanation'))+
+    ' '+(index+1);
   return '<div class="working-book__block" data-book-block="'+e(block.id)+'">'+
     '<div class="working-book__block-head"><strong>'+label+'</strong>'+
       '<div class="working-book__block-actions">'+
@@ -62,15 +67,16 @@ function renderBlock(block,index,length){
           '" aria-label="Move '+label+' down"'+(index===length-1?' disabled':'')+'>↓</button>'+
         '<button type="button" data-book-remove="'+e(block.id)+'" aria-label="Remove '+label+'">Remove</button>'+
       '</div></div>'+
-    (isMath?
-      '<div class="working-book__math-wrap">'+
-        '<textarea data-book-value="'+e(block.id)+'" data-book-kind="math" rows="2"'+
-          ' aria-label="'+label+' in LaTeX" maxlength="1200" spellcheck="false" '+
-          'placeholder="e.g. \\frac{1}{2}x^2">'+e(block.value)+'</textarea>'+
-      '</div>':
-      '<textarea data-book-value="'+e(block.id)+'" data-book-kind="text" rows="3"'+
-        ' aria-label="'+label+'" maxlength="5000" placeholder="Explain your method or decisions">'+
-        e(block.value)+'</textarea>')+
+    (isTool?renderToolEditor(block,{open:openToolIds.has(block.id)}):
+      isMath?
+        '<div class="working-book__math-wrap">'+
+          '<textarea data-book-value="'+e(block.id)+'" data-book-kind="math" rows="2"'+
+            ' aria-label="'+label+' in LaTeX" maxlength="1200" spellcheck="false" '+
+            'placeholder="e.g. \frac{1}{2}x^2">'+e(block.value)+'</textarea>'+
+        '</div>':
+        '<textarea data-book-value="'+e(block.id)+'" data-book-kind="text" rows="3"'+
+          ' aria-label="'+label+'" maxlength="5000" placeholder="Explain your method or decisions">'+
+          e(block.value)+'</textarea>')+
     '</div>';
 }
 function paperName(paper){return {squared:'Grid',ruled:'Lined',plain:'Plain'}[paper];}
@@ -108,7 +114,7 @@ function renderWorkspace(host,scope,entry){
     (typeVisible?
       '<section class="working-book__typed" aria-label="Typed mathematical working">'+
         '<div class="working-book__blocks">'+
-          page.blocks.map((block,i)=>renderBlock(block,i,page.blocks.length)).join('')+
+          page.blocks.map((block,i)=>renderBlock(block,i,page.blocks.length,entry.openToolIds)).join('')+
           (!page.blocks.length?'<p class="working-book__empty">Add a maths line or an explanation to begin.</p>':'')+
         '</div>'+
         '<div class="working-book__palette" role="group" aria-label="Mathematical symbols">'+
@@ -119,6 +125,16 @@ function renderWorkspace(host,scope,entry){
           actionButton('add-math','+ Maths line',page.blocks.length>=MAX_NOTEBOOK_BLOCKS)+
           actionButton('add-text','+ Explanation',page.blocks.length>=MAX_NOTEBOOK_BLOCKS)+
         '</div>'+
+        '<details class="working-book__toolbox" data-book-toolbox'+
+          (entry.toolboxOpen?' open':'')+'>'+
+          '<summary><span>Insert mathematical tool</span><span class="working-book__toolbox-subtitle">'+
+            'Graphs, tables and diagrams</span></summary>'+
+          '<div class="working-book__tool-list" role="group" aria-label="Mathematical tools">'+
+            TOOL_KINDS.map(kind=>'<button type="button" data-book-add-tool="'+kind+'"'+
+              (page.blocks.length>=MAX_NOTEBOOK_BLOCKS?' disabled':'')+
+              '>+ '+e(TOOL_LABELS[kind])+'</button>').join('')+
+          '</div>'+
+        '</details>'+
       '</section>':'')+
     (drawVisible?
       '<section class="working-book__draw" aria-label="Freehand mathematical working">'+
@@ -149,7 +165,15 @@ function renderWorkspace(host,scope,entry){
       'No student login, server upload or automatic marks. Save a copy before clearing browser data.</p>'+
     '</div>';
   connectControls(host,scope,entry);
-  if(typeVisible)enhanceMathBlocks(host,scope,entry);
+  if(typeVisible){
+    enhanceMathBlocks(host,scope,entry);
+    connectToolEditors(host,{
+      getBlock:id=>entry.book.pages[entry.book.page].blocks.find(block=>block.id===id),
+      onChange:(id,data)=>host._bookApply?.({type:'set-tool',id,data}),
+      onCommand:(id,data)=>host._bookApply?.({type:'set-tool',id,data}),
+      onToggle:(id,open)=>open?entry.openToolIds.add(id):entry.openToolIds.delete(id)
+    });
+  }
   if(drawVisible)connectDrawing(host,scope,entry);
 }
 function connectControls(host,scope,entry){
@@ -206,6 +230,19 @@ function connectControls(host,scope,entry){
   host.querySelectorAll('[data-book-remove]').forEach(button=>{
     button.addEventListener('click',()=>{
       apply({type:'remove-block',id:button.dataset.bookRemove});
+    });
+  });
+  const toolbox=host.querySelector('[data-book-toolbox]');
+  toolbox?.querySelector('summary')?.addEventListener('click',()=>{
+    entry.toolboxOpen=!toolbox.open;
+  });
+  host.querySelectorAll('[data-book-add-tool]').forEach(button=>{
+    button.addEventListener('click',()=>{
+      const kind=button.dataset.bookAddTool;
+      if(!TOOL_KINDS.includes(kind)||page().blocks.length>=MAX_NOTEBOOK_BLOCKS)return;
+      const id='block-'+entry.book.nextId;
+      entry.openToolIds.add(id);
+      apply({type:'add-block',kind});
     });
   });
   host.querySelector('[data-book-paper]').addEventListener('change',ev=>{

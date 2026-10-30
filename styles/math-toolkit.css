@@ -1,0 +1,138 @@
+/* Pass 4: integrated mathematical toolkit.
+   Matches notebook paper, avoids pushing the book wider on mobile. */
+.working-book__toolbox {
+  min-width:0;
+  margin-top:12px;
+  border:1px solid #c9dccb;
+  border-radius:10px;
+  background:#f5f8ef;
+}
+.working-book__toolbox > summary {
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  cursor:pointer;padding:13px 14px;font-weight:750;
+  font-size:13px;color:#275344;list-style-position:inside;
+}
+.working-book__toolbox > summary:focus-visible,
+.working-tool__settings > summary:focus-visible {
+  outline:3px solid #3c6fb0;outline-offset:2px;
+}
+.working-book__toolbox-subtitle {font-size:11px;font-weight:500;color:#597365}
+.working-book__tool-list {
+  display:flex;gap:8px;flex-wrap:wrap;padding:11px 12px 13px;
+  border-top:1px solid #d7e6d7;
+}
+.working-book__tool-list button {min-height:40px;background:#fffdfa}
+.working-tool {width:100%;min-width:0}
+.working-tool__preview {
+  padding:11px;border:1px solid #d7e4d8;border-radius:9px;
+  background:#fffefa;overflow:hidden;
+}
+.working-tool__svg {display:block;width:100%;height:auto;max-height:350px}
+.working-tool__settings {
+  margin-top:10px;
+  border:1px solid #d4e0d6;border-radius:9px;
+  background:#f8fbf4;
+}
+.working-tool__settings > summary {
+  cursor:pointer;padding:10px 12px;
+  font-weight:750;font-size:12px;color:#315c46;
+}
+.working-tool__form {
+  min-width:0;padding:12px;
+  border-top:1px solid #dbe6d8;
+}
+.working-tool__hint {
+  font-size:12px;line-height:1.6;color:#5b7462;
+  margin:8px 0 12px;
+}
+.working-tool__label {
+  margin:12px 0 8px;
+  font-size:12px;font-weight:750;color:#345b47;
+}
+.working-tool__fields {
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));
+  gap:10px;min-width:0;margin:8px 0 13px;
+}
+.working-tool__field {
+  display:flex;flex-direction:column;gap:5px;min-width:0;
+  font-size:12px;color:#436451;font-weight:650;
+}
+.working-tool__field input,
+.working-tool__field select,
+.working-tool__point input,
+.working-tool__edit-table input {
+  width:100%;min-width:0;max-width:100%;min-height:40px;
+  font:400 15px/1.2 system-ui,sans-serif;color:#244735;
+  border:1px solid #b8cdbb;border-radius:7px;
+  background:#fff;padding:8px 9px;box-sizing:border-box;
+}
+.working-tool__field :is(input,select):focus-visible,
+.working-tool__point input:focus-visible,
+.working-tool__edit-table input:focus-visible {
+  outline:3px solid #3c6fb0;outline-offset:2px;
+}
+.working-tool__field [aria-invalid="true"],
+.working-tool__point [aria-invalid="true"] {
+  border-color:#a65b48;
+}
+.working-tool__check {
+  display:flex;align-items:center;gap:8px;font-size:12px;
+  font-weight:650;color:#405f4f;margin:8px 0 12px;
+}
+.working-tool__check input {width:19px;height:19px;accent-color:#316e55}
+.working-tool__status {font-size:11px;line-height:1.6;color:#60776a;margin:12px 0 2px}
+.working-tool__points {display:grid;gap:8px;margin-bottom:9px}
+.working-tool__point {
+  display:grid;grid-template-columns:70px minmax(0,1fr) minmax(0,1fr) auto;
+  gap:7px;align-items:center;font-size:12px;color:#40624f;
+}
+.working-tool__point label {display:flex;align-items:center;gap:5px;min-width:0}
+.working-tool__point input {min-width:0}
+.working-tool__point button {min-height:40px}
+.working-tool__limit {font-size:11px;color:#637a6c;margin:0 5px}
+.working-tool__row-actions {display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:11px}
+.working-tool__table-scroll {
+  width:100%;max-width:100%;overflow-x:auto;scrollbar-width:thin;
+  border:1px solid #d2e0d2;border-radius:7px;
+}
+.working-tool__table,
+.working-tool__edit-table {
+  border-collapse:collapse;min-width:100%;max-width:none;
+  font-size:13px;
+}
+.working-tool__table caption {
+  padding:9px;font-weight:750;color:#315643;
+}
+.working-tool__table :is(td,th) {
+  border:1px solid #d4e0d4;text-align:left;
+  padding:8px 11px;white-space:pre-wrap;overflow-wrap:anywhere;
+}
+.working-tool__table th {background:#eef5ee;color:#365e49}
+.working-tool__table tr:nth-child(even) td {background:#fafcf8}
+.working-tool__edit-table :is(th,td) {
+  padding:5px;border:1px solid #d4e0d4;min-width:112px;
+}
+.working-tool__edit-table th:first-child {
+  min-width:38px;width:38px;color:#526f5d;background:#eff5ec;
+}
+.working-tool__tree-check {
+  margin:7px 1px 3px;
+  font-size:12px;line-height:1.6;color:#496653;
+}
+@media(max-width:530px){
+  .working-book__toolbox > summary {padding:10px 11px}
+  .working-book__tool-list {padding:9px;gap:6px}
+  .working-book__tool-list button {font-size:11px}
+  .working-tool__preview {padding:5px}
+  .working-tool__form {padding:9px}
+  .working-tool__fields {grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .working-tool__point {grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    border-bottom:1px solid #dae4d8;padding-bottom:8px}
+  .working-tool__point span,.working-tool__point button {grid-column:span 2}
+}
+@media print {
+  .working-book__toolbox,
+  .working-tool__settings {display:none!important}
+  .working-tool__preview{border:0;padding:0}
+  .working-tool{break-inside:avoid}
+}
