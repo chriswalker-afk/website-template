@@ -304,24 +304,38 @@ function connectControls(host,scope,entry){
   host._bookUpdate=updateBlock;
 }
 function enhanceMathBlocks(host,scope,entry){
+  // A notebook may open automatically in extended-response modes. Avoid
+  // fetching the large visual editor until a maths line is actually used.
+  // The source textarea remains available immediately and works offline.
   for(const source of host.querySelectorAll('[data-book-kind="math"]')){
     const wrapper=source.parentElement,id=source.dataset.bookValue;
-    loadMathLive().then(MathfieldElement=>{
-      if(!source.isConnected||!wrapper.isConnected||wrapper.querySelector('math-field'))return;
-      const field=new MathfieldElement();
-      field.className='working-book__math-field';
-      field.setAttribute('aria-label','Mathematical working');
-      field.value=source.value;
-      field.mathVirtualKeyboardPolicy='auto';
-      field.addEventListener('focus',()=>{entry.activeMathId=id;});
-      field.addEventListener('input',()=>{
-        source.value=field.getValue('latex');
-        if(source.value.length<=1200)host._bookUpdate?.(id,source.value);
+    let requested=false;
+    function activate(){
+      if(requested||!source.isConnected)return;
+      requested=true;
+      loadMathLive().then(MathfieldElement=>{
+        if(!source.isConnected||!wrapper.isConnected||wrapper.querySelector('math-field'))return;
+        const wasFocused=document.activeElement===source;
+        const field=new MathfieldElement();
+        field.className='working-book__math-field';
+        field.setAttribute('aria-label','Mathematical working');
+        field.value=source.value;
+        field.mathVirtualKeyboardPolicy='auto';
+        field.addEventListener('focus',()=>{entry.activeMathId=id;});
+        field.addEventListener('input',()=>{
+          source.value=field.getValue('latex');
+          if(source.value.length<=1200)host._bookUpdate?.(id,source.value);
+        });
+        field.addEventListener('blur',()=>{entry.editing=null;});
+        wrapper.append(field);
+        wrapper.classList.add('working-book__math-wrap--ready');
+        if(wasFocused)field.focus();
+      }).catch(()=>{
+        // Keep the accessible LaTeX source field editable if offline.
       });
-      field.addEventListener('blur',()=>{entry.editing=null;});
-      wrapper.append(field);
-      wrapper.classList.add('working-book__math-wrap--ready');
-    }).catch(()=>{/* Keep the fully editable LaTeX fallback visible. */});
+    }
+    source.addEventListener('focus',activate,{once:true});
+    wrapper.addEventListener('pointerenter',activate,{once:true});
   }
 }
 function connectDrawing(host,scope,entry){
