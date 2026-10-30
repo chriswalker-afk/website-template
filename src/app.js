@@ -3,6 +3,7 @@ import {buildFluencySet,checkFluencyAnswer,PRACTICE_LENGTHS} from './fluency-eng
 import {emptyFluencyProgress,hydrateFluencyProgress,saveFluencyRound} from './fluency-progress.js';
 import {renderFluencyPage,roundScores} from './fluency-ui.js';
 import {enhanceMathInputs,latexToFluencyText} from './math-input.js';
+import {mountWorkingNotebooks} from './working-notebook.js';
 import {renderReasoningPage} from './reasoning-ui.js';
 import {renderProblemSolvingPage} from './problem-solving-ui.js';
 import {renderModellingPage} from './modelling-ui.js';
@@ -641,6 +642,7 @@ function renderBook(route,{animate=true}={}){
         fluencySession().answers[current.question.id]={...current.response,mathLatex:latex};
     }
   });
+  mountWorkingNotebooks(app);
   document.title=(section?section.label+(pages.length>1?' · Page '+(route.pageIndex+1):'')+' · ':
     route.chapterId==='home'?'Contents · ':'')+topic.title+' | The Maths Notebook';
 }
