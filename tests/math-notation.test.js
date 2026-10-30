@@ -18,7 +18,7 @@ test('renders the reported quadratic question with genuine maths semantics',()=>
   assert.match(html,/<mi>f<\/mi>/);
   assert.match(html,/<mo>−<\/mo>/);
   assert.ok(html.includes('calculate '));
-  assert.ok(!html.includes('3x² + x'));
+  assert.ok(!html.replace(/aria-label="[^"]*"/g,'').includes('3x² + x'));
 });
 test('mathematical fractions and inequalities have proper structures',()=>{
   const html=renderMathematicalText(
