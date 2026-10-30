@@ -24,7 +24,7 @@ const mi=value=>token('mi',value);
 const mn=value=>token('mn',value);
 const MATH_START=/^(?:[A-Za-z]\(|[a-zA-Z]\s*[²³⁴⁵⁶⁷⁸⁹⁰^_=<>≤≥≈]|[a-zA-Z]{1,3}[²³⁴⁵⁶⁷⁸⁹⁰]|[+\-−]?\d+(?:\.\d+)?[a-zA-Z](?:[²³⁴⁵^]|\b)|\d+(?:\.\d+)?\s*(?:[²³⁴⁵⁶⁷⁸⁹⁰]|\/\s*\d|\(|%|[×÷=+−≤≥≈-]\s*[\da-zA-Z])|\(\s*[A-Za-z]\s*,\s*[A-Za-z]\s*\)|\(\s*[A-Za-z0-9][^)]{0,40}\)\s*(?:[²³⁴⁵⁶⁷⁸⁹⁰]|\^\s*(?:\d|\{))|\(\s*[-−]?\d+(?:\.\d+)?\s*,\s*[-−]?\d+(?:\.\d+)?\s*\)|√\s*[\d(]|[a-zA-Z]\s*\/\s*[a-zA-Z\d])/u;
 const wordPattern=/^[A-Za-z]+/;
-const numberPattern=/^(?:\d+(?:\.\d*)?|\.\d+)/;
+const numberPattern=/^(?:\d+(?:\.\d+)?|\.\d+)/;
 const operatorChars=new Set('+-−×÷=≤≥<>≈≠±*/^_%,:|πΔ∞√²³⁰¹⁴⁵⁶⁷⁸⁹⁻⁺');
 const skipSelector=[
   'math','svg','script','style','pre','code','textarea','input','select','option',
@@ -46,7 +46,8 @@ function readMathRun(text,index){
       const spaces=rest.match(/^\s+/)[0],next=rest.slice(spaces.length);
       if(!next||/^[.;!?]/.test(next))break;
       const word=next.match(wordPattern);
-      if(word&&(previousType!=='operator'&&previousType!=='open'||
+      if(word&&(previousType!=='operator'&&previousType!=='open'&&
+        !(previousType==='comma'&&depth>0)||
         stopWords.has(word[0].toLowerCase())||
         (word[0].length>3||![...word[0]].every(c=>mathAlphabet.has(c)))))break;
       pos+=spaces.length;continue;
