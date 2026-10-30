@@ -1381,6 +1381,55 @@ app.addEventListener('click',ev=>{
   }
 });
 app.addEventListener('change',ev=>{
+  if(ev.target.matches('input[data-reasoning-notebook-evidence]')&&state.route?.chapterId==='reasoning'){
+    const session=reasoningSession(),current=reasoningEntry(session);
+    if(!current||session.complete||current.response.rating)return;
+    if(ev.target.checked&&!taskHasNotebook('reasoning',current.task.id)){
+      ev.target.checked=false;
+      announce('Add your argument or mathematical working to the notebook before confirming it.');
+      return;
+    }
+    session.entries[current.task.id]={...current.response,notebookConfirmed:ev.target.checked};
+    rerender();
+    document.querySelector('input[data-reasoning-notebook-evidence]')?.focus({preventScroll:true});
+    announce(ev.target.checked?'Notebook recorded as your written argument for self-review.':
+      'Notebook evidence confirmation cleared.');
+    return;
+  }
+  if(ev.target.matches('input[data-ps-notebook-evidence]')&&state.route?.chapterId==='problemSolving'){
+    const session=problemSession(),current=currentProblem(session),
+      kind=ev.target.dataset.psNotebookEvidence;
+    if(!current||session.complete||current.response.rating||
+      !['plan','working'].includes(kind))return;
+    if(ev.target.checked&&!taskHasNotebook('problemSolving',current.task.id)){
+      ev.target.checked=false;
+      announce('Record your strategy or working in the notebook before confirming this option.');
+      return;
+    }
+    const field=kind==='plan'?'notebookPlan':'notebookWorking';
+    session.entries[current.task.id]={...current.response,[field]:ev.target.checked};
+    rerender();
+    document.querySelector('input[data-ps-notebook-evidence="'+kind+'"]')?.focus({preventScroll:true});
+    announce(kind+' notebook evidence '+(ev.target.checked?'confirmed.':'cleared.'));
+    return;
+  }
+  if(ev.target.matches('input[data-mdl-notebook-evidence]')&&state.route?.chapterId==='modelling'){
+    const session=modellingSession(),current=currentModelling(session);
+    if(!current||session.complete||session.stage>=4||current.entry.rating)return;
+    const id=ev.target.dataset.mdlNotebookEvidence;
+    if(id!==MODEL_PHASE_IDS[session.stage])return;
+    if(ev.target.checked&&!taskHasNotebook('modelling',current.task.id)){
+      ev.target.checked=false;
+      announce('Record your work in the modelling notebook before confirming this stage.');
+      return;
+    }
+    session.entries[current.task.id]={...current.entry,
+      notebookStages:{...current.entry.notebookStages,[id]:ev.target.checked}};
+    rerender();
+    document.querySelector('input[data-mdl-notebook-evidence="'+id+'"]')?.focus({preventScroll:true});
+    announce(id+' stage notebook evidence '+(ev.target.checked?'confirmed.':'cleared.'));
+    return;
+  }
   if(ev.target.matches('input[data-mdl-check]')&&state.route?.chapterId==='modelling'){
     const session=modellingSession(),current=currentModelling(session);
     if(!current||session.stage!==4||!current.entry.compared||current.entry.rating)return;
