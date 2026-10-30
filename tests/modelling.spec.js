@@ -1,5 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {MODELLING_CHAPTERS} from '../src/modelling-content.js';
+import {writeWorking,notebookContains,notebookEmpty,confirmStage,openNotebook} from './notebook-helpers.js';
 const phases=['Formulate','Calculate','Interpret','Evaluate'];
 const texts={
   formulate:'The input and output variables are defined, and the domain and assumptions are explicitly stated.',
@@ -12,10 +13,14 @@ const tasks=(topic,level,page)=>MODELLING_CHAPTERS[topic]
 async function open(page,topic='quadratics',level='level-1',pageId){
   await page.goto('/#/'+topic+'/modelling/'+level+(pageId?'/'+pageId:''));
 }
+async function answerStage(page,text){
+  await writeWorking(page,text);
+  await confirmStage(page);
+}
 async function advance(page,fill=true){
   for(let i=0;i<4;i++){
     await expect(page.locator('.mdl-stage-heading')).toContainText(phases[i]);
-    if(fill)await page.locator('#mdl-answer').fill(texts[phases[i].toLowerCase()]);
+    if(fill)await answerStage(page,texts[phases[i].toLowerCase()]);
     await page.getByRole('button',{name:i===3?'Review the whole model':'Continue to '+phases[i+1]}).click();
   }
   await expect(page.locator('.mdl-comparison')).toBeVisible();
@@ -56,26 +61,26 @@ test('the staged model starts with Formulate and hides all model answers',async(
   await expect(page.locator('.mdl-hint')).toHaveCount(0);
   await expect(page.locator('.mdl-example')).toHaveCount(0);
   await expect(page.locator('.mdl-comparison')).toHaveCount(0);
-  await expect(page.locator('#mdl-answer')).toBeVisible();
+  await expect(page.locator('details[data-working-notebook]')).toBeVisible();
 });
 test('nudge and stage comparison preserve writing and correctly record support',async({page})=>{
   await open(page,'sampling');
   const task=tasks('sampling','level-1','population-estimates')[0];
-  await page.locator('#mdl-answer').fill(texts.formulate);
+  await answerStage(page,texts.formulate);
   await page.getByRole('button',{name:'Need a modelling nudge?'}).click();
   await expect(page.locator('.mdl-hint')).toContainText(task.phases[0].nudge);
   await page.getByRole('button',{name:'Compare this stage'}).click();
   await expect(page.locator('.mdl-example')).toContainText(task.phases[0].model);
-  await expect(page.locator('#mdl-answer')).toHaveValue(texts.formulate);
+  await notebookContains(page,texts.formulate);
   await page.getByRole('button',{name:'Hide nudge'}).click();
   await page.getByRole('button',{name:'Hide worked stage'}).click();
   await page.getByRole('button',{name:'Continue to Calculate'}).click();
   await expect(page.locator('.mdl-stage-heading')).toContainText('Calculate');
   await page.getByRole('button',{name:'Previous stage'}).click();
-  await expect(page.locator('#mdl-answer')).toHaveValue(texts.formulate);
+  await notebookContains(page,texts.formulate);
   await page.getByRole('button',{name:'Continue to Calculate'}).click();
   for(let i=1;i<4;i++){
-    await page.locator('#mdl-answer').fill(texts[phases[i].toLowerCase()]);
+    await answerStage(page,texts[phases[i].toLowerCase()]);
     await page.getByRole('button',{name:i===3?'Review the whole model':'Continue to '+phases[i+1]}).click();
   }
   await allChecks(page);
@@ -130,31 +135,33 @@ test('review comparison allows returning to a stage and preserving the draft',as
   await open(page);
   await advance(page,false);
   await page.locator('.mdl-phases button[data-phase="0"]').click();
-  await page.locator('#mdl-answer').fill('This is a proposed model with explicit variables, domain and assumptions.');
+  await answerStage(page,'This is a proposed model with explicit variables, domain and assumptions.');
   await page.getByRole('button',{name:'Return to comparison'}).click();
-  await expect(page.locator('.mdl-compare-own').first()).toContainText('This is a proposed model');
+  await expect(page.locator('.mdl-compare-own').first()).toContainText('working notebook');
+  await notebookContains(page,'This is a proposed model');
 });
 test('unfinished scenario changes require confirmation and can be cancelled',async({page})=>{
   await open(page,'sampling','level-2');
-  await page.locator('#mdl-answer').fill('My initial modelling assumptions must not disappear without confirmation.');
+  await answerStage(page,'My initial modelling assumptions must not disappear without confirmation.');
   await page.getByRole('button',{name:'Revisit weaker scenarios'}).click();
-  await expect(page.locator('.mdl-confirm')).toContainText('Unsaved written modelling decisions will be lost');
+  await expect(page.locator('.mdl-confirm')).toContainText('investigation notebook is saved');
   await page.getByRole('button',{name:'Keep writing'}).click();
-  await expect(page.locator('#mdl-answer')).toContainText('initial modelling assumptions');
+  await notebookContains(page,'initial modelling assumptions');
   await page.getByRole('button',{name:'Revisit weaker scenarios'}).click();
   await page.getByRole('button',{name:'Replace scenario'}).click();
-  await expect(page.locator('#mdl-answer')).toHaveValue('');
+  await notebookContains(page,'initial modelling assumptions');
+  await expect(page.locator('input[data-mdl-notebook-evidence]')).not.toBeChecked();
   await expect(page.locator('.mdl-selection [data-selection="focus"]')).toHaveAttribute('aria-pressed','true');
 });
-test('stage drafts survive internal book page turns but are never stored locally',async({page})=>{
+test('stage notebooks survive internal book page turns and are saved locally',async({page})=>{
   await open(page,'quadratics','level-2');
-  await page.locator('#mdl-answer').fill('I have started modelling with a physical domain and stated assumptions.');
+  await writeWorking(page,'I have started modelling with a physical domain and stated assumptions.');
   await page.getByRole('link',{name:'Next page'}).click();
-  await expect(page.locator('#mdl-answer')).toHaveValue('');
+  await notebookEmpty(page);
   await page.getByRole('link',{name:'Previous page'}).click();
-  await expect(page.locator('#mdl-answer')).toContainText('physical domain');
+  await notebookContains(page,'physical domain');
   const storage=await page.evaluate(()=>JSON.stringify(localStorage));
-  expect(storage).not.toContain('physical domain');
+  expect(storage).toContain('physical domain');
 });
 test('completed scenarios replay weaker tasks or show an informative empty review state',async({page})=>{
   await open(page,'sampling');
@@ -172,16 +179,16 @@ test('completed scenarios replay weaker tasks or show an informative empty revie
   await expect(page.locator('.mdl-scenario')).toHaveText(tasks('sampling','level-1','population-estimates')[1].scenario);
   await expect(page.locator('.page-navigation__count')).toHaveText('Page 1 of 2');
 });
-test('review metadata survives refresh but free-text drafting does not',async({page})=>{
+test('review metadata remains separate from notebook content across refresh',async({page})=>{
   await open(page,'sampling','level-4');
-  await page.locator('#mdl-answer').fill('<script>window.unsafe=true</script> I am defining the model.');
+  await writeWorking(page,'<script>window.unsafe=true</script> I am defining the model.');
   await expect(page.locator('.mdl-workspace script')).toHaveCount(0);
   await advance(page,false);
   await page.getByRole('button',{name:'Revisit this model'}).click();
   const stored=await page.evaluate(()=>localStorage.getItem('maths-notebook-pass1a:modelling:sampling'));
   expect(stored).not.toContain('<script>');
   await page.reload();
-  await expect(page.locator('#mdl-answer')).toHaveValue('');
+  await notebookContains(page,'I am defining the model.');
   await expect(page.locator('.mdl-pulse')).toContainText('to revisit');
   await open(page,'quadratics','level-4');
   await expect(page.locator('.mdl-pulse')).toContainText('4');
@@ -189,7 +196,9 @@ test('review metadata survives refresh but free-text drafting does not',async({p
 test('full workflow is operable by keyboard with reduced-motion preferences',async({page})=>{
   await page.emulateMedia({reducedMotion:'reduce'});
   await open(page);
-  await page.locator('#mdl-answer').focus();
+  const book=await openNotebook(page);
+  await book.locator('[data-book-action="add-text"]').click();
+  await page.locator('[data-book-kind="text"]').last().focus();
   await page.keyboard.type(texts.formulate);
   await page.getByRole('button',{name:'Need a modelling nudge?'}).focus();
   await page.keyboard.press('Enter');

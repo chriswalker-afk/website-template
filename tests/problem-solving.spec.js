@@ -1,5 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {PROBLEM_SOLVING_CHAPTERS} from '../src/problem-solving-content.js';
+import {writeWorking,notebookContains,notebookEmpty,confirmProblem,openNotebook} from './notebook-helpers.js';
 const plan='The known conditions suggest using a suitable form, then substituting to find an unknown.';
 const working='I set up the expression, solved for the remaining values, and checked the original conditions.';
 const tasks=(topic,level,pageId)=>PROBLEM_SOLVING_CHAPTERS[topic]
@@ -8,8 +9,8 @@ async function open(page,topic='quadratics',level='level-1',pageId=null){
   await page.goto('/#/'+topic+'/problemSolving/'+level+(pageId?'/'+pageId:''));
 }
 async function inputAttempt(page){
-  await page.locator('#ps-plan').fill(plan);
-  await page.locator('#ps-work').fill(working);
+  await writeWorking(page,plan+'\n'+working);
+  await confirmProblem(page);
 }
 async function revealAll(page,problem){
   for(let i=0;i<problem.steps.length;i++)
@@ -51,14 +52,14 @@ test('guided start, strategy feedback and staged hints preserve planning notes',
   await expect(page.locator('.ps-strategy-options button')).toHaveCount(2);
   await page.locator('button[data-action="ps-choice"][data-choice="s2"]').click();
   await expect(page.locator('.ps-strategy-feedback')).toHaveText(first.options[1].feedback);
-  await expect(page.locator('#ps-plan')).toHaveValue(plan);
-  await expect(page.locator('#ps-work')).toHaveValue(working);
+  await notebookContains(page,plan);
+  await notebookContains(page,working);
   await page.getByRole('button',{name:'Get a nudge'}).click();
   await expect(page.locator('.ps-hints')).toContainText(first.hints[0]);
   await page.getByRole('button',{name:'Get a stronger hint'}).click();
   await expect(page.locator('.ps-hints p')).toHaveCount(2);
   await expect(page.locator('.ps-hints')).toContainText(first.hints[1]);
-  await expect(page.locator('#ps-work')).toHaveValue(working);
+  await notebookContains(page,working);
   await expect(page.getByRole('button',{name:'Both hints shown'})).toBeDisabled();
   await revealAll(page,first);
   await checkAll(page);
@@ -131,7 +132,7 @@ test('full independent work, step comparison and three checks allow self-rating 
   await expect(page.getByRole('button',{name:'Solved independently'})).toBeEnabled();
   await page.getByRole('button',{name:'Solved independently'}).click();
   await expect(page.locator('.ps-status')).toContainText('Solved independently (self-rated)');
-  await expect(page.locator('#ps-plan')).toBeDisabled();
+  await expect(page.locator('input[data-ps-notebook-evidence="plan"]')).toBeDisabled();
   await page.getByRole('button',{name:'Next problem'}).click();
   await expect(page.locator('.ps-meta')).toContainText('Problem 2 of 2');
   await expect(page.locator('.ps-pulse')).toContainText('self-rated independent');
@@ -145,22 +146,24 @@ test('strategy-free higher-level problems begin without an automatic technique p
     await expect(page.locator('.ps-strategy-options')).toHaveCount(0);
     await expect(page.locator('.ps-hints')).toHaveCount(0);
     await expect(page.locator('.ps-worked')).toHaveCount(0);
-    await expect(page.locator('#ps-plan')).toBeVisible();
-    await expect(page.locator('#ps-work')).toBeVisible();
+    await expect(page.locator('details[data-working-notebook]')).toBeVisible();
+    await expect(page.locator('details[data-working-notebook]')).toBeVisible();
   }
 });
 test('replacing an unfinished selection requires confirmation and can be cancelled',async({page})=>{
   await open(page,'sampling','level-2');
   const first=tasks('sampling','level-2','multi-strata')[0];
-  await page.locator('#ps-plan').fill('My original plan will be kept if I cancel the warning.');
+  await writeWorking(page,'My original plan will be kept if I cancel the warning.');
+  await page.locator('input[data-ps-notebook-evidence="plan"]').check();
   await page.getByRole('button',{name:'Revisit weaker problems'}).click();
-  await expect(page.locator('.ps-confirm')).toContainText('Unsaved plans and working will be lost');
+  await expect(page.locator('.ps-confirm')).toContainText('Notebook pages are saved');
   await page.getByRole('button',{name:'Keep my work'}).click();
-  await expect(page.locator('#ps-plan')).toHaveValue('My original plan will be kept if I cancel the warning.');
+  await notebookContains(page,'My original plan will be kept if I cancel the warning.');
   await expect(page.locator('.ps-prompt')).toHaveText(first.prompt);
   await page.getByRole('button',{name:'Revisit weaker problems'}).click();
   await page.getByRole('button',{name:'Replace practice'}).click();
-  await expect(page.locator('#ps-plan')).toHaveValue('');
+  await notebookContains(page,'My original plan will be kept if I cancel the warning.');
+  await expect(page.locator('input[data-ps-notebook-evidence="plan"]')).not.toBeChecked();
   await expect(page.locator('.ps-selection button[data-mode="focus"]')).toHaveAttribute('aria-pressed','true');
   await expect(page.locator('.ps-meta')).toContainText('Problem 1 of 2');
 });
@@ -205,19 +208,17 @@ test('all independently completed problems have a helpful empty focus state',asy
 });
 test('draft strategy and working survive changing internal book pages',async({page})=>{
   await open(page,'quadratics','level-1');
-  await page.locator('#ps-plan').fill('Use factorised form because both roots are given.');
-  await page.locator('#ps-work').fill('I begin with y = a(x − 2)(x − 5), then use the y-intercept to find a.');
+  await writeWorking(page,'Use factorised form because both roots are given.\nI begin with y = a(x − 2)(x − 5), then use the y-intercept to find a.');
   await page.getByRole('link',{name:'Next page'}).click();
-  await expect(page.locator('#ps-plan')).toHaveValue('');
+  await notebookEmpty(page);
   await page.getByRole('link',{name:'Previous page'}).click();
-  await expect(page.locator('#ps-plan')).toHaveValue('Use factorised form because both roots are given.');
-  await expect(page.locator('#ps-work')).toContainText('a(x − 2)(x − 5)');
+  await notebookContains(page,'Use factorised form because both roots are given.');
+  await notebookContains(page,'a(x − 2)(x − 5)');
   await expect(page.locator('.side-tab[aria-current="page"]')).toContainText('Level 1');
 });
-test('progress survives reload, does not retain working and is isolated across topics and pages',async({page})=>{
+test('progress and locally saved notebooks remain separate across topics and pages',async({page})=>{
   await open(page,'sampling','level-1');
-  await page.locator('#ps-plan').fill('<script>window.unsafe=true</script> Use the correct fraction.');
-  await page.locator('#ps-work').fill('Write the complete calculations and use evidence from the question.');
+  await writeWorking(page,'<script>window.unsafe=true</script> Use the correct fraction.\nWrite the complete calculations and use evidence from the question.');
   await expect(page.locator('.ps-workspace script')).toHaveCount(0);
   await revealAll(page,tasks('sampling','level-1','allocations')[0]);
   await page.getByRole('button',{name:'Retry this problem'}).click();
@@ -225,7 +226,7 @@ test('progress survives reload, does not retain working and is isolated across t
   expect(saved).not.toContain('<script>');
   expect(saved).not.toContain('complete calculations');
   await page.reload();
-  await expect(page.locator('#ps-plan')).toHaveValue('');
+  await notebookContains(page,'Use the correct fraction.');
   await expect(page.locator('.ps-pulse')).toContainText('for retry');
   await open(page,'quadratics','level-1');
   await expect(page.locator('.ps-pulse')).toContainText('0');
@@ -235,10 +236,11 @@ test('progress survives reload, does not retain working and is isolated across t
 test('keyboard navigation works without artificial grading or timed gates',async({page})=>{
   await page.emulateMedia({reducedMotion:'reduce'});
   await open(page,'quadratics','level-1');
-  await page.locator('#ps-plan').focus();
-  await page.keyboard.type(plan);
-  await page.locator('#ps-work').focus();
-  await page.keyboard.type(working);
+  const book=await openNotebook(page);
+  await book.locator('[data-book-action="add-text"]').click();
+  await page.locator('[data-book-kind="text"]').last().focus();
+  await page.keyboard.type(plan+'\n'+working);
+  await confirmProblem(page);
   await page.getByRole('button',{name:'Reveal first worked step'}).focus();
   await page.keyboard.press('Enter');
   await expect(page.locator('.ps-worked li')).toHaveCount(1);

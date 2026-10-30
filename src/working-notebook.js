@@ -2,24 +2,27 @@
 import {escapeHTML as e} from './logic.js';
 import {loadMathLive,MATH_SYMBOLS} from './math-input.js';
 import {DRAW_WIDTH,DRAW_HEIGHT,MAX_NOTEBOOK_PAGES,MAX_NOTEBOOK_BLOCKS,
+  hasWorkingContent,
   blankWorkingNotebook,workingStorageKey,hydrateWorkingNotebook,
   editWorkingNotebook,findInkStroke,inkSVG,inkStrokePath,exportWorkingHTML}
   from './working-notebook-model.js';
 
 const openScopes=new Set();
+const closedScopes=new Set();
 const controllers=new Map();
 const item=(value,label,selected)=>'<option value="'+value+'"'+
   (value===selected?' selected':'')+'>'+label+'</option>';
 const actionButton=(name,label,disabled=false)=>'<button type="button" data-book-action="'+name+
   '"'+(disabled?' disabled':'')+'>'+label+'</button>';
 
-export function workingNotebookMarkup({scope,label='Working notebook'}={}){
+export function workingNotebookMarkup({scope,label='Working notebook',guidance='',initialOpen=false}={}){
   workingStorageKey(scope);
   return '<details class="working-notebook" data-working-notebook data-scope="'+e(scope)+
-    '" data-label="'+e(label)+'"'+(openScopes.has(scope)?' open':'')+'>'+
+    '" data-label="'+e(label)+'"'+(openScopes.has(scope)||(initialOpen&&!closedScopes.has(scope))?' open':'')+'>'+
     '<summary><span class="working-notebook__summary-title">Working notebook</span>'+
       '<span class="working-notebook__summary-note">Type maths, draw, or combine both · saved on this device</span>'+
-    '</summary><div class="working-notebook__mount"></div></details>';
+    '</summary>'+(guidance?'<p class="working-notebook__guidance">'+e(guidance)+'</p>':'')+
+    '<div class="working-notebook__mount"></div></details>';
 }
 function storeFor(scope){
   if(controllers.has(scope))return controllers.get(scope);
@@ -30,6 +33,9 @@ function storeFor(scope){
     saveOk:true,confirmClear:false,expanded:false,activeMathId:null};
   controllers.set(scope,entry);
   return entry;
+}
+export function hasSavedWorking(scope){
+  return hasWorkingContent(storeFor(scope).book);
 }
 function save(scope,entry){
   try{
@@ -298,24 +304,38 @@ function connectControls(host,scope,entry){
   host._bookUpdate=updateBlock;
 }
 function enhanceMathBlocks(host,scope,entry){
+  // A notebook may open automatically in extended-response modes. Avoid
+  // fetching the large visual editor until a maths line is actually used.
+  // The source textarea remains available immediately and works offline.
   for(const source of host.querySelectorAll('[data-book-kind="math"]')){
     const wrapper=source.parentElement,id=source.dataset.bookValue;
-    loadMathLive().then(MathfieldElement=>{
-      if(!source.isConnected||!wrapper.isConnected||wrapper.querySelector('math-field'))return;
-      const field=new MathfieldElement();
-      field.className='working-book__math-field';
-      field.setAttribute('aria-label','Mathematical working');
-      field.value=source.value;
-      field.mathVirtualKeyboardPolicy='auto';
-      field.addEventListener('focus',()=>{entry.activeMathId=id;});
-      field.addEventListener('input',()=>{
-        source.value=field.getValue('latex');
-        if(source.value.length<=1200)host._bookUpdate?.(id,source.value);
+    let requested=false;
+    function activate(){
+      if(requested||!source.isConnected)return;
+      requested=true;
+      loadMathLive().then(MathfieldElement=>{
+        if(!source.isConnected||!wrapper.isConnected||wrapper.querySelector('math-field'))return;
+        const wasFocused=document.activeElement===source;
+        const field=new MathfieldElement();
+        field.className='working-book__math-field';
+        field.setAttribute('aria-label','Mathematical working');
+        field.value=source.value;
+        field.mathVirtualKeyboardPolicy='auto';
+        field.addEventListener('focus',()=>{entry.activeMathId=id;});
+        field.addEventListener('input',()=>{
+          source.value=field.getValue('latex');
+          if(source.value.length<=1200)host._bookUpdate?.(id,source.value);
+        });
+        field.addEventListener('blur',()=>{entry.editing=null;});
+        wrapper.append(field);
+        wrapper.classList.add('working-book__math-wrap--ready');
+        if(wasFocused)field.focus();
+      }).catch(()=>{
+        // Keep the accessible LaTeX source field editable if offline.
       });
-      field.addEventListener('blur',()=>{entry.editing=null;});
-      wrapper.append(field);
-      wrapper.classList.add('working-book__math-wrap--ready');
-    }).catch(()=>{/* Keep the fully editable LaTeX fallback visible. */});
+    }
+    source.addEventListener('focus',activate,{once:true});
+    wrapper.addEventListener('pointerenter',activate,{once:true});
   }
 }
 function connectDrawing(host,scope,entry){
@@ -379,9 +399,11 @@ export function mountWorkingNotebooks(root){
       if(!details.isConnected)return;
       if(details.open){
         openScopes.add(scope);
+        closedScopes.delete(scope);
         renderWorkspace(host,scope,storeFor(scope));
       }else{
         openScopes.delete(scope);
+        closedScopes.add(scope);
         if(document.body.classList.contains('working-book-expanded'))
           document.body.classList.remove('working-book-expanded');
       }

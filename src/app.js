@@ -3,7 +3,10 @@ import {buildFluencySet,checkFluencyAnswer,PRACTICE_LENGTHS} from './fluency-eng
 import {emptyFluencyProgress,hydrateFluencyProgress,saveFluencyRound} from './fluency-progress.js';
 import {renderFluencyPage,roundScores} from './fluency-ui.js';
 import {enhanceMathInputs,latexToFluencyText} from './math-input.js';
-import {mountWorkingNotebooks} from './working-notebook.js';
+import {mountWorkingNotebooks,hasSavedWorking} from './working-notebook.js';
+import {workingScope} from './working-notebook-integration.js';
+import {reasoningAttempt,effectiveProblemAttempt,effectiveModellingAttempt}
+  from './working-notebook-evidence.js';
 import {renderReasoningPage} from './reasoning-ui.js';
 import {renderProblemSolvingPage} from './problem-solving-ui.js';
 import {renderModellingPage} from './modelling-ui.js';
@@ -56,6 +59,19 @@ const state={
   modellingSessions:{},modellingProgress:{}
 };
 let lastTopic=null;
+function taskHasNotebook(mode,id){
+  const route=state.route;
+  if(!route||!id)return false;
+  return hasSavedWorking(workingScope(route.topicId,mode,route.sectionId,route.pageId,id));
+}
+function problemWithNotebook(current){
+  return effectiveProblemAttempt(current.response,
+    taskHasNotebook('problemSolving',current.task.id));
+}
+function modellingWithNotebook(current){
+  return effectiveModellingAttempt(current.entry,
+    taskHasNotebook('modelling',current.task.id));
+}
 
 function memoryFor(topic){
   if(!state.memory[topic.id])
@@ -717,7 +733,8 @@ app.addEventListener('click',ev=>{
     session.entries[current.task.id]={...current.entry,
       examples:{...current.entry.examples,[id]:open},
       modelFirst:Boolean(current.entry.modelFirst||
-        (open&&current.entry.drafts[id].trim().length<20))};
+        (open&&!((current.entry.drafts[id]?.trim().length||0)>=20||
+          modellingWithNotebook(current).notebookStages[id])))};
     rerender();
     document.querySelector('button[data-action="mdl-example"]')?.focus({preventScroll:true});
     announce(open?'Worked modelling stage shown.':'Worked modelling stage hidden.');
@@ -729,11 +746,11 @@ app.addEventListener('click',ev=>{
       if(action==='mdl-review'&&!current.entry.compared)return;
       session.stage=4;
       session.entries[current.task.id]={...current.entry,compared:true,
-        modelFirst:Boolean(current.entry.modelFirst||!attemptedModelling(current.entry))};
+        modelFirst:Boolean(current.entry.modelFirst||!attemptedModelling(modellingWithNotebook(current)))};
     }else session.stage=Math.min(4,session.stage+1);
     session.maxStage=Math.max(session.maxStage,session.stage);
     rerender();
-    document.querySelector(session.stage===4?'input[data-mdl-check="0"]':'#mdl-answer')
+    document.querySelector(session.stage===4?'input[data-mdl-check="0"]':'details[data-working-notebook] > summary')
       ?.focus({preventScroll:true});
     announce(session.stage===4?'The model comparison and review are shown.':
       MODELLING_PHASES[session.stage][1]+' stage.');
@@ -742,13 +759,15 @@ app.addEventListener('click',ev=>{
     if(!current||session.complete||current.entry.rating||!Number.isInteger(index)||
       index<0||index>=4||index>session.maxStage)return;
     session.stage=index;rerender();
-    document.querySelector('#mdl-answer')?.focus({preventScroll:true});
+    document.querySelector('details[data-working-notebook] > summary')?.focus({preventScroll:true});
     announce(MODELLING_PHASES[index][1]+' stage selected.');
   }else if(action==='mdl-rate'){
     const session=modellingSession(),current=currentModelling(session),rating=button.dataset.rating;
-    if(!current||session.complete||session.stage!==4||!canSelfRateModel(current.entry,rating))return;
+    if(!current||session.complete||session.stage!==4)return;
+    const response=modellingWithNotebook(current);
+    if(!canSelfRateModel(response,rating))return;
     try{persistModellingProgress(topic,saveModelReview(modellingProgressFor(topic),
-      topic.id,state.route.sectionId,state.route.pageId,current.task.id,current.entry,rating));}
+      topic.id,state.route.sectionId,state.route.pageId,current.task.id,response,rating));}
     catch(error){announce(error instanceof Error?error.message:'Modelling review not saved.');return;}
     session.entries[current.task.id]={...current.entry,rating};
     rerender();
@@ -763,7 +782,7 @@ app.addEventListener('click',ev=>{
       announce('This modelling page is reviewed.');
     }else{
       session.index++;session.stage=0;session.maxStage=0;
-      rerender();document.querySelector('#mdl-answer')?.focus({preventScroll:true});
+      rerender();document.querySelector('details[data-working-notebook] > summary')?.focus({preventScroll:true});
       announce('Next modelling scenario.');
     }
   }else if(action==='mdl-selection'){
@@ -771,7 +790,7 @@ app.addEventListener('click',ev=>{
     if(!session||!['all','focus'].includes(selection)||session.selection===selection)return;
     const current=currentModelling(session),entry=current?.entry;
     const unfinished=entry&&!entry.rating&&(MODEL_PHASE_IDS.some(id=>
-      entry.drafts[id].trim()||entry.examples[id]||entry.hints[id])||session.maxStage>0);
+      entry.drafts[id].trim()||entry.examples[id]||entry.hints[id]||entry.notebookStages?.[id])||session.maxStage>0);
     if(unfinished){
       session.confirmSwitch=true;session.pendingSelection=selection;
       rerender();document.querySelector('button[data-action="mdl-cancel"]')?.focus({preventScroll:true});
@@ -785,7 +804,7 @@ app.addEventListener('click',ev=>{
   }else if(action==='mdl-cancel'){
     const session=modellingSession();if(!session)return;
     session.confirmSwitch=false;session.pendingSelection=null;
-    rerender();document.querySelector('#mdl-answer')?.focus({preventScroll:true});
+    rerender();document.querySelector('details[data-working-notebook] > summary')?.focus({preventScroll:true});
     announce('Your modelling work has been preserved.');
   }else if(action==='mdl-confirm'){
     const session=modellingSession();
@@ -798,7 +817,7 @@ app.addEventListener('click',ev=>{
     const session=modellingSession(),selected=button.dataset.selection;
     if(!session?.complete||!['all','focus'].includes(selected))return;
     selectModellingSet(selected);rerender();
-    document.querySelector('#mdl-answer,button[data-action="mdl-selection"]')
+    document.querySelector('details[data-working-notebook] > summary,button[data-action="mdl-selection"]')
       ?.focus({preventScroll:true});
     announce('Modelling practice restarted.');
   }else if(action==='ps-strategies'){
@@ -835,7 +854,7 @@ app.addEventListener('click',ev=>{
     const step=current.response.solutionStep+1;
     session.entries[current.task.id]={...current.response,solutionStep:step,
       modelFirst:Boolean(current.response.modelFirst||
-        (current.response.solutionStep===0&&!attemptedProblem(current.response))),
+        (current.response.solutionStep===0&&!attemptedProblem(problemWithNotebook(current)))),
       modelComplete:step===current.task.steps.length};
     rerender();
     document.querySelector(step===current.task.steps.length?
@@ -843,11 +862,12 @@ app.addEventListener('click',ev=>{
     announce('Worked solution step '+step+' of '+current.task.steps.length+' shown.');
   }else if(action==='ps-rate'){
     const session=problemSession(),current=currentProblem(session),rating=button.dataset.rating;
-    if(!current||session.complete||current.response.rating||
-      !canRateProblem(current.response,rating))return;
+    if(!current||session.complete||current.response.rating)return;
+    const response=problemWithNotebook(current);
+    if(!canRateProblem(response,rating))return;
     try{
       saveProblemProgress(topic,reviewProblem(problemProgressFor(topic),
-        topic.id,state.route.sectionId,state.route.pageId,current.task.id,current.response,rating));
+        topic.id,state.route.sectionId,state.route.pageId,current.task.id,response,rating));
     }catch(error){
       announce(error instanceof Error?error.message:'Could not save your problem review.');
       return;
@@ -867,7 +887,7 @@ app.addEventListener('click',ev=>{
     }else{
       session.index++;
       rerender();
-      document.querySelector('#ps-plan')?.focus({preventScroll:true});
+      document.querySelector('details[data-working-notebook] > summary')?.focus({preventScroll:true});
       announce('Next problem.');
     }
   }else if(action==='ps-selection'){
@@ -876,6 +896,7 @@ app.addEventListener('click',ev=>{
     const current=currentProblem(session);
     if(current&&!current.response.rating&&
       (current.response.plan.trim()||current.response.working.trim()||
+       current.response.notebookPlan||current.response.notebookWorking||
        current.response.strategy||current.response.hintCount||current.response.solutionStep)){
       session.confirmSwitch=true;session.pendingSelection=selection;
       rerender();
@@ -901,13 +922,13 @@ app.addEventListener('click',ev=>{
     if(!session)return;
     session.confirmSwitch=false;session.pendingSelection=null;
     rerender();
-    document.querySelector('#ps-plan')?.focus({preventScroll:true});
+    document.querySelector('details[data-working-notebook] > summary')?.focus({preventScroll:true});
     announce('Unfinished problem-solving work preserved.');
   }else if(action==='ps-repeat'){
     const session=problemSession(),selection=button.dataset.mode;
     if(!session?.complete||!['all','focus'].includes(selection))return;
     selectProblemSet(selection);rerender();
-    document.querySelector('#ps-plan,button[data-action="ps-selection"]')?.focus({preventScroll:true});
+    document.querySelector('details[data-working-notebook] > summary,button[data-action="ps-selection"]')?.focus({preventScroll:true});
     announce(selection==='focus'?'Revisiting problems needing support.':'Beginning the problem set again.');
   }else if(action==='reasoning-hint'){
     const session=reasoningSession(),current=reasoningEntry(session);
@@ -922,7 +943,8 @@ app.addEventListener('click',ev=>{
     if(!current||session.complete||current.response.rating)return;
     const old=current.response,show=!old.model;
     session.entries[current.task.id]={...old,model:show,
-      modelFirst:Boolean(old.modelFirst||(show&&old.draft.trim().length<20))};
+      modelFirst:Boolean(old.modelFirst||
+        (show&&!reasoningAttempt(old,taskHasNotebook('reasoning',current.task.id))))};
     rerender();
     document.querySelector('button[data-action="reasoning-model"]')?.focus({preventScroll:true});
     announce(show?'Model argument and self-review criteria shown.':'Model argument hidden.');
@@ -933,7 +955,7 @@ app.addEventListener('click',ev=>{
       !REASONING_RATINGS.includes(rating))return;
     const entry=current.response,review={
       rating,checked:entry.checks.filter(Boolean).length,
-      attempted:entry.draft.trim().length>=20,
+      attempted:reasoningAttempt(entry,taskHasNotebook('reasoning',current.task.id)),
       assisted:Boolean(entry.usedHint||entry.modelFirst),
       modelFirst:Boolean(entry.modelFirst)
     };
@@ -959,7 +981,7 @@ app.addEventListener('click',ev=>{
     }else{
       session.index++;
       rerender();
-      document.querySelector('#reasoning-answer')?.focus({preventScroll:true});
+      document.querySelector('details[data-working-notebook] > summary')?.focus({preventScroll:true});
       announce('Next reasoning prompt.');
     }
   }else if(action==='reasoning-mode'){
@@ -967,7 +989,7 @@ app.addEventListener('click',ev=>{
     if(!session||!['all','focus'].includes(selection)||session.selection===selection)return;
     const current=reasoningEntry(session);
     if(current&&!current.response.rating&&
-      (current.response.draft.trim()||current.response.model)){
+      (current.response.draft.trim()||current.response.model||current.response.notebookConfirmed)){
       session.confirmSwitch=true;
       session.pendingSelection=selection;
       rerender();
@@ -984,7 +1006,7 @@ app.addEventListener('click',ev=>{
     if(!session)return;
     session.confirmSwitch=false;session.pendingSelection=null;
     rerender();announce('Your unfinished argument was preserved.');
-    document.querySelector('#reasoning-answer')?.focus({preventScroll:true});
+    document.querySelector('details[data-working-notebook] > summary')?.focus({preventScroll:true});
   }else if(action==='reasoning-confirm-switch'){
     const session=reasoningSession();
     if(!session?.confirmSwitch||!['all','focus'].includes(session.pendingSelection))return;
@@ -998,7 +1020,7 @@ app.addEventListener('click',ev=>{
     if(!session?.complete||!['all','focus'].includes(selection))return;
     reasoningSelect(selection);rerender();
     announce(selection==='focus'?'Reviewing selected weaker arguments.':'Starting the full argument set again.');
-    document.querySelector('#reasoning-answer,button[data-action="reasoning-mode"]')
+    document.querySelector('details[data-working-notebook] > summary,button[data-action="reasoning-mode"]')
       ?.focus({preventScroll:true});
   }else if(action==='fluency-hint'){
     const session=fluencySession(),current=fluencyAnswer(session);
@@ -1359,6 +1381,55 @@ app.addEventListener('click',ev=>{
   }
 });
 app.addEventListener('change',ev=>{
+  if(ev.target.matches('input[data-reasoning-notebook-evidence]')&&state.route?.chapterId==='reasoning'){
+    const session=reasoningSession(),current=reasoningEntry(session);
+    if(!current||session.complete||current.response.rating)return;
+    if(ev.target.checked&&!taskHasNotebook('reasoning',current.task.id)){
+      ev.target.checked=false;
+      announce('Add your argument or mathematical working to the notebook before confirming it.');
+      return;
+    }
+    session.entries[current.task.id]={...current.response,notebookConfirmed:ev.target.checked};
+    rerender();
+    document.querySelector('input[data-reasoning-notebook-evidence]')?.focus({preventScroll:true});
+    announce(ev.target.checked?'Notebook recorded as your written argument for self-review.':
+      'Notebook evidence confirmation cleared.');
+    return;
+  }
+  if(ev.target.matches('input[data-ps-notebook-evidence]')&&state.route?.chapterId==='problemSolving'){
+    const session=problemSession(),current=currentProblem(session),
+      kind=ev.target.dataset.psNotebookEvidence;
+    if(!current||session.complete||current.response.rating||
+      !['plan','working'].includes(kind))return;
+    if(ev.target.checked&&!taskHasNotebook('problemSolving',current.task.id)){
+      ev.target.checked=false;
+      announce('Record your strategy or working in the notebook before confirming this option.');
+      return;
+    }
+    const field=kind==='plan'?'notebookPlan':'notebookWorking';
+    session.entries[current.task.id]={...current.response,[field]:ev.target.checked};
+    rerender();
+    document.querySelector('input[data-ps-notebook-evidence="'+kind+'"]')?.focus({preventScroll:true});
+    announce(kind+' notebook evidence '+(ev.target.checked?'confirmed.':'cleared.'));
+    return;
+  }
+  if(ev.target.matches('input[data-mdl-notebook-evidence]')&&state.route?.chapterId==='modelling'){
+    const session=modellingSession(),current=currentModelling(session);
+    if(!current||session.complete||session.stage>=4||current.entry.rating)return;
+    const id=ev.target.dataset.mdlNotebookEvidence;
+    if(id!==MODEL_PHASE_IDS[session.stage])return;
+    if(ev.target.checked&&!taskHasNotebook('modelling',current.task.id)){
+      ev.target.checked=false;
+      announce('Record your work in the modelling notebook before confirming this stage.');
+      return;
+    }
+    session.entries[current.task.id]={...current.entry,
+      notebookStages:{...current.entry.notebookStages,[id]:ev.target.checked}};
+    rerender();
+    document.querySelector('input[data-mdl-notebook-evidence="'+id+'"]')?.focus({preventScroll:true});
+    announce(id+' stage notebook evidence '+(ev.target.checked?'confirmed.':'cleared.'));
+    return;
+  }
   if(ev.target.matches('input[data-mdl-check]')&&state.route?.chapterId==='modelling'){
     const session=modellingSession(),current=currentModelling(session);
     if(!current||session.stage!==4||!current.entry.compared||current.entry.rating)return;
@@ -1429,34 +1500,10 @@ app.addEventListener('change',ev=>{
 });
 app.addEventListener('input',ev=>{
   const target=ev.target;
-  if(target.id==='mdl-answer'&&state.route?.chapterId==='modelling'){
-    const session=modellingSession(),current=currentModelling(session);
-    if(current&&!session.complete&&session.stage<4&&!current.entry.rating){
-      const id=MODEL_PHASE_IDS[session.stage];
-      session.entries[current.task.id]={...current.entry,
-        drafts:{...current.entry.drafts,[id]:target.value}};
-    }
-    return;
-  }  if((target.id==='ps-plan'||target.id==='ps-work')&&state.route?.chapterId==='problemSolving'){
-    const session=problemSession(),current=currentProblem(session);
-    if(current&&!session.complete&&!current.response.rating){
-      const field=target.id==='ps-plan'?'plan':'working';
-      session.entries[current.task.id]={...current.response,[field]:target.value};
-    }
-    return;
-  }
-  if(target.id==='reasoning-answer'&&state.route?.chapterId==='reasoning'){
-    const session=reasoningSession(),current=reasoningEntry(session);
-    if(current&&!current.response.rating&&!session.complete)
-      session.entries[current.task.id]={...current.response,draft:target.value};
-    return;
-  }
-  if((target.id==='fluency-answer'||target.id==='fluency-working')&&state.route?.chapterId==='fluency'){
+  if(target.id==='fluency-answer'&&state.route?.chapterId==='fluency'){
     const session=fluencySession(),current=fluencyAnswer(session);
-    if(current&&!session.complete){
-      const part=target.id==='fluency-answer'?'draft':'working';
-      session.answers[current.question.id]={...current.response,[part]:target.value};
-    }
+    if(current&&!session.complete)
+      session.answers[current.question.id]={...current.response,draft:target.value};
   }
   if(target.id==='cloze-answer'){state.cloze.value=target.value;state.cloze.checked=false;}
   if(target.id==='recall-answer'){state.recall.value=target.value;state.recall.checked=false;}
@@ -1465,12 +1512,6 @@ app.addEventListener('input',ev=>{
     const results=document.getElementById('review-results');
     if(results)results.innerHTML=renderReviewList(TOPICS[state.route.topicId],
       memoryFor(TOPICS[state.route.topicId]),state.review);
-  }
-  if(target.matches('textarea[data-understand-response]')){
-    const key=target.dataset.understandResponse;
-    if(key!==understandKey(state.route,'workshop'))return;
-    const prior=state.understand.workshops[key]||{};
-    state.understand.workshops[key]={...prior,response:target.value};
   }
   if(target.matches('input[data-graph]')){
     const key=target.dataset.graph,id=state.route?.pageId;

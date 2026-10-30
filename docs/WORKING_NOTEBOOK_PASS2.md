@@ -45,8 +45,8 @@ when the work matters. If storage is blocked, the UI warns the student.
 
 Scopes are stable per Fluency topic/level/page. The notebook is a *page-level
 scratchbook*, not tied to a generated question seed: changing questions
-does not delete the student's earlier pages. Quick notes retain their prior
-temporary per-question/session behaviour. A completed Fluency round retains
+does not delete the student's earlier pages. The previous unsaved quick-notes working box has been retired: the notebook is
+the one working area, while the separate final-answer field remains. A completed Fluency round retains
 the notebook so students can export after finishing.
 
 Draft state is strictly validated on restore. Excessively large, invalid,
