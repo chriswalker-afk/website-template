@@ -28,7 +28,7 @@ test('Guided shows a relevant start without revealing numerical worked steps',as
     const q=await currentQuestion(page,topic,'level-1',pageId);
     const scaffold=fluencyQuestionScaffold('level-1',q.family);
     await expect(page.locator('.fluency-level-intro')).toContainText('Guided practice');
-    await expect(page.locator('.fluency-scaffold--guided')).toContainText(scaffold.steps[0]);
+    await expectReadingContains(page.locator('.fluency-scaffold--guided'),scaffold.steps[0]);
     await expect(page.locator('.fluency-question__skill')).toHaveText(q.skill);
     await expect(page.locator('.fluency-solution')).toHaveCount(0);
     await expectReadingText(page.locator('.fluency-question__prompt'),q.prompt);
