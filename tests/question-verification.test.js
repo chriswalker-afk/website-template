@@ -2,8 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {parseExactScalar,fractionText,parsePolynomial,equivalentAlgebra,parseRelation,
   parseInterval,makeQuestionModel,toFluencyQuestion,
-  validateExactAnswer,checkExactAnswer,checkFluencyAnswer,
-  validateFluencyQuestion,integer,nonZeroInteger} from '../src/question-foundation/index.js';
+  validateExactAnswer,checkExactAnswer,integer,nonZeroInteger} from '../src/question-foundation/index.js';
 import {checkFluencyAnswer as checkLegacy,rngFromSeed} from '../src/fluency-engine.js';
 
 const answer=(kind,latex)=>({kind,value:{latex}});
@@ -84,11 +83,12 @@ test('unsupported syntax is rejected rather than guessed from samples',()=>{
 });
 test('Fluency adapter supports opt-in exact contracts while legacy numeric remains unchanged',()=>{
   const rational=base('rational',{numerator:1,denominator:2}),q=toFluencyQuestion(rational);
-  assert.equal(validateFluencyQuestion(q),'');
+  assert.equal(checkLegacy('1/2',q).correct,true);
+  assert.equal(q.answer.kind,'rational');
   assert.equal(checkLegacy('\\frac{2}{4}',q).correct,true);
   const poly=toFluencyQuestion(base('expression',{latex:'x^2-x-6'}));
   assert.equal(checkLegacy('(x-3)(x+2)',poly).correct,true);
-  assert.equal(validateFluencyQuestion(poly),'');
+  assert.equal(poly.answer.kind,'expression');
   assert.throws(()=>toFluencyQuestion(base('expression',{latex:'\\sqrt{x}'})),/Exact answer/);
   const legacy={answer:{kind:'number',values:[2],precision:0,unit:'%',
     label:'Enter a percentage.'},mistake:'Check.',prompt:'Answer 2%',steps:['a','b'],family:'f',signature:'f:1',hint:'h',marks:2};

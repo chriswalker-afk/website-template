@@ -105,6 +105,7 @@ function multiplyPoly(a,b){
 function scalePoly(a,n){return multiplyPoly(a,constant(n));}
 function polyPow(a,power){
   if(!Number.isInteger(power)||power<0||power>MAX_POWER)fail('Unsupported exponent');
+  if(power===0&&a.size===0)fail('Zero to the zero power is undefined');
   let value=constant(ONE),base=a,exponent=power;
   while(exponent){if(exponent%2)value=multiplyPoly(value,base);exponent=Math.floor(exponent/2);
     if(exponent)base=multiplyPoly(base,base);}
