@@ -151,3 +151,14 @@ button:disabled{opacity:.58;cursor:not-allowed}
 
 /* Ensure disabled and hidden preview controls are truly removed from layout. */
 [hidden]{display:none!important}
+
+/* Keep the horizontally scrolling mobile family rail inside its grid cell. */
+.qw-library,.qw-family-list,.qw-workspace,.qw-panel{min-width:0;max-width:100%}
+@media(max-width:760px){
+  .qw-library{overflow:hidden}
+  .qw-family-list{
+    display:flex;flex:none;min-width:0;max-width:100%;width:100%;
+    overflow-x:auto;overflow-y:hidden;overscroll-behavior-inline:contain;
+  }
+  .qw-family-button{flex:0 0 180px;max-width:210px}
+}
