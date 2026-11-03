@@ -55,8 +55,9 @@ const generate=rng=>{
     topicId:'gradient',familyId:'sample-rise-run',signature:run+':'+gradient,
     parameters:{run,rise,gradient},prompt:`A line rises ${rise} over a run of ${run}. Find its gradient.`,
     marks:2,answer:{kind:'number',values:[gradient]},
-    solutionSteps:[`Gradient = ${rise} / ${run} = ${gradient}.`],
-    hint:'Divide rise by run.',skill:'Gradient'
+    solutionSteps:[`Signed rise = ${rise}; run = ${run}.`, `Gradient = ${rise} / ${run} = ${gradient}.`],
+    hint:'Divide rise by run.',skill:'Gradient',
+    misconception:'Do not reverse rise and run.'
   });
   return presentQuestion(model,'fluency');
 };

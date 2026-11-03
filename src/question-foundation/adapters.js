@@ -8,6 +8,8 @@ export function toFluencyQuestion(model){
   if(!['number','ordered','unordered'].includes(answer.kind))
     throw new TypeError('This answer requires a future checker or self-review; cannot auto-mark in Fluency');
   if(model.marks>8)throw new RangeError('Legacy Fluency supports at most 8 marks');
+  if(model.solutionSteps.length<2)throw new TypeError('Legacy Fluency requires at least two worked steps');
+  if(!model.misconception)throw new TypeError('Legacy Fluency requires specific misconception feedback');
   return {
     family:model.familyId,
     signature:model.familyId+':'+model.signature,

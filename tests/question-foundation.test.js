@@ -7,7 +7,7 @@ import {fluencyFamilies} from '../src/topic-packs/gradient/fluency-families.js';
 
 const model=()=>makeQuestionModel({topicId:'gradient',familyId:'rise-run',signature:'4:2',
   parameters:{rise:4,run:2},prompt:'Find the gradient when rise is 4 and run is 2.',
-  marks:2,answer:{kind:'number',values:[2]},solutionSteps:['Gradient = 4 / 2 = 2.'],
+  marks:2,answer:{kind:'number',values:[2]},solutionSteps:['Signed rise = 4 and run = 2.','Gradient = 4 / 2 = 2.'],
   hint:'Divide rise by run.',skill:'Gradient',misconception:'Do not reverse the fraction.'});
 test('parameter helpers are reproducible and handle rational signs',()=>{
   const sample=seed=>{const rng=rngFromSeed(seed);return [
@@ -29,7 +29,7 @@ test('model contract validates and rejects incomplete questions',()=>{
 });
 test('legacy Fluency adapter produces an auto-markable question',()=>{
   const q=toFluencyQuestion(model());
-  assert.equal(validateFluencyQuestion(q),null);
+  assert.equal(validateFluencyQuestion(q),'');
   assert.equal(checkFluencyAnswer('2',q).correct,true);
   assert.equal(checkFluencyAnswer('3',q).correct,false);
   assert.equal(q.signature,'rise-run:4:2');
@@ -41,7 +41,7 @@ test('worksheet and worked-example presentations use the same source',()=>{
   const q=toWorksheetQuestion(model(),p);
   assert.equal(q.answerTex,'2');assert.equal(q.spaceMm,24);
   assert.deepEqual(presentQuestion(model(),'worksheet',p),q);
-  assert.equal(presentQuestion(model(),'worked-example').steps.length,1);
+  assert.equal(presentQuestion(model(),'worked-example').steps.length,2);
   assert.throws(()=>toWorksheetQuestion(model(),{}),/LaTeX/);
 });
 test('unsupported symbolic answers never silently become numerical marking',()=>{
