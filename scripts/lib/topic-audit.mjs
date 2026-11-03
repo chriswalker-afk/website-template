@@ -3,7 +3,8 @@ import {readdir} from 'node:fs/promises';
 import {join,resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {validateTopics} from '../../src/logic.js';
-import {validateFluencyQuestion,rngFromSeed} from '../../src/fluency-engine.js';
+import {rngFromSeed} from '../../src/fluency-engine.js';
+import {auditFluencyGenerator} from '../../src/question-foundation/audit.js';
 import {MODES} from './topic-scaffold.mjs';
 const root=resolve(import.meta.dirname,'../..');
 const SLUG=/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
@@ -111,14 +112,12 @@ export function auditTopicRecord(topic,questionBank,visuals){
   if(topic.modes?.fluency){
     for(const [family,create] of Object.entries(questionBank.fluency||{})){
       if(typeof create!=='function')continue;
-      for(const seed of [1,47,2026]){
-        try{
-          const q=create(rngFromSeed(seed));
-          const error=validateFluencyQuestion(q);
-          if(error)blockers.push('Fluency '+family+' (seed '+seed+'): '+error);
-          else if(q.family!==family)blockers.push('Fluency '+family+': generated family ID differs.');
-        }catch(error){blockers.push('Fluency '+family+' (seed '+seed+') failed: '+error.message);}
-      }
+      try{
+        const audit=auditFluencyGenerator(create,{familyId:family,count:48});
+        blockers.push(...audit.errors.map(message=>'Fluency '+family+': '+message));
+        for(const warning of audit.warnings)
+          if(warning.startsWith('Low variation'))warnings.push('Fluency '+family+': '+warning);
+      }catch(error){blockers.push('Fluency '+family+': audit failed: '+error.message);}
     }
   }
   for(const family of questionBank.worksheet||[]){

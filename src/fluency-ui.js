@@ -163,7 +163,7 @@ export function renderFluencyPage(page,topic,route,session,progress){
       scope:[topic.id,'fluency',route.sectionId,route.pageId].join(':'),
       label:'Fluency mathematical working'}):activeQuestion(session,
       [topic.id,'fluency',route.sectionId,route.pageId].join(':')))+
-    '<p class="fluency-privacy">Answers are checked numerically, with equivalent root orders and suitable fractions accepted. '+
+    '<p class="fluency-privacy">Supported numerical and exact algebraic answers are checked, while other forms may need self-review. '+
     'Completed-round summaries and notebook pages are saved separately on this device.</p>'+
     '</div>';
 }

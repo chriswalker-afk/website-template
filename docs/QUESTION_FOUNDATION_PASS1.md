@@ -16,7 +16,7 @@ solutionSteps,hint,skill,misconception,difficulty})`.
   unordered, rational, expression, equation, inequality, interval, coordinates,
   set, choice and self-review. **Only the first three can currently be automatically
   marked by the existing Fluency checker.** Other kinds are authoring contracts
-  awaiting Pass 2, not claims of verified symbolic equivalence.
+  implemented in Pass 2 for a deliberately limited set of exact forms; see Pass 2 documentation.
 - `solutionSteps` and `hint` must be reviewed; the foundation does not
   infer a proof or mathematical solution from the prompt.
 
@@ -69,8 +69,7 @@ Run `npm run check`, `npm run test:latex`, and `npm run test:browser`.
 The new Node tests cover parameter bounds/reproducibility, model validation,
 adapters, rejection of unsupported auto-marking and legacy Gradient smoke tests.
 
-**Pass 2:** add trustworthy mathematical equivalence/answer verification
-(including safe parsing, exact rational arithmetic, equivalent algebraic
-expressions and inequalities), independent generated-question property tests,
-and diagnostics that explain failures without pretending a numeric check proves
-symbolic correctness. Retain explicit self-review for open-ended responses.
+**Pass 2 is implemented:** see [Exact mathematical checking and generator audits](QUESTION_FOUNDATION_PASS2.md).
+It adds opt-in exact rational, polynomial, equation, inequality, interval, coordinate
+and finite-set answer checking, as well as wider seeded audits. Unsupported
+mathematics continues to use explicit self-review.

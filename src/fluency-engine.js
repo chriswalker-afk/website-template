@@ -2,6 +2,7 @@ import {FLUENCY_LEVELS} from './fluency-levels.js';
 import {int,fmt} from './topic-packs/builders/fluency-question.js';
 import {fluencyFamiliesFor} from './question-bank.js';
 import {TOPIC_PACKS} from './topic-packs/registry.js';
+import {isExactAnswerKind,checkExactAnswer,validateExactAnswer,exactAnswerText} from './question-foundation/verification.js';
 // Reusable, deterministic Fluency question generator and strict response verifier.
 // No DOM, network, eval, AI grading or external dependencies. Questions carry their
 // own numerical answer contract and fully authored, parameter-derived working.
@@ -76,11 +77,13 @@ function parseValues(raw,answer){
   return values.some(v=>v===null)?null:values;
 }
 export function answerText(answer){
+  if(isExactAnswerKind(answer?.kind))return exactAnswerText(answer);
   const display=x=>answer.precision?Number(x).toFixed(2):fmt(x);
   if(answer.kind==='number')return display(answer.values[0])+(answer.unit||'');
   return answer.values.map(display).join(', ');
 }
 export function checkFluencyAnswer(raw,q){
+  if(isExactAnswerKind(q?.answer?.kind))return checkExactAnswer(raw,q.answer);
   const values=parseValues(raw,q.answer),expected=q.answer.values;
   if(!values)return {correct:false,kind:'format',message:'Use the requested numerical answer format. '+q.answer.label};
   const tolerance=q.answer.precision||1e-9;
@@ -95,6 +98,7 @@ export function validateFluencyQuestion(q){
   if(!q||typeof q.prompt!=='string'||!q.prompt||!q.signature||!q.family||!q.hint||!q.mistake)return 'Missing prompt/feedback';
   if(!Number.isInteger(q.marks)||q.marks<1||q.marks>8)return 'Invalid mark total';
   if(!Array.isArray(q.steps)||q.steps.length<2||q.steps.some(s=>typeof s!=='string'||!s.trim()))return 'Incomplete working';
+  if(isExactAnswerKind(q.answer?.kind))return validateExactAnswer(q.answer);
   if(!['number','ordered','unordered'].includes(q.answer?.kind)||
     !Array.isArray(q.answer.values)||!q.answer.values.length||
     q.answer.values.some(x=>!Number.isFinite(x)))return 'Invalid numerical answer';

@@ -1,12 +1,18 @@
 import {validateQuestionModel} from './model.js';
+import {isExactAnswerKind,validateExactAnswer,exactAnswerLabel} from './verification.js';
 
-// Pass 1: retain the exact legacy interactive numeric contract; no silent symbolic grading.
+// Legacy numerical answers remain unchanged; exact types use an opt-in verified contract.
 export function toFluencyQuestion(model){
   const errors=validateQuestionModel(model);
   if(errors.length)throw new TypeError(errors.join('; '));
   const answer=model.answer;
-  if(!['number','ordered','unordered'].includes(answer.kind))
-    throw new TypeError('This answer requires a future checker or self-review; cannot auto-mark in Fluency');
+  const numeric=['number','ordered','unordered'].includes(answer.kind);
+  if(!numeric&&!isExactAnswerKind(answer.kind))
+    throw new TypeError('No automatic checker for this answer type; use teacher or self-review');
+  if(!numeric){
+    const problem=validateExactAnswer(answer);
+    if(problem)throw new TypeError(problem);
+  }
   if(model.marks>8)throw new RangeError('Legacy Fluency supports at most 8 marks');
   if(model.solutionSteps.length<2)throw new TypeError('Legacy Fluency requires at least two worked steps');
   if(!model.misconception)throw new TypeError('Legacy Fluency requires specific misconception feedback');
@@ -14,12 +20,14 @@ export function toFluencyQuestion(model){
     family:model.familyId,
     signature:model.familyId+':'+model.signature,
     prompt:model.prompt,
-    answer:{kind:answer.kind,values:[...answer.values],
+    answer:numeric?{kind:answer.kind,values:[...answer.values],
       precision:answer.precision||0,unit:answer.unit||'',
       label:answer.label||(
         answer.kind==='number'?'Enter one number.':
         answer.kind==='unordered'?'Enter the values separated by commas (either order).':
-        'Enter the values in order, separated by commas.')},
+        'Enter the values in order, separated by commas.')}:
+      {kind:answer.kind,value:answer.value,
+        label:answer.label||exactAnswerLabel(answer.kind)},
     steps:[...model.solutionSteps],hint:model.hint,marks:model.marks,
     skill:model.skill||model.familyId,mistake:model.misconception||''
   };
