@@ -165,8 +165,14 @@ class PolynomialParser{
       const op=this.peek();
       if(op==='*'||op==='/'){
         this.pos++;const other=this.unary();
+        // "1/2x" is ambiguous: insist on an explicit multiplication sign,
+        // a LaTeX fraction, or parentheses rather than guessing precedence.
+        if(op==='/'&&['num','var','(','{','frac'].includes(this.peek()))
+          fail('Ambiguous division followed by implicit multiplication');
         value=op==='*'?multiplyPoly(value,other):scalePoly(value,div(ONE,scalarPoly(other)));
       }else if(['num','var','(','{','frac'].includes(op)){
+        if(op==='num'&&this.tokens[this.pos-1]?.type==='num')
+          fail('Use an explicit multiplication sign between numbers');
         value=multiplyPoly(value,this.unary());
       }else break;
     }

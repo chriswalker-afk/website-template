@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {rngFromSeed} from '../src/fluency-engine.js';
 import {makeQuestionModel,integer,nonZeroInteger,
-  toFluencyQuestion,auditFluencyGenerator,auditQuestionModelGenerator} from '../src/question-foundation/index.js';
+  toFluencyQuestion} from '../src/question-foundation/index.js';
+import {auditFluencyGenerator,auditQuestionModelGenerator} from '../src/question-foundation/audit.js';
 import {fluencyFamilies} from '../src/topic-packs/gradient/fluency-families.js';
 
 const modelGenerator=rng=>{

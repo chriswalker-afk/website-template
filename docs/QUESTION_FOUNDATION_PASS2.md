@@ -31,7 +31,9 @@ This verifier does **not** pretend to be a general computer algebra system.
   limited set of Latin variables. The tokenizer rejects unknown commands.
 - Expressions are compared as exact polynomials. Only division by a
   **constant** is allowed; variable denominators and rational functions
-  are rejected to avoid silently ignoring excluded domains.
+  are rejected to avoid silently ignoring excluded domains. An ambiguous
+  form such as 1/2x requires parentheses, a fraction template or an
+  explicit multiplication sign.
 - Equations and inequalities are compared after subtracting their sides.
   The resulting polynomials must be equal up to a nonzero rational factor.
   This handles rearrangements and negative scaling but is deliberately
@@ -88,6 +90,8 @@ in this example because the **mathematical expression** is equivalent.
   automatically marked.
 - checkExactAnswer(): produces correct, value, format or unsupported
   feedback and rejects unsupported forms.
+- Import generator auditing helpers from src/question-foundation/audit.js
+  (separate from the runtime authoring entrypoint to avoid module cycles).
 - auditFluencyGenerator(create,{familyId,count:48,oracle}): 48 seeded
   samples by default; detects unstable generation, bad question contracts,
   reference-answer checking failures and suspiciously low variation.

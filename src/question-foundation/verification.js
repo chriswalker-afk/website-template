@@ -87,7 +87,8 @@ export function checkExactAnswer(raw,answer){
 export function exactAnswerText(answer){
   if(answer?.kind==='rational'){
     const q=rationalAnswer(answer);
-    return q.d===1n?String(q.n):String(q.n)+'/'+String(q.d);
+    return q.d===1n?'\\('+String(q.n)+'\\)':
+      '\\(\\frac{'+q.n+'}{'+q.d+'}\\)';
   }
   if(isExactAnswerKind(answer?.kind))return '\\('+expectedLatex(answer)+'\\)';
   return '';

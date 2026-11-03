@@ -25,6 +25,10 @@ test('exact fractions reduce sign and preserve decimal precision without floats'
     kind:'rational',value:{numerator:1,denominator:3}}).correct,false);
   assert.equal(checkExactAnswer('1/0',{
     kind:'rational',value:{numerator:1,denominator:2}}).kind,'format');
+  assert.equal(checkExactAnswer('1/2x',{
+    kind:'rational',value:{numerator:1,denominator:2}}).kind,'format');
+  assert.equal(checkExactAnswer('2 3',{
+    kind:'rational',value:{numerator:6,denominator:1}}).kind,'format');
 });
 test('symbolic polynomial expansion and factorisation use exact coefficients',()=>{
   const equivalent=[
