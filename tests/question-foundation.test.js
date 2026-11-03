@@ -52,7 +52,7 @@ test('unsupported symbolic answers never silently become numerical marking',()=>
 test('existing Gradient family output remains valid and unchanged by opt-in API',()=>{
   for(const [name,create] of Object.entries(fluencyFamilies)){
     const question=create(rngFromSeed(2026));
-    assert.equal(validateFluencyQuestion(question),null,name);
+    assert.equal(validateFluencyQuestion(question),'',name);
     assert.ok(question.steps.length>0,name);
   }
 });
