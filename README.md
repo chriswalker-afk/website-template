@@ -22,6 +22,25 @@ To create a *different* topic with the creator, use a fresh ID such as:
 
     npm run new-topic -- --id percentage-change --title "Percentage Change" --qualification 4MA1 --level Foundation
 
+## Teacher Question Workshop — Pass 3
+
+The new question-generation authoring studio lets teachers inspect actual Fluency and
+printable question families before publishing more topic websites. It supports reproducible
+seed previews, Developing/Secure/Stretch worksheet difficulty, exact accepted-answer
+examples, an answer-checker explorer, full worked solutions and printable LaTeX, plus a
+seeded QA dashboard with downloadable reports.
+
+    npm run author:questions -- --topic gradient
+
+Open the URL printed in the terminal (or open /authoring.html on the template hub).
+The workshop can inspect registered **draft** topics without exposing them through the
+student topic selector. It is read-only and publicly accessible, not an authenticated
+admin area or a no-code editor. All mathematical content is still authored and reviewed
+in the topic pack source; a passing QA report does not prove mathematical correctness.
+
+See **[Pass 3 — Teacher Question Workshop](docs/QUESTION_FOUNDATION_PASS3.md)**
+for the full workflow and limitations.
+
 ## Start a new maths topic
 
 **Pass 4 — New Topic Creator** now provides a one-command topic pack, an authoring-readiness audit and a draft-safe standalone preview. In a terminal, run:

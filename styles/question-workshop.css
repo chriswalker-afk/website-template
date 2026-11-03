@@ -148,3 +148,6 @@ button:disabled{opacity:.58;cursor:not-allowed}
 }
 @media(max-width:460px){.qw-variations{grid-template-columns:1fr}.qw-heading h1{font-size:33px}.qw-brand strong{font-size:10px}.qw-brand__mark{width:36px;height:36px}.qw-panel__header h2{font-size:21px}.qw-button{white-space:normal}.qw-topicbar__detail{min-width:0}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+/* Ensure disabled and hidden preview controls are truly removed from layout. */
+[hidden]{display:none!important}

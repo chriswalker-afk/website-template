@@ -1,5 +1,4 @@
 // Start the same local preview server, with a direct link to the teacher workshop.
-import {pathToFileURL} from 'node:url';
 import {resolve} from 'node:path';
 const SLUG=/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
 function parseOptions(argv){
