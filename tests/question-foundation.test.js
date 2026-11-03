@@ -44,10 +44,15 @@ test('worksheet and worked-example presentations use the same source',()=>{
   assert.equal(presentQuestion(model(),'worked-example').steps.length,2);
   assert.throws(()=>toWorksheetQuestion(model(),{}),/LaTeX/);
 });
-test('unsupported symbolic answers never silently become numerical marking',()=>{
+test('supported expressions use exact marking while unsupported kinds remain self-review',()=>{
   const q=makeQuestionModel({...model(),answer:{kind:'expression',value:{latex:'2x+1'}}});
-  assert.throws(()=>toFluencyQuestion(q),/future checker/);
+  const fluency=toFluencyQuestion(q);
+  assert.equal(validateFluencyQuestion(fluency),'');
+  assert.equal(checkFluencyAnswer('x+x+1',fluency).correct,true);
+  assert.equal(checkFluencyAnswer('2x+2',fluency).correct,false);
   assert.equal(presentQuestion(q,'worked-example').prompt,q.prompt);
+  const openEnded=makeQuestionModel({...model(),answer:{kind:'self-review'},reviewCriteria:['Explain reasoning.']});
+  assert.throws(()=>toFluencyQuestion(openEnded),/No automatic checker/);
 });
 test('existing Gradient family output remains valid and unchanged by opt-in API',()=>{
   for(const [name,create] of Object.entries(fluencyFamilies)){
