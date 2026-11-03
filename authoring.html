@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#24483e">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Question Workshop · The Maths Notebook</title>
+  <meta name="description" content="Teacher-side question-family preview and generator quality checks for the reusable maths website template.">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles/question-workshop.css">
+</head>
+<body>
+  <a href="#workshop-main" class="qw-skip">Skip to the question workshop</a>
+  <header class="qw-topbar">
+    <div class="qw-topbar__inner">
+      <a class="qw-brand" href="./index.html"><span class="qw-brand__mark">M</span>
+        <span><strong>THE MATHS NOTEBOOK</strong><small>Authoring tools</small></span>
+      </a>
+      <a class="qw-back" href="./index.html">View student website <span aria-hidden="true">↗</span></a>
+    </div>
+  </header>
+  <main class="qw-shell" id="workshop-main">
+    <section class="qw-heading" aria-labelledby="workshop-title">
+      <div>
+        <span class="qw-eyebrow">Teacher workspace · Pass 3</span>
+        <h1 id="workshop-title">Question Workshop<span class="qw-title-dot">.</span></h1>
+        <p>Inspect a question family, reproduce any seed, review the working and test accepted answers. Run repeatable checks before publishing a topic.</p>
+      </div>
+      <div class="qw-heading__note">
+        <strong>Source of truth</strong>
+        <span>Previewing the actual topic generators — not sample questions or copies.</span>
+      </div>
+    </section>
+
+    <section class="qw-topicbar" aria-label="Choose topic">
+      <div class="qw-field qw-field--grow">
+        <label for="studio-topic">Topic pack</label>
+        <select id="studio-topic"></select>
+      </div>
+      <p id="studio-topic-detail" class="qw-topicbar__detail"></p>
+      <div class="qw-topicbar__right">
+        <a id="studio-student-link" href="./index.html" class="qw-link">Open student site ↗</a>
+      </div>
+    </section>
+
+    <div class="qw-layout">
+      <aside class="qw-library" aria-label="Question-family catalogue">
+        <div class="qw-library__heading">
+          <span class="qw-eyebrow">Library</span>
+          <h2>Question families <span id="studio-family-count" class="qw-number"></span></h2>
+        </div>
+        <div class="qw-search">
+          <label for="studio-search">Find a family</label>
+          <input id="studio-search" type="search" placeholder="e.g. gradient, equation…" autocomplete="off">
+        </div>
+        <div class="qw-field">
+          <label for="studio-type">Show</label>
+          <select id="studio-type">
+            <option value="all">All question families</option>
+            <option value="fluency">Fluency generators</option>
+            <option value="worksheet">Printable families</option>
+          </select>
+        </div>
+        <div id="studio-families" class="qw-family-list" aria-live="polite"></div>
+        <div class="qw-library__footer">
+          <strong>Building a new topic?</strong>
+          <p>Create a draft with the Topic Creator, then choose it here. Draft packs stay hidden from the student hub.</p>
+          <a href="https://github.com/chriswalker-afk/website-template/blob/main/docs/QUESTION_FOUNDATION_PASS3.md" target="_blank" rel="noopener noreferrer">Authoring guide ↗</a>
+        </div>
+      </aside>
+
+      <div class="qw-workspace">
+        <section class="qw-panel qw-controls" aria-labelledby="preview-settings-title">
+          <div class="qw-panel__header">
+            <div><span class="qw-eyebrow">01 · Generate</span><h2 id="preview-settings-title">Choose a variation</h2></div>
+            <span id="studio-family-badge" class="qw-badge">Select a family</span>
+          </div>
+          <div class="qw-controls__row">
+            <div class="qw-field">
+              <label for="studio-seed">Reproducible seed</label>
+              <input id="studio-seed" type="number" min="1" max="999999999" value="2026" step="1">
+            </div>
+            <button type="button" id="studio-next-seed" class="qw-button qw-button--subtle">Next seed ↻</button>
+            <div class="qw-field">
+              <label for="studio-difficulty">Worksheet difficulty</label>
+              <select id="studio-difficulty">
+                <option value="developing">Developing</option>
+                <option value="secure" selected>Secure</option>
+                <option value="stretch">Stretch</option>
+              </select>
+            </div>
+            <button type="button" id="studio-copy-link" class="qw-button qw-button--subtle">Copy preview link</button>
+          </div>
+          <div id="studio-share-help" class="qw-share-help" hidden>
+            <label for="studio-share-url">Copy the preview address manually</label>
+            <input id="studio-share-url" type="text" readonly>
+          </div>
+          <p id="studio-notice" role="status" aria-live="polite" class="qw-notice"></p>
+        </section>
+
+        <section class="qw-panel qw-preview" aria-labelledby="question-preview-title">
+          <div class="qw-panel__header">
+            <div><span class="qw-eyebrow">02 · Examine</span><h2 id="question-preview-title">Question preview</h2></div>
+            <span id="studio-preview-metadata" class="qw-panel__meta"></span>
+          </div>
+          <div id="studio-preview" class="qw-paper" aria-live="polite">
+            <p>Select a question family to inspect its generated content.</p>
+          </div>
+          <div id="studio-variations" class="qw-variations" aria-label="Nearby generated variations"></div>
+        </section>
+
+        <section class="qw-panel" aria-labelledby="answer-check-title">
+          <div class="qw-panel__header">
+            <div><span class="qw-eyebrow">03 · Verify</span><h2 id="answer-check-title">Accepted-answer explorer</h2></div>
+          </div>
+          <div id="studio-answer-examples" class="qw-examples"></div>
+          <form id="studio-answer-form" class="qw-answer-form">
+            <div class="qw-field qw-field--grow">
+              <label for="studio-answer-input">Test an alternative student answer</label>
+              <input id="studio-answer-input" type="text" maxlength="360"
+                placeholder="Enter an answer to test its marking" autocomplete="off">
+            </div>
+            <button type="submit" class="qw-button" id="studio-check-answer">Check this answer</button>
+          </form>
+          <p id="studio-answer-result" class="qw-result" role="status" aria-live="polite">
+            This checks final answers, not mathematical working or required presentation form.
+          </p>
+        </section>
+
+        <section class="qw-panel qw-audit" aria-labelledby="qa-title">
+          <div class="qw-panel__header">
+            <div><span class="qw-eyebrow">04 · Review</span><h2 id="qa-title">Quality assurance</h2></div>
+            <span class="qw-badge">Deterministic</span>
+          </div>
+          <p>Run the same generators repeatedly across multiple seeds. Errors identify the family and seed; warnings flag topics that still need teacher review.</p>
+          <div class="qw-audit__actions">
+            <div class="qw-field">
+              <label for="studio-audit-count">Seeds per family</label>
+              <select id="studio-audit-count">
+                <option value="8">8 · Quick scan</option>
+                <option value="24">24 · Review</option>
+                <option value="48" selected>48 · Standard</option>
+                <option value="96">96 · Stress test</option>
+              </select>
+            </div>
+            <button id="studio-audit-family" class="qw-button qw-button--subtle" type="button">Audit selected family</button>
+            <button id="studio-audit-topic" class="qw-button" type="button">Audit entire topic</button>
+            <button id="studio-download-report" class="qw-button qw-button--subtle" disabled type="button">Download QA report</button>
+          </div>
+          <div id="studio-audit-summary" role="status" aria-live="polite" class="qw-audit__summary">
+            No audit run yet. Select a family and choose a check.
+          </div>
+          <div id="studio-audit-results" class="qw-audit__results"></div>
+          <p class="qw-caution"><strong>Scope:</strong> Passing checks do not prove the correctness of a question, its worked solutions, or its curriculum alignment. Independent mathematical checking and teacher review remain essential.</p>
+        </section>
+      </div>
+    </div>
+    <footer class="qw-footer">
+      <p>This is a separate, read-only authoring page. It does not edit source files, store student responses or grant administrative access. The site is publicly accessible wherever the repository is hosted — do not include confidential material.</p>
+    </footer>
+  </main>
+  <noscript><p class="qw-nojs">This workshop requires JavaScript to inspect the registered topic generators.</p></noscript>
+  <script type="module" src="./src/question-workshop/ui.js"></script>
+</body>
+</html>
