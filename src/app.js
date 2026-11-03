@@ -1463,9 +1463,11 @@ app.addEventListener('submit',ev=>{
     const session=fluencySession(),current=fluencyAnswer(session);
     if(!current||session.complete||current.response.correct||current.response.revealed)return;
     const latex=current.response.mathMode?(document.querySelector('[data-math-source]')?.value||''):'';
-    const converted=current.response.mathMode?latexToFluencyText(latex,current.question.answer):null;
+    const numeric=['number','ordered','unordered'].includes(current.question.answer.kind);
+    const converted=current.response.mathMode&&numeric?
+      latexToFluencyText(latex,current.question.answer):null;
     const draft=current.response.mathMode?(converted??latex):(document.querySelector('#fluency-answer')?.value||'');
-    const verdict=converted===null&&current.response.mathMode?
+    const verdict=converted===null&&current.response.mathMode&&numeric?
       {correct:false,kind:'format',message:'Enter a supported numerical expression or use simple typing.'}:
       checkFluencyAnswer(draft,current.question);
     const attempts=(current.response.tries||0)+(verdict.kind==='format'?0:1);

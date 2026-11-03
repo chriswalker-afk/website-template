@@ -25,13 +25,23 @@ function fluencyTextTex(text){
     return symbols[part]||escapeLatexText(part);
   }).join('');
 }
+function fluencyAnswerTex(answer){
+  if(answer.kind==='rational'){
+    const {numerator,denominator}=answer.value;
+    return '\\('+ (denominator===1?String(numerator):
+      '\\frac{'+numerator+'}{'+denominator+'}') +'\\)';
+  }
+  if(['expression','equation','inequality','interval','coordinates','set'].includes(answer.kind))
+    return '\\('+answer.value.latex+'\\)';
+  return fluencyTextTex(answerText(answer));
+}
 function toWorksheetFluencyQuestion(q){
   const list='\\begin{enumerate}[label=(\\alph*),leftmargin=*,itemsep=3pt]'+
     q.steps.map(step=>'\\item '+fluencyTextTex(step)).join('')+'\\end{enumerate}';
   return {
     signature:q.signature,marks:q.marks,spaceMm:Math.max(24,q.steps.length*12),
     prompt:q.prompt,questionTex:fluencyTextTex(q.prompt),
-    answerTex:fluencyTextTex(answerText(q.answer)),
+    answerTex:fluencyAnswerTex(q.answer),
     solutionTex:list,hintTex:fluencyTextTex(q.hint)
   };
 }

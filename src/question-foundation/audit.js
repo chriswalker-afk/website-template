@@ -2,7 +2,7 @@
 // by topic authors; reference round-trips alone do not prove a prompt is true.
 import {rngFromSeed,validateFluencyQuestion,checkFluencyAnswer,answerText} from '../fluency-engine.js';
 import {validateQuestionModel} from './model.js';
-import {isExactAnswerKind,validateExactAnswer,exactAnswerSample} from './verification.js';
+import {isExactAnswerKind,validateExactAnswer,exactAnswerSample,checkExactAnswer} from './verification.js';
 
 function seedsFrom(options){
   if(options.seeds!==undefined){
@@ -74,11 +74,7 @@ export function auditQuestionModelGenerator(create,options={}){
     signature:model=>model.topicId+':'+model.familyId+':'+model.signature,
     answerSample:model=>isExactAnswerKind(model.answer.kind)?
       exactAnswerSample(model.answer):null,
-    check:(raw,model)=>{
-      // The model is independent of UI; do not use an untrusted arithmetic
-      // evaluation in a generator audit.
-      if(!isExactAnswerKind(model.answer.kind))return {correct:true};
-      return null;
-    }
+    check:(raw,model)=>isExactAnswerKind(model.answer.kind)?
+      checkExactAnswer(raw,model.answer):{correct:true}
   });
 }
