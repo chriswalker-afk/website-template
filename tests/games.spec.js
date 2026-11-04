@@ -158,9 +158,19 @@ test('Hex Crossing accepts a mathematical fraction then rejects an incorrect ans
   await expect(page.locator('.game-slim-status')).toContainText('Player 2');
   await page.locator('[data-cell="1"]').click();
   await expect(page.locator('[data-math-input][data-active="true"]')).toBeVisible();
-  await page.locator('[data-math-source]').evaluate(field=>{
-    field.value='90000';field.dispatchEvent(new Event('input',{bubbles:true}));
-  });
+  // Enter the wrong answer through the actual MathLive field when loaded,
+  // rather than changing the hidden backing input behind the visual editor.
+  const visualField=page.locator('.math-input--ready math-field');
+  if(await visualField.count()){
+    await visualField.evaluate(field=>{
+      field.value='90000';field.dispatchEvent(new Event('input',{bubbles:true}));
+    });
+  }else{
+    await page.locator('[data-math-source]').evaluate(field=>{
+      field.value='90000';field.dispatchEvent(new Event('input',{bubbles:true}));
+    });
+  }
+  await expect(page.locator('[data-math-source]')).toHaveValue('90000');
   await page.locator('#game-hex-form button[type="submit"]').click();
   await expect(page.locator('[data-cell="1"]')).toHaveClass(/game-hex-cell--available/);
   await expect(page.locator('.game-feedback')).toContainText('stays available');
