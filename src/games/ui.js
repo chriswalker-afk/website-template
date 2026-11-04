@@ -62,8 +62,9 @@ function renderLoop(state){
       '<span class="game-loop-hub__icon" aria-hidden="true">↻</span>'+
       '<strong>Close the loop</strong>'+
       '<span>Follow the arrows. Each question connects to the answer on the next card.</span>'+
-      (selected?'<div class="game-loop-hub__picked">Holding: '+e(selected.answerDisplay)+
-        '</div>':'<span class="game-loop-hub__picked">Tap a card, then its destination.</span>')+
+      (selected?'<div class="game-loop-hub__picked"><strong>Holding</strong>'+
+        '<span>'+e(selected.question)+'</span><em>'+e(selected.answerDisplay)+'</em></div>':
+        '<span class="game-loop-hub__picked">Pick a card, then tap a position.</span>')+
       '</div>';
   const tray=state.tray.map(id=>domino(byId.get(id),{selected:state.selectedId===id})).join('');
   return '<section class="game-shell game-shell--loop">'+
@@ -157,9 +158,9 @@ function renderHex(state,pairs){
   const pair=chosen?byId.get(chosen.pairId):null;
   const maths=pair&&pair.answer?.kind!=='text',mathMode=maths&&pending.mathMode!==false;
   const plainInput=pair&&!pending.result?
-    '<input id="game-hex-answer" type="text" aria-label="Answer in simple typing" required '+
+    '<input id="game-hex-answer" type="text" aria-label="Answer in simple typing"'+
     'autocapitalize="off" autocomplete="off" maxlength="250" spellcheck="false"'+
-    (mathMode?' hidden':'')+' value="'+e(pending.simpleDraft||'')+'">':'';
+    (mathMode?' disabled hidden':' required')+' value="'+e(pending.simpleDraft||'')+'">':'';
   const editor=maths&&!pending.result?
     mathInputMarkup({targetId:'game-hex-answer',active:mathMode,latex:pending.mathLatex||''}):'';
   const challenge=pair?
