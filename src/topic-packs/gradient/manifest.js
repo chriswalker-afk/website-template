@@ -14,7 +14,8 @@ export const manifest=Object.freeze({
       "fluency",
       "reasoning",
       "problemSolving",
-      "modelling"
+      "modelling",
+      "games"
     ]
   },
   "modes": {
@@ -24,7 +25,7 @@ export const manifest=Object.freeze({
     "reasoning": true,
     "problemSolving": true,
     "modelling": true,
-    "games": false,
+    "games": true,
     "examPractice": false
   },
   "worksheetSkills": [

@@ -18,6 +18,13 @@ function shuffle(rng,items){
   }
   return values;
 }
+export function numericalGamePair(id,question,value,{level='core',cue}={}){
+  if(!Number.isFinite(value))throw new TypeError('A finite mathematical answer is required');
+  const display=Object.is(value,-0)?'0':String(value);
+  return {id,question,answerDisplay:display,
+    answer:{kind:'number',values:[value],label:'Enter the numerical answer.'},
+    level,...(cue?{cue}:{})};
+}
 export function vocabularyGamePairs(cards){
   if(!Array.isArray(cards))throw new TypeError('Expected an authored vocabulary deck');
   return cards.map(card=>({

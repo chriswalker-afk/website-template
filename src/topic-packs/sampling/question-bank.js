@@ -1,5 +1,7 @@
+import {gamePairs} from './game-pairs.js';
 // One source of truth for this topic's generated practice, print questions and skill scaffolds.
 import {fluencyFamilies} from './fluency-families.js';
 import {worksheetFamilies} from './worksheet-families.js';
 import {scaffolds} from './fluency-scaffolds.js';
-export const questionBank=Object.freeze({schemaVersion:1,fluency:fluencyFamilies,worksheet:worksheetFamilies,scaffolds});
+export const questionBank=Object.freeze({schemaVersion:1,fluency:fluencyFamilies,worksheet:worksheetFamilies,scaffolds,
+  games:{schemaVersion:1,pairs:gamePairs}});
