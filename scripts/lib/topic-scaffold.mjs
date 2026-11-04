@@ -87,14 +87,26 @@ export const worksheetFamilies=Object.freeze([]);
     'reasoning.js':simple('reasoning'),
     'problem-solving.js':simple('problemSolving'),
     'modelling.js':simple('modelling'),
-    'games.js':simple('games'),
+    'games.js':String.raw`// Games are disabled while this topic is a draft.
+  // Once eight unique question–answer pairs have been authored in game-pairs.js,
+  // replace the empty sections with:
+  // import {standardGameSections} from '../../games/sections.js';
+  // export const games=standardGameSections();
+  export const games=[];
+`,
+    'game-pairs.js':String.raw`// Provide at least eight distinct reviewed question/answer pairs.
+  // See docs/STANDARD_GAMES.md and the Gradient example.
+  export const gamePairs=Object.freeze([]);
+`,
     'exam-practice.js':simple('examPractice'),
     'question-bank.js':String.raw`// Executable generators stay outside cloneable topic data.
 import {fluencyFamilies} from './fluency-families.js';
 import {worksheetFamilies} from './worksheet-families.js';
 import {scaffolds} from './fluency-scaffolds.js';
+import {gamePairs} from './game-pairs.js';
 export const questionBank=Object.freeze({
-  schemaVersion:1,fluency:fluencyFamilies,worksheet:worksheetFamilies,scaffolds
+  schemaVersion:1,fluency:fluencyFamilies,worksheet:worksheetFamilies,scaffolds,
+  games:{schemaVersion:1,pairs:gamePairs}
 });
 `,
     'visuals.js':String.raw`// Named diagrams and explorers go here; see docs/VISUAL_PACK_PASS3.md.
@@ -118,6 +130,7 @@ export const topic=Object.freeze({...manifest,cards,clozes,cloze,
       '2. Add a diagram and concept check, method stepper, interactive visual and complete workshop.\n'+
       '3. Build requested modes, then enable them in manifest.modes once validated.\n'+
       '4. Register reviewed question families and visual definitions where needed.\n'+
+      '   For Games, add 8+ unique answers to game-pairs.js, then activate standardGameSections().\n'+
       '5. Run npm run audit:topic -- --topic '+o.id+'.\n'+
       '6. Run npm run preview:topic -- --topic '+o.id+' to review the book.\n'+
       '7. After passing all quality checks, change authoring.status to ready.\n'+

@@ -5,6 +5,7 @@ import {pathToFileURL} from 'node:url';
 import {validateTopics} from '../../src/logic.js';
 import {rngFromSeed} from '../../src/fluency-engine.js';
 import {auditFluencyGenerator} from '../../src/question-foundation/audit.js';
+import {STANDARD_GAMES} from '../../src/games/engine.js';
 import {MODES} from './topic-scaffold.mjs';
 const root=resolve(import.meta.dirname,'../..');
 const SLUG=/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
@@ -130,7 +131,9 @@ export function auditTopicRecord(topic,questionBank,visuals){
         blockers.push('Worksheet '+family.id+': missing question, answer, hint or worked solution.');
     }catch(error){blockers.push('Worksheet '+family.id+': generation failed: '+error.message);}
   }
-  if(topic.modes?.games)warnings.push('Games are currently previews; verify implementation before sharing as playable activities.');
+  if(topic.modes?.games&&(topic.chapters?.games||[]).some(section=>
+    (section.pages||[]).some(page=>!STANDARD_GAMES.includes(page.gameId))))
+    warnings.push('Some game activities are still previews and are not playable.');
   return {id,title:topic.title,status:topic.authoring?.status||'legacy',
     structuralErrors:[...new Set(structuralErrors)],
     blockers:[...new Set(blockers)],warnings:[...new Set(warnings)],

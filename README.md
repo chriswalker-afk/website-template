@@ -22,6 +22,21 @@ To create a *different* topic with the creator, use a fresh ID such as:
 
     npm run new-topic -- --id percentage-change --title "Percentage Change" --qualification 4MA1 --level Foundation
 
+## Standard topic games — Loop Cards, Concentration and Hex Crossing
+
+Three reusable, playable games are now available from the **Games** chapter.
+Each topic supplies reviewed question/answer pairs in its own game-pairs.js file;
+the shared engines build a closed-loop domino challenge, a solo/two-player
+question-and-answer Concentration deck, and a two-player Blockbusters-style
+hexagon crossing race. The same game logic works for Gradient numerical
+questions, Sampling terminology and Quadratics vocabulary. Teachers can add
+all or only some games to any new topic using standardGameSections().
+
+See **[Standard Games authoring guide](docs/STANDARD_GAMES.md)** for the
+question-bank contract, eight-unique-answer requirement, accepted forms,
+test routes, difficulty options and publishing checks. Existing game previews
+remain labelled previews rather than being represented as finished activities.
+
 ## Teacher Question Workshop — Pass 3
 
 The new question-generation authoring studio lets teachers inspect actual Fluency and

@@ -26,6 +26,8 @@ test('creator checks safe IDs, qualifications, tier and requested modes',()=>{
   assert.ok(contents.files['manifest.js'].includes('"status": "draft"'));
   assert.ok(contents.files['manifest.js'].includes('"qualification": "4MA1"'));
   assert.ok(contents.files['visuals.js'].includes('diagrams:{}'));
+  assert.ok(contents.files['game-pairs.js'].includes('gamePairs'));
+  assert.ok(contents.files['games.js'].includes('standardGameSections'));
   assert.equal(Object.keys(contents.files).length>=15,true);
 });
 

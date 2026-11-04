@@ -102,7 +102,7 @@ test('concentration matches question to answer only, supports two players and co
 });
 test('true hex neighbours and BFS find only connected left-right or top-bottom paths',()=>{
   assert.deepEqual(hexNeighbours(0,3).sort((a,b)=>a-b),[1,3]);
-  assert.ok(hexNeighbours(4,3).includes(6));
+  assert.ok(hexNeighbours(4,3).includes(7));
   assert.ok(hexNeighbours(4,3).includes(8));
   const board=Array.from({length:9},(_,id)=>({id,owner:null}));
   for(const id of [0,1,2])board[id].owner=0;
