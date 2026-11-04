@@ -22,6 +22,15 @@ To create a *different* topic with the creator, use a fresh ID such as:
 
     npm run new-topic -- --id percentage-change --title "Percentage Change" --qualification 4MA1 --level Foundation
 
+## Student game experience
+
+The reusable games now have a focused, single-screen playing layout with a
+proper clockwise domino ring, automatically reversing unmatched Concentration
+cards after five seconds, per-player **Questions I've seen** review and
+scratch notes, and proper mathematical notation input for Hex Crossing.
+Students can return to the book without losing the current game state.
+See [Game Experience Upgrade](docs/GAME_EXPERIENCE_UPGRADE.md).
+
 ## Standard topic games — Loop Cards, Concentration and Hex Crossing
 
 Three reusable, playable games are now available from the **Games** chapter.

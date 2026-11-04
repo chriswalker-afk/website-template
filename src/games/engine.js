@@ -66,9 +66,38 @@ export function createLoopGame(pairs,{seed=2026,difficulty='core',count=GAME_PAI
   }));
   // Lock an anchor card: cyclic rotations should not create multiple UI solutions.
   return {type:'loop-cards',seed,difficulty,count,
-    deck,placements:[deck[0].id,...Array(count-1).fill(null)],
+    deck,placements:[deck[0].id,...Array(count-1).fill(null)],selectedId:null,
     tray:shuffle(rngFromSeed((seed%999999998)+1),deck.slice(1).map(c=>c.id)),
-    attempts:0,solved:false,checked:false,feedback:'Select a card to add it to the next space. The question on each card must connect to the answer on the next card — including the last back to the first.'};
+    attempts:0,solved:false,checked:false,feedback:'Pick up a card, then choose its place in the ring. Follow the arrows clockwise and connect the last card back to START.'};
+}
+// Select a physical card with a click/keyboard/tap; the next slot tap places it.
+export function loopPick(state,id){
+  if(state.type!=='loop-cards'||state.solved||
+    !state.deck.some(card=>card.id===id)||state.placements[0]===id)return state;
+  const selectedId=state.selectedId===id?null:id;
+  return {...state,selectedId,feedback:selectedId?
+    'Card picked up. Choose a space in the ring, or drag it to a different space.':
+    'Card released. Pick a card to move it.'};
+}
+// Move a card into any non-anchor slot. Occupied slots exchange cards;
+// a displaced card returns to the tray when the source was the tray.
+export function loopMove(state,id,to){
+  if(state.type!=='loop-cards'||state.solved||
+    !Number.isInteger(to)||to<1||to>=state.count||!state.deck.some(card=>card.id===id))
+    return state;
+  const from=state.placements.indexOf(id),inTray=state.tray.includes(id);
+  if(from===0||from===to||from<0&&!inTray)return state;
+  const placements=[...state.placements],displaced=placements[to];
+  const tray=[...state.tray];
+  if(from>=1)placements[from]=displaced;
+  else{
+    tray.splice(tray.indexOf(id),1);
+    if(displaced)tray.push(displaced);
+  }
+  placements[to]=id;
+  return {...state,placements,tray,selectedId:null,checked:false,
+    feedback:displaced?'Cards exchanged. Check the links in the ring.':
+      'Card placed. Follow the arrows to connect the next question and answer.'};
 }
 export function loopPlace(state,id){
   if(state.type!=='loop-cards'||state.solved||!state.tray.includes(id))return state;
@@ -76,14 +105,14 @@ export function loopPlace(state,id){
   if(index===-1)return state;
   const positions=[...state.placements];positions[index]=id;
   return {...state,placements:positions,tray:state.tray.filter(item=>item!==id),
-    checked:false,feedback:'Card placed. Keep linking the question to the answer on the next card.'};
+    selectedId:null,checked:false,feedback:'Card placed. Keep linking the question to the answer on the next card.'};
 }
 export function loopRemove(state,index){
   if(state.type!=='loop-cards'||state.solved||!Number.isInteger(index)||
     index<=0||index>=state.count||!state.placements[index])return state;
   const id=state.placements[index],placements=[...state.placements];
   placements[index]=null;
-  return {...state,placements,tray:[...state.tray,id],checked:false,
+  return {...state,placements,tray:[...state.tray,id],selectedId:null,checked:false,
     feedback:'Card returned to your collection.'};
 }
 export function swapLoop(state,from,to){
@@ -93,7 +122,7 @@ export function swapLoop(state,from,to){
     Math.abs(from-to)!==1||!state.placements[from]||!state.placements[to])return state;
   const placements=[...state.placements];
   [placements[from],placements[to]]=[placements[to],placements[from]];
-  return {...state,placements,checked:false,
+  return {...state,placements,selectedId:null,checked:false,
     feedback:'Cards swapped. Check how their neighbouring questions and answers connect.'};
 }
 export function checkLoop(state){
@@ -120,19 +149,52 @@ export function createConcentrationGame(pairs,{seed=2026,difficulty='core',playe
   ]));
   return {type:'concentration',seed,difficulty,players,tiles,
     shown:[],matched:[],moves:0,scores:[0,0],turn:0,pendingMismatch:false,
+    seenByPlayer:[[],[]],reviewPlayer:0,reviewPairId:null,reviewNotes:{},
     complete:false,feedback:'Flip a question card and the answer that matches it.'};
+}
+// Capture only the *question* sides actually exposed by a player.
+ // Review is independent of turn so one player can calculate while the other
+ // flips cards. The history stores question IDs, never hidden answer text.
+function withSeenQuestion(state,tile){
+  if(tile.kind!=='question')return state;
+  const seenByPlayer=state.seenByPlayer.map(ids=>[...ids]);
+  if(!seenByPlayer[state.turn].includes(tile.pairId))
+    seenByPlayer[state.turn].push(tile.pairId);
+  return {...state,seenByPlayer,
+    reviewPairId:state.reviewPlayer===state.turn?
+      tile.pairId:state.reviewPairId};
+}
+export function selectConcentrationHistory(state,player,pairId=null){
+  if(state.type!=='concentration'||!Number.isInteger(player)||
+    player<0||player>=state.players)return state;
+  const list=state.seenByPlayer[player];
+  if(pairId!==null&&!list.includes(pairId))return state;
+  const selected=pairId===null?
+    (player===state.reviewPlayer&&list.includes(state.reviewPairId)?
+      state.reviewPairId:list.at(-1)||null):pairId;
+  if(player===state.reviewPlayer&&selected===state.reviewPairId)return state;
+  return {...state,reviewPlayer:player,reviewPairId:selected};
+}
+export function noteConcentrationWorking(state,player,pairId,working){
+  if(state.type!=='concentration'||!Number.isInteger(player)||
+    player<0||player>=state.players||
+    !state.seenByPlayer[player].includes(pairId)||
+    typeof working!=='string'||working.length>1200)return state;
+  const key=player+':'+pairId;
+  return {...state,reviewNotes:{...state.reviewNotes,[key]:working}};
 }
 export function flipConcentration(state,id){
   if(state.type!=='concentration'||state.complete||state.pendingMismatch||
     state.shown.includes(id)||state.tiles.every(t=>t.id!==id))return state;
   const tile=state.tiles.find(t=>t.id===id);
   if(state.matched.includes(tile.pairId))return state;
+  state=withSeenQuestion(state,tile);
   if(state.shown.length===0)return {...state,shown:[id],feedback:'Find the matching question or answer.'};
   const other=state.tiles.find(t=>t.id===state.shown[0]),correct=
     tile.pairId===other.pairId&&tile.kind!==other.kind;
   const moves=state.moves+1;
   if(!correct)return {...state,shown:[state.shown[0],id],moves,
-    pendingMismatch:true,feedback:'Not a matching question and answer. Look carefully, then continue.'};
+    pendingMismatch:true,feedback:'No match. Both cards will flip back automatically in 5 seconds.'};
   const matched=[...state.matched,tile.pairId],scores=[...state.scores];
   scores[state.turn]++;
   const complete=matched.length===state.tiles.length/2;
@@ -145,7 +207,7 @@ export function continueConcentration(state){
   if(state.type!=='concentration'||!state.pendingMismatch)return state;
   return {...state,shown:[],pendingMismatch:false,
     turn:state.players===2?1-state.turn:0,
-    feedback:state.players===2?'Next player. Choose two cards.':'Try another pair.'};
+    feedback:state.players===2?'Player '+(2-state.turn)+' to play. Choose two cards.':'Try another pair.'};
 }
 
 // Pointy-top hexes in an odd-r offset grid, with alternate rows shifted right.
@@ -202,7 +264,8 @@ export function selectHex(state,index){
   if(state.type!=='hex-crossing'||state.winner!==null||state.pending!==null||
     !Number.isInteger(index)||index<0||index>=state.cells.length||
     state.cells[index].owner!==null)return state;
-  return {...state,pending:{index,result:null},feedback:'Answer correctly to claim this hexagon.'};
+  return {...state,pending:{index,result:null,mathMode:null,mathLatex:'',simpleDraft:''},
+    feedback:'Answer correctly to claim this hexagon.'};
 }
 export function submitHex(state,pairs,raw){
   if(state.type!=='hex-crossing'||state.winner!==null||!state.pending||

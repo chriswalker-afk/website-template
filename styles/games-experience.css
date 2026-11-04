@@ -1,0 +1,435 @@
+/* Student-game UX: a one-screen play surface with a physical card loop.
+   This layer intentionally builds on the existing notebook game palette. */
+body.game-focus-mode {overflow:hidden}
+body.game-focus-mode .sitebar{display:none}
+body.game-focus-mode .scene{position:fixed;inset:0;z-index:100;overflow:hidden;padding:0;background:#e6e9df}
+body.game-focus-mode .book-wrap{max-width:none;width:100%;height:100dvh;padding:0;margin:0}
+body.game-focus-mode .book{height:100%;filter:none}
+body.game-focus-mode .book::before,body.game-focus-mode .book::after,
+body.game-focus-mode .book-paper::before,
+body.game-focus-mode .book-page::before{display:none}
+body.game-focus-mode :is(.chapter-tabs,.side-tabs,.mobile-navigation,.paper-head,
+ .page-title,.page-subtitle,.page-navigation){display:none!important}
+body.game-focus-mode .book-paper{height:100%;min-height:0;overflow:hidden;border:0;box-shadow:none;border-radius:0}
+body.game-focus-mode .book-page{height:100%;min-height:0;overflow:hidden;padding:0;animation:none}
+body.game-focus-mode .page-body{height:100%;min-height:0;padding:0;overflow:hidden}
+body.game-focus-mode .game-workspace{
+  width:100%;height:100%;min-height:0;margin:0;padding:10px clamp(10px,1.5vw,24px);
+  display:flex;flex-direction:column;gap:9px;overflow:hidden;
+  background:radial-gradient(circle at 50% 15%,#f7f9f1,transparent 62%),#e4e8dc
+}
+body.game-focus-mode .game-workspace .game-shell{
+  flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:6px;
+  box-shadow:0 6px 24px #25433714
+}
+.game-workspace{min-width:0}
+.game-toolbar{min-height:62px;gap:8px;padding:8px 13px;background:#f8f8f1}
+.game-toolbar__identity{min-width:130px;margin-right:auto;line-height:1.15}
+.game-toolbar__eyebrow{display:block;font-size:10px;text-transform:uppercase;
+  letter-spacing:.1em;font-weight:750;color:#728275}
+.game-play-title{font:normal clamp(22px,2.25vw,31px)/1.1 Georgia,serif;
+  margin:3px 0;color:#294b3d;letter-spacing:-.025em}
+.game-focus-toggle{white-space:nowrap}
+.game-toolbar__levels{width:auto;max-width:none;order:0}
+.game-slim-status{
+  display:flex;flex-wrap:wrap;align-items:center;gap:6px 13px;font-size:11px;
+  color:#526d5b;min-height:27px
+}
+.game-slim-status strong{color:#2e5d49;font-size:12px}
+.game-slim-status span{background:#eef3e9;border-radius:6px;padding:4px 8px}
+.game-feedback{margin:0;min-height:27px;padding:7px 11px;font-size:12px;flex:none}
+.game-workspace .game-shell{min-width:0}
+/* Closed clockwise domino circuit: corners and sides of a 3 by 3 ring. */
+.game-loop-playfield{
+  display:grid;grid-template-columns:minmax(0,1.65fr) minmax(205px,.8fr);
+  gap:12px;flex:1;min-height:0;min-width:0
+}
+.game-loop-board{
+  position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  grid-template-rows:repeat(3,minmax(0,1fr));gap:12px;padding:11px;
+  border:1px solid #d0dccc;border-radius:19px;max-width:none;width:100%;height:100%;
+  margin:0;min-height:0;min-width:0;background:#edf3e9;
+  box-shadow:inset 0 0 0 5px #f7f9f3
+}
+.game-loop-board::before{
+  content:"";position:absolute;inset:14%;border:3px dashed #9cbc9c;border-radius:24%;
+  opacity:.8;pointer-events:none
+}
+.game-loop-slot{
+  display:flex;flex-direction:column;min-width:0;min-height:0;
+  padding:4px;gap:3px;position:relative;z-index:1;
+  border:1px solid #d1dbce;border-radius:10px;background:#fdfdf9
+}
+.game-loop-slot--anchor{background:#e7f2df;border:2px solid #78a182}
+.game-loop-slot--top-left{grid-area:1/1}
+.game-loop-slot--top{grid-area:1/2}
+.game-loop-slot--top-right{grid-area:1/3}
+.game-loop-slot--right{grid-area:2/3}
+.game-loop-slot--bottom-right{grid-area:3/3}
+.game-loop-slot--bottom{grid-area:3/2}
+.game-loop-slot--bottom-left{grid-area:3/1}
+.game-loop-slot--left{grid-area:2/1}
+.game-loop-slot.is-drop-target{background:#e0f2d7;border-color:#3b8a53;box-shadow:0 0 0 3px #4c9b5b55}
+.game-loop-slot__index{
+  display:inline-flex;align-items:center;align-self:start;
+  color:#567767;font-size:10px;font-weight:800;letter-spacing:.07em;line-height:1.1;
+  padding:0 3px;min-height:12px
+}
+.game-loop-slot--anchor .game-loop-slot__index{color:#286344}
+.game-loop-slot .game-domino{
+  display:grid;grid-template-columns:1fr;grid-template-rows:minmax(0,1.8fr) minmax(0,.8fr);
+  flex:1;width:100%;height:100%;min-height:0!important;overflow:hidden;
+  border:1px solid #cfdbca!important;box-shadow:0 2px 5px #2843350b
+}
+.game-loop-slot .game-domino__half{display:flex;flex-direction:column;gap:2px;min-height:0;padding:5px 8px}
+.game-loop-slot .game-domino__question{border-right:0;border-bottom:1px dashed #c0cabd}
+.game-loop-slot .game-domino__key{font-size:8px}
+.game-loop-slot .game-domino__copy{
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;
+  overflow:hidden;font-size:clamp(10px,1.1vw,12px);line-height:1.3
+}
+.game-loop-slot .game-domino__answer .game-domino__copy{font-size:clamp(12px,1.25vw,16px);line-height:1.1}
+.game-loop-slot .game-domino--anchor{background:#f8fff5!important}
+.game-loop-slot .game-domino.is-picked,.game-domino-tray .game-domino.is-picked{
+  border:2px solid #2f8653!important;background:#f5fff3!important;
+  box-shadow:0 0 0 2px #4c9b5b3e!important
+}
+.game-loop-empty{
+  width:100%;flex:1;min-height:0!important;border:2px dashed #b5cbb4!important;
+  background:#f5faf2!important;border-radius:8px!important;
+  color:#64866b!important;display:flex!important;align-items:center;justify-content:center;
+  flex-direction:column;gap:1px;font-size:10px!important;padding:5px!important
+}
+.game-loop-empty__icon{font-size:25px;line-height:1}
+.game-loop-empty.is-target{background:#e3f3d9!important;border-color:#61a46a!important;color:#276344!important}
+.game-loop-arrow{
+  position:absolute;font-size:19px;font-weight:900;color:#3f9563;
+  line-height:1;z-index:3;pointer-events:none;text-shadow:0 0 5px #f7fdf4;
+}
+.game-loop-slot--top-left .game-loop-arrow,.game-loop-slot--top .game-loop-arrow,
+.game-loop-slot--bottom-right .game-loop-arrow,.game-loop-slot--bottom .game-loop-arrow{
+  top:50%;right:-15px;transform:translateY(-50%)
+}
+.game-loop-slot--bottom-right .game-loop-arrow,.game-loop-slot--bottom .game-loop-arrow{
+  right:auto;left:-15px
+}
+.game-loop-slot--top-right .game-loop-arrow,.game-loop-slot--right .game-loop-arrow{
+  bottom:-16px;left:50%;transform:translateX(-50%)
+}
+.game-loop-slot--bottom-left .game-loop-arrow,.game-loop-slot--left .game-loop-arrow{
+  top:-16px;left:50%;transform:translateX(-50%)
+}
+.game-loop-hub{
+  grid-area:2/2;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;text-align:center;gap:6px;padding:10px;
+  border-radius:50%;border:2px solid #9ac19f;
+  background:radial-gradient(circle,#fffef4,#e3f1e4);color:#3f6852;
+  box-shadow:0 5px 18px #234d3520;min-width:0;min-height:0;z-index:2
+}
+.game-loop-hub__icon{font:normal clamp(23px,3vw,40px)/.8 Georgia,serif}
+.game-loop-hub strong{font:600 clamp(12px,1.4vw,20px)/1.12 Georgia,serif}
+.game-loop-hub>span:last-child,.game-loop-hub__picked{
+  font-size:clamp(9px,1.02vw,12px);line-height:1.28;overflow-wrap:anywhere
+}
+.game-loop-hub__picked{padding:5px;border-radius:5px;background:#d5e9d8;font-weight:700}
+.game-loop-hand{
+  display:flex;flex-direction:column;gap:7px;min-width:0;min-height:0;
+  background:#f6f4e9;border:1px solid #e1ddcc;border-radius:13px;padding:11px
+}
+.game-loop-hand__head{display:flex;justify-content:space-between;align-items:center;gap:8px;
+  color:#345b48;font-size:13px}
+.game-loop-hand__head>span{font-size:11px;color:#738074}
+.game-domino-tray{
+  flex:1;min-height:0;overflow-x:hidden;overflow-y:auto;display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(75px,1fr);
+  align-content:start;gap:6px;scrollbar-width:thin;margin:0
+}
+.game-domino-tray .game-domino{
+  min-height:68px!important;height:100%;width:100%;display:flex;flex-direction:column;
+  text-align:left;padding:0!important;box-shadow:0 2px 6px #37563e13
+}
+.game-domino-tray .game-domino__half{display:flex;flex-direction:column;gap:2px;padding:5px 7px;min-height:0}
+.game-domino-tray .game-domino__question{border-right:0;border-bottom:1px dashed #cfdbcc;flex:1}
+.game-domino-tray .game-domino__key{font-size:8px}
+.game-domino-tray .game-domino__copy{font-size:10px;line-height:1.25;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden}
+.game-domino-tray .game-domino__answer .game-domino__copy{font-size:12px}
+.game-loop-hand__actions{display:flex;gap:6px;flex-wrap:wrap}
+.game-loop-hand__actions .game-action--primary{flex:1}
+.game-loop-hand__empty{font-size:12px;color:#607a65;line-height:1.5}
+.game-loop-hand .game-feedback{margin:0}
+.game-gesture-hint{margin:0;color:#6a796c;font-size:11px;line-height:1.3}
+.game-drag-ghost{
+  position:fixed!important;z-index:2000!important;pointer-events:none!important;
+  width:155px;height:100px;opacity:.93;transform:rotate(-3deg);
+  box-shadow:0 17px 30px #143a3340!important
+}
+/* Concentration: fixed 4×4 board plus a full-size reading desk. */
+.game-memory-head{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.game-player-choice{display:flex;gap:4px;margin:0;padding:3px;border:1px solid #d3dfd0;
+  border-radius:9px;background:#f0f4ea}
+.game-memory-stage{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(215px,.43fr);
+  gap:12px;flex:1;min-height:0
+}
+.game-memory-board{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  grid-template-rows:repeat(4,minmax(0,1fr));
+  gap:7px;margin:0;max-width:none;min-width:0;min-height:0
+}
+.game-memory-tile{
+  aspect-ratio:auto;min-height:0!important;height:100%;padding:7px!important;
+  line-height:1.26;min-width:0
+}
+.game-memory-tile__text{font-size:clamp(10px,1vw,12px);line-height:1.27;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;line-clamp:4;overflow:hidden}
+.game-memory-detail{
+  display:flex;flex-direction:column;gap:9px;min-height:0;overflow:auto;
+  margin:0;padding:14px;background:#f5f6ec;border:1px solid #d4dfd3;border-radius:11px
+}
+.game-memory-detail__eyebrow{font-size:10px;color:#63816c;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.game-memory-detail__face{background:#fffefa;border-left:3px solid #7eae86;padding:10px 12px;border-radius:6px}
+.game-memory-detail__face strong{text-transform:uppercase;font-size:10px;letter-spacing:.1em;color:#497a58}
+.game-memory-detail__face p{font-size:clamp(12px,1.25vw,15px);line-height:1.5;overflow-wrap:anywhere;margin:4px 0}
+.game-memory-detail__empty{color:#65786c;font-size:13px;line-height:1.65;margin:auto 0}
+.game-memory-countdown{margin-top:auto;font-size:11px;color:#7c653b;display:grid;gap:7px}
+.game-memory-countdown__track{height:7px;display:block;overflow:hidden;background:#e6dbc7;border-radius:10px}
+.game-memory-countdown__track span{display:block;width:100%;height:100%;background:#ba9153;
+  transform-origin:left;animation:game-five-seconds 5s linear forwards}
+@keyframes game-five-seconds{to{transform:scaleX(0)}}
+.game-turn{font-size:12px;line-height:1.35;margin:0}
+/* Hex Crossing: the board and maths answer pad stay side by side. */
+.game-hex-stage{display:grid;grid-template-columns:minmax(0,1fr) minmax(270px,.85fr);
+  gap:15px;align-items:stretch;flex:1;min-height:0}
+.game-hex-legend{margin:0;gap:7px;font-size:11px}
+.game-hex-legend>span{padding:5px 9px}
+.game-hex-layout{
+  margin:0;min-height:0;max-height:100%;overflow:hidden;
+  padding:8px 2px 14px;border:1px solid #d7e1d4;border-radius:12px;
+  background:#f6f8f0;gap:2px
+}
+.game-hex-board{--hex-size:clamp(37px,6.7vh,68px);padding:0 calc(var(--hex-size)/4)}
+.game-hex-challenge{
+  min-width:0;max-width:none;margin:0;padding:16px;overflow-y:auto;min-height:0;
+  display:flex;flex-direction:column;justify-content:center;gap:12px
+}
+.game-hex-challenge__question{font-size:clamp(15px,1.5vw,19px);line-height:1.55}
+.game-hex-placeholder{text-align:center;margin:auto;display:grid;place-items:center;gap:9px;color:#527a60}
+.game-hex-placeholder>span{font-size:45px;line-height:1}
+.game-hex-placeholder strong{font:600 20px Georgia,serif}
+.game-hex-placeholder p{font-size:13px;margin:0;color:#768478}
+.game-hex-form{min-width:0}
+.game-hex-form__row{align-items:flex-start;gap:8px}
+.game-hex-form__editor{flex:1;min-width:0}
+.game-hex-form__editor>input{width:100%;min-height:44px}
+.game-hex-form__editor>input[hidden]{display:none}
+.game-hex-form__row>button{align-self:flex-start}
+.game-hex-form__editor .math-input{margin:0}
+.game-hex-form__editor .math-input__toggle{min-height:32px;padding:5px 9px;font-size:11px}
+.game-hex-form__editor .math-input__panel{padding:8px;margin-top:5px}
+.game-hex-form__editor .math-input__hint,.game-hex-form__editor .math-input__status{display:none}
+.game-hex-form__editor .math-input__source{min-height:44px}
+.game-hex-form__editor .math-input__field{font-size:19px;min-height:45px;padding:8px 9px}
+.game-hex-form__editor .math-input__palette{margin-top:6px;gap:4px}
+.game-hex-form__editor .math-input__symbol{min-width:32px;min-height:32px;padding:5px;font-size:14px}
+.game-hex-result{font-size:14px;line-height:1.5;margin:0}
+.game-workspace .game-complete{margin:5px 0;padding:8px 12px}
+/* Page-embedded view is compact but never traps the main document scroll. */
+body:not(.game-focus-mode) .game-workspace .game-shell{
+  height:clamp(590px,76vh,800px);max-height:none;display:flex;flex-direction:column;gap:6px
+}
+body:not(.game-focus-mode) .game-loop-playfield,
+body:not(.game-focus-mode) .game-memory-stage,
+body:not(.game-focus-mode) .game-hex-stage{min-height:0}
+/* Mobile: the playfield itself fills the viewport. Cards remain draggable,
+   with the card hand scrolling sideways INSIDE the playing surface. */
+@media(max-width:760px){
+  body.game-focus-mode .game-workspace{padding:7px;gap:6px}
+  .game-toolbar{padding:7px;min-height:0;gap:5px;flex-wrap:wrap}
+  .game-toolbar__identity{flex:1 1 45%;min-width:118px}
+  .game-play-title{font-size:22px}
+  .game-toolbar__eyebrow{font-size:9px}
+  .game-toolbar .game-action{min-height:32px;padding:5px 7px;font-size:11px!important;flex:none}
+  .game-toolbar__levels{flex:none;width:auto;order:0;justify-content:flex-start;padding:2px}
+  .game-shell{padding:9px}
+  .game-loop-playfield{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) minmax(130px,.35fr);gap:6px}
+  .game-loop-board{gap:6px;padding:6px;min-height:0}
+  .game-loop-slot{padding:2px;gap:1px}
+  .game-loop-slot__index{font-size:9px}
+  .game-loop-slot .game-domino__half{padding:3px 4px;gap:0}
+  .game-loop-slot .game-domino__key{font-size:7px}
+  .game-loop-slot .game-domino__copy{font-size:9px;line-height:1.1;-webkit-line-clamp:3;line-clamp:3}
+  .game-loop-slot .game-domino__answer .game-domino__copy{font-size:11px}
+  .game-loop-arrow{font-size:16px}
+  .game-loop-slot--top-left .game-loop-arrow,.game-loop-slot--top .game-loop-arrow{right:-9px}
+  .game-loop-slot--bottom-right .game-loop-arrow,.game-loop-slot--bottom .game-loop-arrow{left:-9px}
+  .game-loop-slot--top-right .game-loop-arrow,.game-loop-slot--right .game-loop-arrow{bottom:-9px}
+  .game-loop-slot--bottom-left .game-loop-arrow,.game-loop-slot--left .game-loop-arrow{top:-9px}
+  .game-loop-hub{padding:4px;gap:2px}
+  .game-loop-hub__icon{font-size:21px}
+  .game-loop-hub strong{font-size:11px}
+  .game-loop-hub>span:last-child{font-size:9px;line-height:1.1}
+  .game-loop-hub__picked{font-size:9px;padding:3px}
+  .game-loop-hand{padding:6px;gap:4px}
+  .game-loop-hand__head{font-size:12px}
+  .game-domino-tray{
+    display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:6px;
+    min-height:0;align-content:start;scrollbar-width:thin
+  }
+  .game-domino-tray .game-domino{flex:0 0 112px;max-width:112px;height:100%;min-height:70px!important}
+  .game-loop-hand__actions{gap:4px}
+  .game-loop-hand__actions .game-action{min-height:31px;padding:5px 8px;font-size:11px!important}
+  .game-gesture-hint{font-size:9px}
+  .game-memory-stage{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) minmax(100px,.32fr);gap:7px}
+  .game-memory-board{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(4,minmax(0,1fr));gap:5px}
+  .game-memory-tile{min-height:0!important;padding:4px!important}
+  .game-memory-tile__text{font-size:10px;-webkit-line-clamp:3;line-clamp:3}
+  .game-memory-detail{padding:8px;gap:5px}
+  .game-memory-detail__face{padding:5px 8px}
+  .game-memory-detail__face p{font-size:12px;line-height:1.3;margin:2px 0}
+  .game-memory-detail__empty{font-size:11px;line-height:1.3}
+  .game-memory-detail__eyebrow{font-size:9px}
+  .game-memory-countdown{margin-top:0}
+  .game-turn{font-size:11px}
+  .game-hex-stage{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) minmax(170px,.65fr);gap:7px}
+  .game-hex-layout{max-height:100%;padding:4px 2px}
+  .game-hex-board{--hex-size:clamp(33px,5.2vh,52px)}
+  .game-hex-challenge{padding:10px;gap:7px}
+  .game-hex-challenge__question{font-size:13px}
+  .game-hex-placeholder>span{font-size:24px}
+  .game-hex-placeholder strong{font-size:15px}
+  .game-hex-placeholder p{font-size:11px}
+  .game-hex-form__row{flex-wrap:nowrap}
+  .game-hex-form__row>.game-action{font-size:11px!important;padding:7px}
+  .game-hex-legend{font-size:10px}
+  .game-slim-status{gap:4px 7px;font-size:10px;min-height:0}
+  .game-slim-status strong{font-size:11px}
+  .game-feedback{font-size:11px;padding:5px 8px}
+}
+@media(max-width:420px){
+  .game-toolbar__levels{order:2}
+  .game-toolbar__identity{flex:1 1 44%}
+  .game-loop-hub>span:last-child{display:none}
+  .game-loop-hand .game-feedback{font-size:10px}
+  .game-memory-detail__face p{font-size:11px}
+  .game-hex-board{--hex-size:clamp(32px,4.8vh,42px)}
+}
+@media(max-height:650px) and (min-width:761px){
+  .game-toolbar{min-height:48px}
+  .game-workspace .game-shell{padding:9px}
+  .game-loop-board{gap:6px}
+  .game-domino-tray{gap:4px}
+  .game-memory-stage{gap:7px}
+  .game-hex-board{--hex-size:clamp(34px,6vh,54px)}
+}
+@media(prefers-reduced-motion:reduce){
+  .game-memory-countdown__track span{animation:none;background:#c3bba3}
+}
+
+
+/* Concentration question history — an independent reading/working margin.
+   A player can work here while their opponent flips cards on the board. */
+.game-memory-detail{overflow-y:auto;overscroll-behavior:contain;gap:7px;scrollbar-width:thin}
+.game-memory-detail__header{display:grid;gap:3px}
+.game-memory-detail__header strong{font:600 19px/1.18 Georgia,serif;color:#315947}
+.game-memory-detail__header span{font-size:10px;color:#678272}
+.game-memory-history__players{display:flex;gap:5px;flex-wrap:wrap}
+.game-memory-history__players .game-action--tiny{
+  flex:1;min-height:30px!important;padding:5px 7px;
+  font-size:11px!important;background:#edf2e9
+}
+.game-memory-history__players .game-action--tiny.is-active{
+  background:#315f4b;color:#fffdf5;border-color:#315f4b
+}
+.game-memory-history__list{
+  display:flex;flex:0 0 auto;gap:5px;max-height:95px;overflow:auto;
+  padding:3px 1px 5px;scrollbar-width:thin
+}
+.game-memory-history__item{
+  display:grid;gap:2px;flex:0 0 98px;min-height:49px;
+  background:#fffdf7;border:1px solid #c8d8c9;border-radius:7px;
+  padding:6px 7px;text-align:left;color:#3b614d
+}
+.game-memory-history__item strong{font-size:10px;color:#467552}
+.game-memory-history__item span{
+  display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;
+  -webkit-box-orient:vertical;overflow:hidden;font-size:10px;line-height:1.3
+}
+.game-memory-history__item em{font-size:10px;color:#a78038}
+.game-memory-history__item.is-active{
+  border:2px solid #518565;background:#e8f3e5;padding:5px 6px
+}
+.game-memory-working{
+  display:flex;flex-direction:column;gap:5px;flex:1 0 auto;
+  min-height:0;border-top:1px solid #d5e1d4;padding-top:8px
+}
+.game-memory-working__label{display:flex;flex-wrap:wrap;gap:5px;justify-content:space-between}
+.game-memory-working__label strong{font-size:11px;color:#37664f}
+.game-memory-working__label span{font-size:10px;color:#8b927d}
+.game-memory-working__question{
+  margin:0;max-height:90px;overflow:auto;
+  font-size:13px;line-height:1.5;color:#294b3b;overflow-wrap:anywhere
+}
+.game-memory-working label{font-size:10px;font-weight:800;letter-spacing:.05em;color:#5e7864}
+.game-memory-working textarea{
+  width:100%;min-width:0;min-height:65px;height:clamp(65px,13vh,105px);
+  resize:none;padding:9px 10px;border-radius:8px;border:1px solid #b9cdbb;
+  background:#fffefa;color:#27493c;font:13px/1.45 "Segoe UI",sans-serif;
+}
+.game-memory-working textarea:focus-visible{
+  outline:3px solid #3671a2;outline-offset:2px
+}
+.game-memory-working__hint{
+  margin:0;font-size:10px;line-height:1.3;color:#738276
+}
+.game-memory-live{
+  display:grid;gap:4px;max-height:91px;overflow-y:auto;flex:0 0 auto;
+  padding:6px 8px;background:#eff2e9;border:1px solid #d5dfd2;
+  border-radius:7px;font-size:11px
+}
+.game-memory-live>span{
+  font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+  font-weight:800;color:#547861
+}
+.game-memory-live>div{
+  border-left:2px solid #90b599;padding-left:6px;
+}
+.game-memory-live strong{font-size:9px;text-transform:uppercase;color:#5c8d69}
+.game-memory-live p{margin:1px 0;font-size:11px;line-height:1.3;overflow-wrap:anywhere}
+.game-memory-detail .game-memory-countdown{margin:0}
+@media(max-width:760px){
+  .game-memory-detail{gap:5px;padding:7px;align-items:stretch}
+  .game-memory-detail__header{gap:0}
+  .game-memory-detail__header strong{font-size:13px}
+  .game-memory-detail__header span{font-size:9px}
+  .game-memory-history__players .game-action--tiny{min-height:27px!important;padding:3px 6px}
+  .game-memory-history__list{max-height:48px;min-height:41px}
+  .game-memory-history__item{flex-basis:92px;min-height:39px;padding:4px 5px}
+  .game-memory-history__item span{-webkit-line-clamp:1;line-clamp:1}
+  .game-memory-working{gap:3px;padding-top:5px}
+  .game-memory-working__question{font-size:11px;max-height:45px}
+  .game-memory-working textarea{min-height:44px;height:48px;font-size:12px;padding:4px 7px}
+  .game-memory-working__hint{display:none}
+  .game-memory-live{max-height:54px}
+}
+/* Very narrow devices: keep the board usable while the side desk scrolls
+   internally. No part of the game is sent below the visible playing surface. */
+@media(max-width:440px){
+  .game-memory-stage{grid-template-rows:minmax(0,1fr) minmax(145px,.45fr)}
+  .game-memory-detail{overflow:auto}
+  .game-memory-history__list{flex:none}
+}
+
+/* The maths editor is shown directly for mathematical answers; terms use text. */
+.game-hex-form__head{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+.game-hex-form__head span,.game-hex-form__head label{font-weight:800;color:#50715c}
+.game-hex-form__editor .math-input__toggle{display:none!important}
+
+/* Use more of the hex play surface while respecting narrow desktop widths. */
+@media(min-width:761px){
+  .game-hex-board{--hex-size:clamp(40px,min(9.5vh,6.5vw),78px)}
+}
+
+/* Keep the Claim action outside the form-associated visual mathematics editor. */
+.game-hex-form__row>.game-hex-form{flex:1;min-width:0}
+.game-hex-form__row>.game-action{flex:0 0 auto;align-self:flex-start}
