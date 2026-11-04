@@ -4,8 +4,9 @@ import {TOPICS,QUESTION_BANKS} from '../src/topic-packs/registry.js';
 import {validateQuestionBank} from '../src/question-bank.js';
 import {validateGamePairs,numericalGamePair,vocabularyGamePairs} from '../src/games/contracts.js';
 import {STANDARD_GAME_DETAILS,standardGameSections} from '../src/games/sections.js';
-import {selectGamePairs,createGameSession,createLoopGame,loopPlace,loopRemove,checkLoop,
-  createConcentrationGame,flipConcentration,continueConcentration,swapLoop,
+import {selectGamePairs,createGameSession,createLoopGame,loopPick,loopMove,loopPlace,loopRemove,checkLoop,
+  createConcentrationGame,flipConcentration,continueConcentration,
+  selectConcentrationHistory,noteConcentrationWorking,swapLoop,
   createHexGame,hexNeighbours,hexHasPath,selectHex,submitHex,continueHex,cancelHex,
   checkGameAnswer} from '../src/games/engine.js';
 const gradient=QUESTION_BANKS.gradient.games.pairs;
@@ -85,6 +86,67 @@ test('loop cards contain the previous answer, enforce a closed cycle and can be 
   assert.equal(game.attempts,2);
   assert.equal(loopRemove(game,1),game,'solved loops stay complete');
 });
+
+test('loop cards can be picked up, placed anywhere, exchanged and replayed without losing the fixed start',()=>{
+  let state=createLoopGame(gradient,{seed:2026});
+  const first=state.tray[0],second=state.tray[1];
+  state=loopPick(state,first);
+  assert.equal(state.selectedId,first);
+  state=loopMove(state,first,7);
+  assert.equal(state.placements[7],first);
+  assert.equal(state.selectedId,null);
+  state=loopMove(state,second,2);
+  assert.equal(state.placements[2],second);
+  state=loopMove(state,first,2);
+  assert.equal(state.placements[2],first);
+  assert.equal(state.placements[7],second,'occupied positions exchange');
+  assert.equal(state.tray.includes(first),false);
+  state=loopPick(state,second);
+  assert.equal(state.selectedId,second);
+  state=loopPick(state,second);
+  assert.equal(state.selectedId,null,'a second tap puts the card down');
+  assert.equal(loopMove(state,first,0),state,'start card is fixed');
+  assert.equal(loopPick(state,state.deck[0].id),state,'start card cannot be picked up');
+});
+test('Concentration remembers only viewed questions for each player and preserves working',()=>{
+  let state=createConcentrationGame(gradient,{seed:12,players:2});
+  const q1=state.tiles.find(tile=>tile.kind==='question');
+  const wrongAnswer=state.tiles.find(tile=>tile.kind==='answer'&&tile.pairId!==q1.pairId);
+  state=flipConcentration(state,q1.id);
+  assert.deepEqual(state.seenByPlayer[0],[q1.pairId]);
+  assert.deepEqual(state.seenByPlayer[1],[]);
+  assert.equal(state.reviewPairId,q1.pairId);
+  state=flipConcentration(state,wrongAnswer.id);
+  assert.deepEqual(state.seenByPlayer[0],[q1.pairId],
+    'answer sides do not go into the question review history');
+  state=noteConcentrationWorking(state,0,q1.pairId,'rise / run');
+  assert.equal(state.reviewNotes['0:'+q1.pairId],'rise / run');
+  assert.equal(noteConcentrationWorking(state,1,q1.pairId,'Should not be allowed'),state);
+  assert.equal(noteConcentrationWorking(state,0,q1.pairId,'x'.repeat(1201)),state);
+  const before=state;
+  state=selectConcentrationHistory(state,1);
+  assert.equal(state.reviewPlayer,1);
+  assert.equal(state.reviewPairId,null);
+  assert.equal(state.pendingMismatch,true,'review does not change the current card pair');
+  state=selectConcentrationHistory(state,0);
+  assert.equal(state.reviewPairId,q1.pairId);
+  assert.deepEqual(state.shown,before.shown);
+  state=continueConcentration(state);
+  assert.equal(state.turn,1);
+  const q2=state.tiles.find(tile=>tile.kind==='question'&&tile.pairId!==q1.pairId);
+  state=flipConcentration(state,q2.id);
+  assert.deepEqual(state.seenByPlayer[1],[q2.pairId]);
+  assert.equal(state.reviewPairId,q1.pairId,
+    'the previous player can keep studying while the next player plays');
+  state=selectConcentrationHistory(state,1);
+  assert.equal(state.reviewPairId,q2.pairId);
+  state=noteConcentrationWorking(state,1,q2.pairId,'different calculation');
+  assert.equal(state.reviewNotes['0:'+q1.pairId],'rise / run');
+  assert.equal(state.reviewNotes['1:'+q2.pairId],'different calculation');
+  assert.deepEqual(createConcentrationGame(gradient,{seed:12,players:2}).seenByPlayer,[[],[]],
+    'a new set has no notes or question history');
+});
+
 test('concentration matches question to answer only, supports two players and completion',()=>{
   let game=createConcentrationGame(quadratics,{seed:17,players:2});
   assert.deepEqual(game,createConcentrationGame(quadratics,{seed:17,players:2}));
