@@ -166,7 +166,7 @@ test('Hex Crossing accepts mathematical notation and equivalent numerical fracti
   await page.locator('[data-action="game-continue"]').click();
   await expect(page.locator('.game-slim-status')).toContainText('Player 2');
   await page.locator('[data-cell="1"]').click();
-  await page.locator('[data-math-toggle]').click();
+  await page.locator('[data-action="game-hex-mode"]').click();
   const toggled=await page.evaluate(()=>({
     active:document.querySelector('[data-math-input]')?.dataset.active,
     html:document.querySelector('#game-hex-answer')?.outerHTML||null,
@@ -174,6 +174,7 @@ test('Hex Crossing accepts mathematical notation and equivalent numerical fracti
   }));
   if(toggled.active!=='false'||!toggled.html||toggled.html.includes(' hidden'))
     console.log('Maths mode toggle diagnostic:',JSON.stringify(toggled));
+  await expect(page.locator('[data-math-input][data-active="false"]')).toBeVisible();
   await expect(page.locator('#game-hex-answer:not([hidden])')).toBeVisible();
   await page.locator('#game-hex-answer').fill('90000');
   await page.locator('#game-hex-form button[type="submit"]').click();

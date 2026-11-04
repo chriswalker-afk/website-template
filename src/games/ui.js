@@ -208,8 +208,11 @@ function renderHex(state,pairs){
         '</strong> '+e(pending.result.answer)+'</p>'+
       (state.winner===null?button('game-continue','Next player →','','game-action--primary'):''):
       '<form id="game-hex-form" class="game-hex-form">'+
-        '<label id="game-hex-answer-label" for="game-hex-answer">'+
+        '<div class="game-hex-form__head"><label id="game-hex-answer-label" for="game-hex-answer">'+
           (maths?'Your mathematical answer':'Your answer')+'</label>'+
+          (maths?button('game-hex-mode',mathMode?'Simple typing':'Maths notation',
+            'aria-pressed="'+mathMode+'"','game-action--quiet game-hex-form__mode'):'')+
+        '</div>'+
         '<div class="game-hex-form__row"><div class="game-hex-form__editor">'+
           plainInput+editor+'</div>'+
           '<button type="submit" class="game-action game-action--primary">Claim hexagon</button></div>'+
