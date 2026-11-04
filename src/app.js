@@ -856,10 +856,7 @@ function submitSelectedHex(session,pairs){
   const value=mathematical?
     (['number','ordered','unordered'].includes(pair.answer.kind)?
       (latexToFluencyText(latex,pair.answer)??latex):latex):raw;
-  console.info('HEX_DEBUG_ANSWER',JSON.stringify({latex,raw,value,expected:pair.answerDisplay,kind:pair.answer.kind,turn:session.turn}));
-  const next=submitHex(session,pairs,value);
-  console.info('HEX_DEBUG_RESULT',JSON.stringify({changed:next!==session,feedback:next.feedback,result:next.pending?.result}));
-  return next;
+  return submitHex(session,pairs,value);
 }
 // MathLive's form-associated custom element can swallow a button click
 // during its internal focus/keyboard updates. Handle the Claim control in
@@ -867,7 +864,6 @@ function submitSelectedHex(session,pairs){
 app.addEventListener('click',ev=>{
   const claim=ev.target.closest?.('button[data-action="game-hex-submit"]');
   if(!claim)return;
-  console.info('HEX_DEBUG_CLICK','captured');
   ev.preventDefault();
   ev.stopPropagation();
   const session=gameSession();
@@ -877,7 +873,6 @@ app.addEventListener('click',ev=>{
     const next=submitSelectedHex(session,pairs);
     if(next!==session)setGameSession(next);
   }catch(error){
-    console.error('HEX_DEBUG_ERROR',error);
     announce('Game could not update: '+error.message);
   }
 },true);

@@ -210,15 +210,16 @@ function renderHex(state,pairs){
       '<p class="game-hex-result"><strong>'+(pending.result.correct?'Correct!':'Answer:')+
         '</strong> '+e(pending.result.answer)+'</p>'+
       (state.winner===null?button('game-continue','Next player →','','game-action--primary'):''):
-      '<form id="game-hex-form" class="game-hex-form" novalidate>'+
-        '<div class="game-hex-form__head">'+
-          (maths?'<span id="game-hex-answer-label">Enter a mathematical answer</span>':
-            '<label id="game-hex-answer-label" for="game-hex-answer">Your answer</label>')+
-        '</div>'+
-        '<div class="game-hex-form__row"><div class="game-hex-form__editor">'+
-          plainInput+editor+'</div>'+
-          '<button type="submit" data-action="game-hex-submit" class="game-action game-action--primary">Claim hexagon</button></div>'+
-      '</form>'+button('game-cancel','Choose another tile','','game-action--quiet'))
+      '<div class="game-hex-form__head">'+
+        (maths?'<span id="game-hex-answer-label">Enter a mathematical answer</span>':
+          '<label id="game-hex-answer-label" for="game-hex-answer">Your answer</label>')+
+      '</div>'+
+      '<div class="game-hex-form__row">'+
+        '<form id="game-hex-form" class="game-hex-form" novalidate>'+
+          '<div class="game-hex-form__editor">'+plainInput+editor+'</div>'+
+        '</form>'+
+        button('game-hex-submit','Claim hexagon','','game-action--primary')+
+      '</div>'+button('game-cancel','Choose another tile','','game-action--quiet'))
     :'<div class="game-hex-placeholder"><span aria-hidden="true">⬡</span>'+
       '<strong>Choose an unclaimed hexagon</strong>'+
       '<p>Answer correctly to claim it for your path.</p></div>';

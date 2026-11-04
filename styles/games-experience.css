@@ -429,3 +429,7 @@ body:not(.game-focus-mode) .game-hex-stage{min-height:0}
 @media(min-width:761px){
   .game-hex-board{--hex-size:clamp(40px,min(9.5vh,6.5vw),78px)}
 }
+
+/* Keep the Claim action outside the form-associated visual mathematics editor. */
+.game-hex-form__row>.game-hex-form{flex:1;min-width:0}
+.game-hex-form__row>.game-action{flex:0 0 auto;align-self:flex-start}

@@ -158,9 +158,6 @@ test('Concentration restart cancels flip-back timer, clears review notes, and co
   await expect(page.locator('[data-card="'+q.id+'"]')).toBeDisabled();
 });
 test('Hex Crossing accepts a mathematical fraction then rejects an incorrect answer',async({page})=>{
-  page.on('console',msg=>{if(msg.text().includes('HEX_DEBUG_'))
-    console.log('HEX BROWSER:',msg.text());});
-  page.on('pageerror',error=>console.log('HEX ERROR:',error.message));
   await page.goto(hexRoute);
   await expect(page.locator('.game-play-title')).toHaveText('Hex Crossing');
   await expect(page.locator('.game-hex-cell')).toHaveCount(25);
@@ -170,14 +167,14 @@ test('Hex Crossing accepts a mathematical fraction then rejects an incorrect ans
   await expect(page.locator('[data-math-input][data-active="true"]')).toBeVisible();
   const latex='\\frac{'+(pair.answer.values[0]*2)+'}{2}';
   await enterHexMath(page,latex);
-  await page.locator('#game-hex-form button[type="submit"]').click();
+  await page.locator('[data-action="game-hex-submit"]').click();
   await expect(page.locator('[data-cell="0"]')).toHaveClass(/game-hex-cell--forest/);
   await page.locator('[data-action="game-continue"]').click();
   await expect(page.locator('.game-slim-status')).toContainText('Player 2');
   await page.locator('[data-cell="1"]').click();
   await expect(page.locator('[data-math-input][data-active="true"]')).toBeVisible();
   await enterHexMath(page,'90000');
-  await page.locator('#game-hex-form button[type="submit"]').click();
+  await page.locator('[data-action="game-hex-submit"]').click();
   await expect(page.locator('[data-cell="1"]')).toHaveClass(/game-hex-cell--available/);
   await expect(page.locator('.game-feedback')).toContainText('stays available');
 });
@@ -187,7 +184,7 @@ test('Hex Crossing uses simple word answers for vocabulary-only topics',async({p
   await expect(page.locator('[data-math-input]')).toHaveCount(0);
   await expect(page.locator('#game-hex-answer')).toBeVisible();
   await page.locator('#game-hex-answer').fill('not a sampling term');
-  await page.locator('#game-hex-form button[type="submit"]').click();
+  await page.locator('[data-action="game-hex-submit"]').click();
   await expect(page.locator('.game-feedback')).toContainText('stays available');
 });
 test('All three games keep board and major controls in the mobile viewport',async({page})=>{
