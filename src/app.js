@@ -727,15 +727,116 @@ function updateGraph(){
   typesetSiteMath(app);
 }
 
+// Physical card interactions: desktop drag/drop and touch/stylus pointer drag.
+// Tap/Enter on a card, then tap/Enter a slot remains the keyboard fallback.
+let draggedLoopId=null;
+let pointerLoopDrag=null;
+let suppressLoopClickUntil=0;
+function clearLoopDropHighlight(){
+  app.querySelectorAll('.game-loop-slot.is-drop-target').forEach(slot=>
+    slot.classList.remove('is-drop-target'));
+}
+function moveDraggedLoop(id,position){
+  const session=gameSession();
+  if(session?.type!=='loop-cards'||!id)return false;
+  const next=loopMove(session,id,position);
+  if(next===session)return false;
+  setGameSession(next);
+  const target=app.querySelector('[data-loop-slot="'+position+'"] [data-game-draggable]');
+  target?.focus({preventScroll:true});
+  return true;
+}
+app.addEventListener('dragstart',event=>{
+  const card=event.target.closest?.('[data-game-draggable]');
+  if(!card||gameSession()?.type!=='loop-cards')return;
+  draggedLoopId=card.dataset.gameDraggable;
+  if(event.dataTransfer){
+    event.dataTransfer.effectAllowed='move';
+    event.dataTransfer.setData('text/plain',draggedLoopId);
+  }
+  card.classList.add('is-dragging');
+});
+app.addEventListener('dragover',event=>{
+  if(!draggedLoopId)return;
+  const slot=event.target.closest?.('[data-loop-slot]');
+  const position=Number(slot?.dataset.loopSlot);
+  clearLoopDropHighlight();
+  if(!slot||!Number.isInteger(position)||position<=0)return;
+  event.preventDefault();
+  if(event.dataTransfer)event.dataTransfer.dropEffect='move';
+  slot.classList.add('is-drop-target');
+});
+app.addEventListener('drop',event=>{
+  if(!draggedLoopId)return;
+  const slot=event.target.closest?.('[data-loop-slot]');
+  const position=Number(slot?.dataset.loopSlot);
+  event.preventDefault();clearLoopDropHighlight();
+  const id=draggedLoopId;
+  draggedLoopId=null;
+  suppressLoopClickUntil=Date.now()+300;
+  if(slot&&Number.isInteger(position)&&position>0)moveDraggedLoop(id,position);
+});
+app.addEventListener('dragend',()=>{
+  draggedLoopId=null;clearLoopDropHighlight();
+  app.querySelectorAll('.game-domino.is-dragging').forEach(c=>c.classList.remove('is-dragging'));
+});
+function removeLoopPointerGhost(){
+  pointerLoopDrag?.ghost?.remove();
+  clearLoopDropHighlight();
+}
+app.addEventListener('pointerdown',event=>{
+  if(!['touch','pen'].includes(event.pointerType)||event.button!==0)return;
+  const card=event.target.closest?.('[data-game-draggable]');
+  if(!card||gameSession()?.type!=='loop-cards')return;
+  pointerLoopDrag={id:card.dataset.gameDraggable,pointerId:event.pointerId,
+    source:card,x:event.clientX,y:event.clientY,moving:false,ghost:null};
+  try{card.setPointerCapture(event.pointerId);}catch{/* Pointer capture is optional. */}
+});
+app.addEventListener('pointermove',event=>{
+  const drag=pointerLoopDrag;
+  if(!drag||event.pointerId!==drag.pointerId)return;
+  if(!drag.moving&&Math.hypot(event.clientX-drag.x,event.clientY-drag.y)<9)return;
+  drag.moving=true;event.preventDefault();
+  if(!drag.ghost){
+    const ghost=drag.source.cloneNode(true);
+    ghost.removeAttribute('id');ghost.removeAttribute('draggable');
+    ghost.removeAttribute('data-action');ghost.setAttribute('aria-hidden','true');
+    ghost.classList.add('game-drag-ghost');
+    document.body.append(ghost);
+    drag.ghost=ghost;
+  }
+  drag.ghost.style.left=(event.clientX-72)+'px';
+  drag.ghost.style.top=(event.clientY-49)+'px';
+  clearLoopDropHighlight();
+  const hit=document.elementFromPoint(event.clientX,event.clientY);
+  const slot=hit?.closest?.('[data-loop-slot]');
+  if(slot&&Number(slot.dataset.loopSlot)>0)slot.classList.add('is-drop-target');
+});
+function finishLoopPointer(event){
+  const drag=pointerLoopDrag;
+  if(!drag||event.pointerId!==drag.pointerId)return;
+  const wasMoving=drag.moving;
+  removeLoopPointerGhost();
+  pointerLoopDrag=null;
+  if(!wasMoving)return; // Tap is handled by the normal click action.
+  suppressLoopClickUntil=Date.now()+350;
+  const hit=document.elementFromPoint(event.clientX,event.clientY);
+  const slot=hit?.closest?.('[data-loop-slot]');
+  if(slot&&Number(slot.dataset.loopSlot)>0)
+    moveDraggedLoop(drag.id,Number(slot.dataset.loopSlot));
+}
+app.addEventListener('pointerup',finishLoopPointer);
+app.addEventListener('pointercancel',event=>{
+  if(pointerLoopDrag?.pointerId!==event.pointerId)return;
+  removeLoopPointerGhost();pointerLoopDrag=null;
+});
+
 app.addEventListener('click',ev=>{
   const button=ev.target.closest('button[data-action]');
   if(!button)return;
   const action=button.dataset.action,topic=TOPICS[state.route.topicId];
   if(action.startsWith('game-')){
-    if(suppressLoopClick){
-      suppressLoopClick=false;
-      return;
-    }
+    if(Date.now()<suppressLoopClickUntil&&['game-pick','game-slot'].includes(action))return;
     if(action==='game-focus-toggle'){
       state.gameFocus=!state.gameFocus;
       rerender();
