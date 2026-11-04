@@ -34,8 +34,8 @@ banks, so new topics require no game-specific rendering code.
   mathematical notation editor, including a fraction palette and
   MathLive when available.
 - The entered LaTeX is passed through the same bounded numerical/exact
-  mathematics checker already used in Fluency. Students can switch to
-  simple typing; vocabulary questions retain the normal text field.
+  mathematics checker already used in Fluency. The maths editor includes
+  LaTeX typing as a fallback; vocabulary questions use a normal text field.
 - The current question/input and hex board occupy adjacent panels on
   desktop and stacked panels within the viewport on small screens.
 - Mathematical notation is an input aid, not a new claim of full symbolic

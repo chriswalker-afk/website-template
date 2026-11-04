@@ -192,13 +192,16 @@ function renderHex(state,pairs){
   }).join('');
   const pending=state.pending,chosen=pending?state.cells[pending.index]:null;
   const pair=chosen?byId.get(chosen.pairId):null;
-  const maths=pair&&pair.answer?.kind!=='text',mathMode=maths&&pending.mathMode!==false;
-  const plainInput=pair&&!pending.result?
+  const maths=Boolean(pair&&pair.answer?.kind!=='text');
+  // Mathematical answers always use the existing notation editor. It provides
+  // visual MathLive input when available and LaTeX typing as its fallback.
+  // Vocabulary answers use a separate conventional text field.
+  const plainInput=pair&&!maths&&!pending.result?
     '<input id="game-hex-answer" type="text" aria-label="Answer in simple typing" '+
     'autocapitalize="off" autocomplete="off" maxlength="250" spellcheck="false"'+
-    (mathMode?' disabled hidden':'')+' value="'+e(pending.simpleDraft||'')+'">':'';
+    ' value="'+e(pending.simpleDraft||'')+'">':'';
   const editor=maths&&!pending.result?
-    mathInputMarkup({targetId:'game-hex-answer',active:mathMode,latex:pending.mathLatex||''}):'';
+    mathInputMarkup({targetId:'game-hex-answer',active:true,latex:pending.mathLatex||''}):'';
   const challenge=pair?
     '<div class="game-hex-challenge__meta">Player '+(state.turn+1)+
       ' · Hexagon '+(chosen.id+1)+'</div>'+
@@ -208,10 +211,9 @@ function renderHex(state,pairs){
         '</strong> '+e(pending.result.answer)+'</p>'+
       (state.winner===null?button('game-continue','Next player →','','game-action--primary'):''):
       '<form id="game-hex-form" class="game-hex-form" novalidate>'+
-        '<div class="game-hex-form__head"><label id="game-hex-answer-label" for="game-hex-answer">'+
-          (maths?'Your mathematical answer':'Your answer')+'</label>'+
-          (maths?button('game-hex-mode',mathMode?'Simple typing':'Maths notation',
-            'aria-pressed="'+mathMode+'"','game-action--quiet game-hex-form__mode'):'')+
+        '<div class="game-hex-form__head">'+
+          (maths?'<span id="game-hex-answer-label">Enter a mathematical answer</span>':
+            '<label id="game-hex-answer-label" for="game-hex-answer">Your answer</label>')+
         '</div>'+
         '<div class="game-hex-form__row"><div class="game-hex-form__editor">'+
           plainInput+editor+'</div>'+

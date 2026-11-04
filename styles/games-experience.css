@@ -420,10 +420,9 @@ body:not(.game-focus-mode) .game-hex-stage{min-height:0}
   .game-memory-history__list{flex:none}
 }
 
-/* Hex has its own mode selector; do not expose MathLive's separate nested toggle. */
+/* The maths editor is shown directly for mathematical answers; terms use text. */
 .game-hex-form__head{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
-.game-hex-form__head label{font-weight:800;color:#50715c}
-.game-hex-form__mode{min-height:30px!important;padding:5px 9px;font-size:11px!important}
+.game-hex-form__head span,.game-hex-form__head label{font-weight:800;color:#50715c}
 .game-hex-form__editor .math-input__toggle{display:none!important}
 
 /* Use more of the hex play surface while respecting narrow desktop widths. */

@@ -879,25 +879,6 @@ app.addEventListener('click',ev=>{
       else if(action==='game-review-question')
         next=selectConcentrationHistory(session,Number(button.dataset.player),button.dataset.pair);
       else if(action==='game-hex-select')next=selectHex(session,Number(button.dataset.cell));
-      else if(action==='game-hex-mode'&&session.type==='hex-crossing'&&session.pending&&
-        !session.pending.result){
-        console.info('HEX_MODE_ACTION',JSON.stringify({
-          type:session.type,index:session.pending.index,mathMode:session.pending.mathMode,
-          result:session.pending.result}));
-        const pair=pairs.find(p=>p.id===session.cells[session.pending.index].pairId);
-        if(pair&&pair.answer.kind!=='text'){
-          const mathMode=session.pending.mathMode===false;
-          const latex=String(document.querySelector('[data-math-source]')?.value||
-            session.pending.mathLatex||'');
-          const plain=String(document.querySelector('#game-hex-answer')?.value||
-            session.pending.simpleDraft||'');
-          next={...session,pending:{...session.pending,mathMode,
-            mathLatex:latex,simpleDraft:mathMode?plain:
-              (latexToFluencyText(latex,pair.answer)||plain)}};
-          console.info('HEX_MODE_NEXT',JSON.stringify({
-            mathMode:next.pending.mathMode,kind:pair.answer.kind}));
-        }
-      }
       else if(action==='game-continue')next=session.type==='concentration'?
         continueConcentration(session):continueHex(session);
       else if(action==='game-cancel')next=cancelHex(session);
@@ -915,9 +896,8 @@ app.addEventListener('click',ev=>{
     }catch(error){announce('Game could not update: '+error.message);return;}
     if(next!==session){
       setGameSession(next);
-      if(action==='game-hex-select'||action==='game-hex-mode')
-        document.querySelector(next.pending?.mathMode===false?'#game-hex-answer':
-          '[data-math-source]')?.focus({preventScroll:true});
+      if(action==='game-hex-select')
+        document.querySelector('[data-math-source], #game-hex-answer')?.focus({preventScroll:true});
       else if(action==='game-pick'&&next.selectedId)
         document.querySelector('[data-game-draggable="'+next.selectedId+'"]')?.focus({preventScroll:true});
       else if(action==='game-continue')document.querySelector('button[data-action="game-hex-select"]:not(:disabled), button[data-action="game-flip"]:not(:disabled)')?.focus({preventScroll:true});
@@ -1754,7 +1734,7 @@ app.addEventListener('submit',ev=>{
     const pairs=questionBankFor(topic.id).games?.pairs||[];
     const pair=pairs.find(p=>p.id===session.cells[session.pending?.index]?.pairId);
     if(!pair)return;
-    const mathematical=pair.answer.kind!=='text'&&session.pending.mathMode!==false;
+    const mathematical=pair.answer.kind!=='text';
     const latex=String(document.querySelector('[data-math-source]')?.value||
       session.pending.mathLatex||'');
     const raw=String(document.querySelector('#game-hex-answer')?.value||

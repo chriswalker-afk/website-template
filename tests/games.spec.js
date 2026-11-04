@@ -140,9 +140,7 @@ test('Concentration restart cancels flip-back timer, clears review notes, and co
   await expect(page.locator('.game-memory-head')).toContainText('1 of 8 pairs');
   await expect(page.locator('[data-card="'+q.id+'"]')).toBeDisabled();
 });
-test('Hex Crossing accepts mathematical notation and equivalent numerical fractions',async({page})=>{
-  page.on('console',msg=>{if(msg.text().startsWith('HEX_MODE_'))console.log('HEX JS:',msg.text());});
-  page.on('pageerror',error=>console.log('HEX PAGE ERROR:',error.message));
+test('Hex Crossing accepts a mathematical fraction then rejects an incorrect answer',async({page})=>{
   await page.goto(hexRoute);
   await expect(page.locator('.game-play-title')).toHaveText('Hex Crossing');
   await expect(page.locator('.game-hex-cell')).toHaveCount(25);
@@ -150,37 +148,31 @@ test('Hex Crossing accepts mathematical notation and equivalent numerical fracti
   const pair=gradient.find(p=>p.id===board.cells[0].pairId);
   await page.locator('[data-cell="0"]').click();
   await expect(page.locator('[data-math-input][data-active="true"]')).toBeVisible();
-  const val=pair.answer.values[0];
-  const latex='\\frac{'+(val*2)+'}{2}';
+  const latex='\\frac{'+(pair.answer.values[0]*2)+'}{2}';
   await page.locator('[data-math-source]').evaluate((field,value)=>{
     field.value=value;field.dispatchEvent(new Event('input',{bubbles:true}));
   },latex);
   await page.locator('#game-hex-form button[type="submit"]').click();
-  const claimClass=await page.locator('[data-cell="0"]').getAttribute('class');
-  if(!claimClass.includes('game-hex-cell--forest'))
-    console.log('Maths input diagnostic:',JSON.stringify({
-      expected:val,latex,
-      fieldValue:await page.locator('[data-math-source]').inputValue().catch(()=>null),
-      feedback:await page.locator('.game-feedback').textContent(),
-      verdict:await page.locator('.game-hex-result').textContent().catch(()=>null)
-    }));
   await expect(page.locator('[data-cell="0"]')).toHaveClass(/game-hex-cell--forest/);
   await page.locator('[data-action="game-continue"]').click();
   await expect(page.locator('.game-slim-status')).toContainText('Player 2');
   await page.locator('[data-cell="1"]').click();
-  await page.locator('[data-action="game-hex-mode"]').click();
-  const toggled=await page.evaluate(()=>({
-    active:document.querySelector('[data-math-input]')?.dataset.active,
-    html:document.querySelector('#game-hex-answer')?.outerHTML||null,
-    context:document.querySelector('.game-hex-form__editor')?.innerHTML.slice(0,250)||null
-  }));
-  if(toggled.active!=='false'||!toggled.html||toggled.html.includes(' hidden'))
-    console.log('Maths mode toggle diagnostic:',JSON.stringify(toggled));
-  await expect(page.locator('[data-math-input][data-active="false"]')).toBeVisible();
-  await expect(page.locator('#game-hex-answer:not([hidden])')).toBeVisible();
-  await page.locator('#game-hex-answer').fill('90000');
+  await expect(page.locator('[data-math-input][data-active="true"]')).toBeVisible();
+  await page.locator('[data-math-source]').evaluate(field=>{
+    field.value='90000';field.dispatchEvent(new Event('input',{bubbles:true}));
+  });
   await page.locator('#game-hex-form button[type="submit"]').click();
   await expect(page.locator('[data-cell="1"]')).toHaveClass(/game-hex-cell--available/);
+  await expect(page.locator('.game-feedback')).toContainText('stays available');
+});
+test('Hex Crossing uses simple word answers for vocabulary-only topics',async({page})=>{
+  await page.goto('/#/sampling/games/hex-crossing');
+  await page.locator('[data-cell="0"]').click();
+  await expect(page.locator('[data-math-input]')).toHaveCount(0);
+  await expect(page.locator('#game-hex-answer')).toBeVisible();
+  await page.locator('#game-hex-answer').fill('not a sampling term');
+  await page.locator('#game-hex-form button[type="submit"]').click();
+  await expect(page.locator('.game-feedback')).toContainText('stays available');
 });
 test('All three games keep board and major controls in the mobile viewport',async({page})=>{
   await page.setViewportSize({width:375,height:800});
