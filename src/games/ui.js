@@ -1,183 +1,209 @@
-// Accessible, dependency-free game views for the existing book UI.
-// Every question and answer is escaped; the mathematical typesetter handles
-// mathematical reading text after the page is rendered.
+// Three responsive, keyboard/touch accessible game views. The existing
+// maths typesetter processes questions after the book is rendered.
 import {escapeHTML as escape} from '../logic.js';
+import {mathInputMarkup} from '../math-input.js';
 import {STANDARD_GAMES} from './engine.js';
 const e=value=>escape(String(value??''));
 const button=(action,label,extra='',cls='')=>
   '<button type="button" class="game-action '+cls+'" data-action="'+action+'" '+extra+'>'+label+'</button>';
-const span=(value,cls='')=>'<span class="'+cls+'">'+e(value)+'</span>';
-const cardFaces=card=>
-  '<span class="game-domino__half game-domino__question"><span class="game-domino__key">QUESTION</span>'+
-    '<span class="game-domino__copy">'+e(card.question)+'</span></span>'+
-  '<span class="game-domino__half game-domino__answer"><span class="game-domino__key">ANSWER</span>'+
-    '<span class="game-domino__copy">'+e(card.answerDisplay)+'</span></span>';
-function toolbar(state){
-  const options=[{id:'core',label:'Core maths'},{id:'mixed',label:'Include challenge'}];
-  return '<div class="game-toolbar" aria-label="Game settings">'+
-    '<div class="game-toolbar__seed"><strong>Set #'+state.seed+'</strong><span>Repeatable shuffle</span></div>'+
+const LABELS={'loop-cards':'Loop Cards',concentration:'Concentration','hex-crossing':'Hex Crossing'};
+function toolbar(state,{focused=true}={}){
+  return '<header class="game-toolbar">'+
+    '<div class="game-toolbar__identity"><span class="game-toolbar__eyebrow">Maths arcade · Set #'+state.seed+'</span>'+
+      '<h2 class="game-play-title">'+e(LABELS[state.type])+'</h2></div>'+
     '<div class="game-toolbar__levels" role="group" aria-label="Question difficulty">'+
-      options.map(o=>button('game-difficulty',e(o.label),
-        'data-level="'+o.id+'" aria-pressed="'+(state.difficulty===o.id)+'"',
-        'game-action--level'+(state.difficulty===o.id?' is-active':''))).join('')+'</div>'+
-    button('game-restart','Restart','', 'game-action--quiet')+
-    button('game-new','New shuffle ↻','','game-action--primary')+
-  '</div>';
+      ['core','mixed'].map(id=>button('game-difficulty',id==='core'?'Core':'Challenge',
+        'data-level="'+id+'" aria-pressed="'+(state.difficulty===id)+'"',
+        'game-action--level'+(state.difficulty===id?' is-active':''))).join('')+
+    '</div>'+
+    button('game-restart','Restart','','game-action--quiet')+
+    button('game-new','New set ↻','','game-action--quiet')+
+    button('game-focus-toggle',focused?'← Back to book':'Focus play ⛶',
+      'aria-pressed="'+focused+'"','game-action--primary game-focus-toggle')+
+    '</header>';
 }
 function message(state){
-  return '<p class="game-feedback'+(state.solved||state.complete||state.winner!==null?' game-feedback--success':'')+
-    '" role="status" aria-live="polite">'+e(state.feedback)+'</p>';
+  return '<p class="game-feedback'+(state.solved||state.complete||state.winner!==null?
+    ' game-feedback--success':'')+'" role="status" aria-live="polite">'+e(state.feedback)+'</p>';
 }
+function cardFaces(card){
+  return '<span class="game-domino__half game-domino__question"><span class="game-domino__key">QUESTION</span>'+
+    '<span class="game-domino__copy">'+e(card.question)+'</span></span>'+
+    '<span class="game-domino__half game-domino__answer"><span class="game-domino__key">ANSWER</span>'+
+    '<span class="game-domino__copy">'+e(card.answerDisplay)+'</span></span>';
+}
+function domino(card,{selected=false,placed=false}={}){
+  return button('game-pick',cardFaces(card),'data-card="'+e(card.id)+'" data-game-draggable="'+e(card.id)+
+      '" draggable="true" aria-pressed="'+selected+'" aria-label="'+
+      (placed?'Pick up placed card: ':'Pick up unplaced card: ')+e(card.question)+'"',
+    'game-domino'+(placed?' game-domino--placed':'')+(selected?' is-picked':''));
+}
+const LOOP_POSITIONS=['top-left','top','top-right','right','bottom-right','bottom','bottom-left','left'];
+const LOOP_ARROWS=['→','→','↓','↓','←','←','↑','↑'];
 function renderLoop(state){
   const byId=new Map(state.deck.map(c=>[c.id,c]));
   const slots=state.placements.map((id,index)=>{
-    const card=byId.get(id);
-    return '<div class="game-loop-slot'+(index===0?' game-loop-slot--anchor':'')+
-      '" data-slot="'+index+'">'+
-      '<div class="game-loop-slot__head"><span>Card '+(index+1)+'</span>'+
-      (index===0?'<strong>Start</strong>':card&&!state.solved?'<span>Tap to move</span>':'')+'</div>'+
-      (card?(index===0||state.solved?
-          '<div class="game-domino game-domino--placed">'+cardFaces(card)+'</div>':
-          button('game-remove',cardFaces(card),'data-position="'+index+
-            '" aria-label="Return card '+(index+1)+' to the tray"','game-domino game-domino--placed')
-        ):'<div class="game-loop-empty"><span>+</span><span>Choose a card</span></div>')+
-      (card&&index>0&&!state.solved?
-        '<div class="game-loop-slot__moves">'+
-          (index>1&&state.placements[index-1]?
-            button('game-swap','↑ Earlier','data-from="'+index+'" data-to="'+(index-1)+
-              '" aria-label="Move card '+(index+1)+' earlier in the loop"','game-action--small'):'')+
-          (index<state.count-1&&state.placements[index+1]?
-            button('game-swap','↓ Later','data-from="'+index+'" data-to="'+(index+1)+
-              '" aria-label="Move card '+(index+1)+' later in the loop"','game-action--small'):'')+
-        '</div>':'')+
+    const card=byId.get(id),selected=state.selectedId===id;
+    return '<div class="game-loop-slot game-loop-slot--'+LOOP_POSITIONS[index]+
+      (index===0?' game-loop-slot--anchor':'')+(selected?' is-picked':'')+
+      '" data-loop-slot="'+index+'" data-loop-position="'+LOOP_POSITIONS[index]+'">'+
+      '<span class="game-loop-slot__index">'+(index===0?'START':index+1)+'</span>'+
+      (card?(index===0?
+        '<div class="game-domino game-domino--anchor">'+cardFaces(card)+'</div>':
+        domino(card,{selected,placed:true})):
+        button('game-slot','<span class="game-loop-empty__icon">+</span><span>Drop or tap to place</span>',
+          'data-position="'+index+'" aria-label="Place picked-up card in position '+(index+1)+'"',
+          'game-loop-empty'+(state.selectedId?' is-target':'')))+
+      '<span class="game-loop-arrow" aria-hidden="true">'+LOOP_ARROWS[index]+'</span>'+
     '</div>';
   }).join('');
-  const tray=state.tray.map(id=>{
-    const card=byId.get(id);
-    return button('game-place',cardFaces(card),'data-card="'+e(id)+
-      '" aria-label="Place card containing question '+e(card.question)+'"','game-domino');
-  }).join('');
+  const selected=byId.get(state.selectedId);
+  const hub='<div class="game-loop-hub">'+
+      '<span class="game-loop-hub__icon" aria-hidden="true">↻</span>'+
+      '<strong>Close the loop</strong>'+
+      '<span>Follow the arrows. Each question connects to the answer on the next card.</span>'+
+      (selected?'<div class="game-loop-hub__picked">Holding: '+e(selected.answerDisplay)+
+        '</div>':'<span class="game-loop-hub__picked">Tap a card, then its destination.</span>')+
+      '</div>';
+  const tray=state.tray.map(id=>domino(byId.get(id),{selected:state.selectedId===id})).join('');
   return '<section class="game-shell game-shell--loop">'+
-    '<div class="game-stats"><span>'+state.placements.filter(Boolean).length+'/'+state.count+
-      ' cards placed</span><span>'+state.attempts+' check'+(state.attempts===1?'':'s')+
-      '</span><span>'+(state.solved?'Loop complete':'Last card must link to the first')+'</span></div>'+
-    '<p class="game-intro">The <strong>question</strong> on each card must match the <strong>answer on the next card</strong>. The first card is fixed; rearrange the others to close the loop.</p>'+
-    '<div class="game-loop-board" aria-label="Your loop card sequence">'+slots+'</div>'+
-    '<p class="game-loop-closure"><span aria-hidden="true">↶</span> Loop back: the last question must match the first answer.</p>'+
-    '<h3 class="game-subheading">Cards to place</h3>'+
-    (state.solved?'<p class="game-complete">Every connection is correct. Try another shuffle or a challenge deck.</p>':
-      '<div class="game-domino-tray" aria-label="Unplaced question and answer cards">'+tray+'</div>')+
-    '<div class="game-bottom">'+button('game-check','Check my loop',
-      (state.solved||state.tray.length?'disabled':''),'game-action--primary')+'</div>'+
-    message(state)+'</section>';
-}
-function tileClass(state,tile){
-  const visible=state.shown.includes(tile.id)||state.matched.includes(tile.pairId);
-  return 'game-memory-tile'+(visible?' is-open':'')+
-    (state.matched.includes(tile.pairId)?' is-matched':'');
+    '<div class="game-slim-status"><strong>'+state.placements.filter(Boolean).length+'/'+state.count+
+      ' cards placed</strong><span>'+state.attempts+' checks</span>'+
+      '<span>'+ (state.solved?'Loop completed':'Clockwise · last links to start')+'</span></div>'+
+    '<div class="game-loop-playfield">'+
+      '<div class="game-loop-board" aria-label="Eight cards arranged around a closed clockwise loop">'+
+        slots+hub+
+      '</div>'+
+      '<aside class="game-loop-hand" aria-label="Cards waiting to be placed">'+
+        '<div class="game-loop-hand__head"><strong>Your cards</strong><span>'+state.tray.length+' remaining</span></div>'+
+        '<div class="game-domino-tray">'+(state.solved?
+          '<p class="game-complete">Every link is correct. The loop is closed!</p>':
+          tray||'<p class="game-loop-hand__empty">All cards are in the ring. Check your loop or rearrange them.</p>')+
+        '</div>'+
+        '<div class="game-loop-hand__actions">'+
+          button('game-check','Check loop ✓',
+            (state.solved||state.tray.length?'disabled':'')+' aria-label="Check all eight connections"',
+            'game-action--primary')+
+          (state.selectedId?button('game-unpick','Put down','','game-action--quiet'):'')+
+        '</div>'+
+        message(state)+
+      '</aside>'+
+    '</div>'+
+    '<p class="game-gesture-hint">Drag a card into the loop, or tap a card then tap a space. Swap two cards by dropping one on the other. The starting card stays fixed.</p>'+
+    '</section>';
 }
 function renderConcentration(state){
-  const cards=state.tiles.map((tile,i)=>{
+  const cards=state.tiles.map((tile,index)=>{
     const visible=state.shown.includes(tile.id)||state.matched.includes(tile.pairId);
     const complete=state.matched.includes(tile.pairId);
     const label=visible?(tile.kind==='question'?'Question: ':'Answer: ')+tile.text:
-      'Turn over card '+(i+1);
+      'Turn over card '+(index+1);
     return button('game-flip',
       visible?'<span class="game-memory-tile__type">'+e(tile.kind)+'</span>'+
         '<span class="game-memory-tile__text">'+e(tile.text)+'</span>':
         '<span class="game-memory-tile__back" aria-hidden="true">✦</span>'+
-        '<span class="game-memory-tile__number">Card '+(i+1)+'</span>',
+        '<span class="game-memory-tile__number">Card '+(index+1)+'</span>',
       'data-card="'+e(tile.id)+'" aria-label="'+e(label)+'"'+
         (complete||state.pendingMismatch||state.complete?' disabled':''),
-      tileClass(state,tile));
+      'game-memory-tile'+(visible?' is-open':'')+(complete?' is-matched':''));
   }).join('');
   const revealed=state.tiles.filter(tile=>state.shown.includes(tile.id));
-  const details=revealed.length?'<div class="game-memory-detail" role="status" aria-live="polite">'+
-    revealed.map(tile=>'<div><strong>'+e(tile.kind==='question'?'Question':'Answer')+
-      '</strong><p>'+e(tile.text)+'</p></div>').join('')+'</div>':'';
+  const details='<aside class="game-memory-detail" aria-live="polite">'+
+    '<span class="game-memory-detail__eyebrow">Reading desk</span>'+
+    (revealed.length?revealed.map(tile=>
+      '<div class="game-memory-detail__face"><strong>'+e(tile.kind)+'</strong><p>'+
+        e(tile.text)+'</p></div>').join(''):
+      '<p class="game-memory-detail__empty">Turn over two cards to read their questions and answers here.</p>')+
+    (state.pendingMismatch?
+      '<div class="game-memory-countdown" aria-label="Cards flip back in five seconds">'+
+      '<strong>Not a pair · flipping back in 5 seconds</strong>'+
+      '<span class="game-memory-countdown__track"><span></span></span></div>':'')+
+    (state.complete?'<p class="game-complete">All matches found!</p>':'')+
+    '</aside>';
   return '<section class="game-shell game-shell--memory">'+
-    '<div class="game-toolbar__levels game-player-choice" role="group" aria-label="Number of players">'+
-      button('game-players','Solo','data-players="1" aria-pressed="'+(state.players===1)+'"',
-        state.players===1?'is-active':'')+
-      button('game-players','Two players','data-players="2" aria-pressed="'+(state.players===2)+'"',
-        state.players===2?'is-active':'')+
-    '</div>'+
-    '<div class="game-stats">'+
-      '<span aria-label="'+state.matched.length+' of '+(state.tiles.length/2)+' pairs matched">'+
-      state.matched.length+'/'+(state.tiles.length/2)+' pairs</span>'+
-      '<span>'+state.moves+' attempts</span>'+
+    '<div class="game-memory-head">'+
+      '<div class="game-player-choice" role="group" aria-label="Number of players">'+
+        button('game-players','Solo','data-players="1" aria-pressed="'+(state.players===1)+'"',
+          state.players===1?'is-active':'')+
+        button('game-players','Two players','data-players="2" aria-pressed="'+(state.players===2)+'"',
+          state.players===2?'is-active':'')+'</div>'+
+      '<div class="game-slim-status"><strong>'+state.matched.length+' of '+(state.tiles.length/2)+
+      ' pairs</strong><span>'+state.moves+' turns</span>'+
       (state.players===2?'<span>Player 1: '+state.scores[0]+' · Player 2: '+state.scores[1]+'</span>':
-        '<span>Matched: '+state.scores[0]+'</span>')+
-      '</div>'+
-    (state.players===2?'<p class="game-turn">Player <strong>'+(state.turn+1)+
-      '</strong> to play. A correct match keeps the turn; an incorrect pair passes it.</p>':
-      '<p class="game-intro">Turn over a question and the answer that belongs to it. Find all matching pairs.</p>')+
-    '<div class="game-memory-board" aria-label="Concentration matching cards">'+cards+'</div>'+
-    details+
-    (state.pendingMismatch?'<div class="game-bottom">'+button('game-continue','Hide cards and continue',
-      '', 'game-action--primary')+'</div>':'')+
-    (state.complete?'<p class="game-complete">All pairs found! '+
-      (state.players===2?(state.scores[0]===state.scores[1]?'It is a draw.':
-        'Player '+(state.scores[0]>state.scores[1]?'1':'2')+' wins.'):'Game complete.')+'</p>':'')+
-    message(state)+'</section>';
+        '<span>Score: '+state.scores[0]+'</span>')+'</div></div>'+
+    '<p class="game-turn">'+(state.players===2?'Player '+(state.turn+1)+' to play · ':
+      '')+'Find a matching question and answer. Incorrect pairs turn back after five seconds.</p>'+
+    '<div class="game-memory-stage">'+
+      '<div class="game-memory-board" aria-label="Sixteen face-down matching cards">'+cards+'</div>'+
+      details+'</div>'+message(state)+'</section>';
 }
 function renderHex(state,pairs){
   const byId=new Map(pairs.map(p=>[p.id,p]));
   const rows=Array.from({length:state.size},(_,row)=>{
     const cells=state.cells.slice(row*state.size,(row+1)*state.size);
     return '<div class="game-hex-row" role="group" aria-label="Row '+(row+1)+'">'+
-      cells.map((cell,c)=>{
+      cells.map((cell,col)=>{
         const owner=cell.owner===null?'available':cell.owner===0?'forest':'gold';
-        const clue=byId.get(cell.pairId)?.cue||String(cell.id+1);
+        const cue=byId.get(cell.pairId)?.cue||String(cell.id+1);
         return button('game-hex-select',
-          '<span class="game-hex-cell__cue">'+e(clue)+'</span>',
-          'data-cell="'+cell.id+'" aria-label="Row '+(row+1)+', column '+(c+1)+
-          ', '+(cell.owner===null?'unclaimed':cell.owner===0?'Player 1':'Player 2')+
+          '<span class="game-hex-cell__cue">'+e(cue)+'</span>',
+          'data-cell="'+cell.id+'" aria-label="Row '+(row+1)+', column '+(col+1)+
+            ', '+(cell.owner===null?'unclaimed':cell.owner===0?'Player 1':'Player 2')+
           '"'+(cell.owner!==null||state.pending!==null||state.winner!==null?' disabled':''),
           'game-hex-cell game-hex-cell--'+owner);
       }).join('')+'</div>';
   }).join('');
-  const isPending=state.pending!==null,selected=isPending?
-    state.cells[state.pending.index]:null,pair=selected?byId.get(selected.pairId):null;
-  const prompt=pair?'<section class="game-hex-challenge" aria-label="Hexagon challenge">'+
-    '<p class="game-hex-challenge__meta">Player '+(state.turn+1)+
-      ' · Hexagon '+(selected.id+1)+'</p>'+
+  const pending=state.pending,chosen=pending?state.cells[pending.index]:null;
+  const pair=chosen?byId.get(chosen.pairId):null;
+  const maths=pair&&pair.answer?.kind!=='text',mathMode=maths&&pending.mathMode!==false;
+  const plainInput=pair&&!pending.result?
+    '<input id="game-hex-answer" type="text" aria-label="Answer in simple typing" required '+
+    'autocapitalize="off" autocomplete="off" maxlength="250" spellcheck="false"'+
+    (mathMode?' hidden':'')+' value="'+e(pending.simpleDraft||'')+'">':'';
+  const editor=maths&&!pending.result?
+    mathInputMarkup({targetId:'game-hex-answer',active:mathMode,latex:pending.mathLatex||''}):'';
+  const challenge=pair?
+    '<div class="game-hex-challenge__meta">Player '+(state.turn+1)+
+      ' · Hexagon '+(chosen.id+1)+'</div>'+
     '<p class="game-hex-challenge__question">'+e(pair.question)+'</p>'+
-    (state.pending.result?
-      '<p><strong>'+(state.pending.result.correct?'Correct!':'Answer to review:')+'</strong> '+
-        e(state.pending.result.answer)+'</p>'+
-      (state.winner===null?button('game-continue','Next turn →','','game-action--primary'):''):
+    (pending.result?
+      '<p class="game-hex-result"><strong>'+(pending.result.correct?'Correct!':'Answer:')+
+        '</strong> '+e(pending.result.answer)+'</p>'+
+      (state.winner===null?button('game-continue','Next player →','','game-action--primary'):''):
       '<form id="game-hex-form" class="game-hex-form">'+
-        '<label for="game-hex-answer">Your answer</label>'+
-        '<div class="game-hex-form__row"><input id="game-hex-answer" type="text" required '+
-          'autocapitalize="off" autocomplete="off" maxlength="250" spellcheck="false">'+
-          '<button type="submit" class="game-action game-action--primary">Check answer</button></div>'+
-        '</form>'+button('game-cancel','Choose another hexagon','','game-action--quiet'))+
-    '</section>':'';
+        '<label id="game-hex-answer-label" for="game-hex-answer">'+
+          (maths?'Your mathematical answer':'Your answer')+'</label>'+
+        '<div class="game-hex-form__row"><div class="game-hex-form__editor">'+
+          plainInput+editor+'</div>'+
+          '<button type="submit" class="game-action game-action--primary">Claim hexagon</button></div>'+
+      '</form>'+button('game-cancel','Choose another tile','','game-action--quiet'))
+    :'<div class="game-hex-placeholder"><span aria-hidden="true">⬡</span>'+
+      '<strong>Choose an unclaimed hexagon</strong>'+
+      '<p>Answer correctly to claim it for your path.</p></div>';
   return '<section class="game-shell game-shell--hex">'+
-    '<p class="game-intro">Pass-and-play for two students. <strong>Player 1 (Forest)</strong> makes a connected path from left to right; <strong>Player 2 (Gold)</strong> goes from top to bottom. Hexagons are earned by correctly answering their questions.</p>'+
-    '<div class="game-hex-legend"><span class="game-hex-legend--forest">Forest: left ↔ right</span>'+
-      '<span class="game-hex-legend--gold">Gold: top ↕ bottom</span></div>'+
-    '<div class="game-hex-layout"><span class="game-hex-side game-hex-side--forest">Start · 1</span>'+
-      '<div class="game-hex-board" aria-label="Hexagon connection board">'+
-      '<span class="game-hex-edge">Gold starts here ↓</span>'+rows+
-      '<span class="game-hex-edge">↑ Gold finishes here</span></div>'+
-      '<span class="game-hex-side game-hex-side--forest">Finish · 1</span></div>'+
-    '<div class="game-stats"><span>Turn: Player '+(state.turn+1)+'</span>'+
-      '<span>Answered: '+state.rounds+'</span>'+
-      '<span>Claimed: '+state.cells.filter(c=>c.owner!==null).length+'/'+state.cells.length+'</span></div>'+
-    prompt+
+    '<div class="game-hex-legend"><span class="game-hex-legend--forest">Forest · Player 1 · left ↔ right</span>'+
+      '<span class="game-hex-legend--gold">Gold · Player 2 · top ↕ bottom</span></div>'+
+    '<div class="game-hex-stage">'+
+      '<div class="game-hex-layout"><span class="game-hex-side game-hex-side--forest">Start</span>'+
+        '<div class="game-hex-board" aria-label="Hexagon connection board">'+
+        '<span class="game-hex-edge">Gold begins ↓</span>'+rows+
+        '<span class="game-hex-edge">↑ Gold finishes</span></div>'+
+        '<span class="game-hex-side game-hex-side--forest">Finish</span></div>'+
+      '<aside class="game-hex-challenge" aria-label="Current question">'+challenge+'</aside>'+
+    '</div>'+
+    '<div class="game-slim-status"><strong>Player '+(state.turn+1)+' to play</strong>'+
+      '<span>'+state.rounds+' attempted</span>'+
+      '<span>'+state.cells.filter(c=>c.owner!==null).length+'/'+state.cells.length+
+        ' claimed</span></div>'+
     (state.winner!==null?'<p class="game-complete">Player '+(state.winner+1)+
-      ' has connected their sides of the board and wins!</p>':'')+
+      ' connected their sides and wins!</p>':'')+
     message(state)+'</section>';
 }
-export function renderStandardGame(page,session,pairs){
+export function renderStandardGame(page,session,pairs,{focused=true}={}){
   if(!STANDARD_GAMES.includes(page.gameId)||!session)return '';
   return '<div class="game-workspace" data-standard-game="'+e(page.gameId)+'">'+
-    toolbar(session)+
+    toolbar(session,{focused})+
     (page.gameId==='loop-cards'?renderLoop(session):
       page.gameId==='concentration'?renderConcentration(session):renderHex(session,pairs))+
-    '<p class="game-privacy">Questions are selected from this topic’s reviewed game bank. '+
-    'Game progress remains in this browser session; no account or online leaderboard is required.</p>'+
     '</div>';
 }
