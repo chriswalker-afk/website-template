@@ -858,9 +858,27 @@ function submitSelectedHex(session,pairs){
       (latexToFluencyText(latex,pair.answer)??latex):latex):raw;
   return submitHex(session,pairs,value);
 }
-// MathLive's form-associated custom element can swallow a button click
-// during its internal focus/keyboard updates. Handle the Claim control in
-// capture phase so it always reaches our game engine before editor listeners.
+// MathLive can consume the click while transferring focus out of its
+// custom editor. A primary pointer press submits before that focus handoff;
+// click remains the keyboard-accessible fallback.
+function claimHexFromEvent(ev){
+  const button=ev.target.closest?.('button[data-action="game-hex-submit"]');
+  if(!button||(ev.type==='pointerdown'&&ev.button!==0))return;
+  ev.preventDefault();
+  ev.stopPropagation();
+  const session=gameSession();
+  if(session?.type!=='hex-crossing')return;
+  const pairs=questionBankFor(state.route.topicId).games?.pairs||[];
+  try{
+    const next=submitSelectedHex(session,pairs);
+    if(next!==session)setGameSession(next);
+  }catch(error){
+    announce('Game could not update: '+error.message);
+  }
+}
+app.addEventListener('pointerdown',claimHexFromEvent,true);
+app.addEventListener('click',claimHexFromEvent,true);
+
 app.addEventListener('click',ev=>{
   const claim=ev.target.closest?.('button[data-action="game-hex-submit"]');
   if(!claim)return;
