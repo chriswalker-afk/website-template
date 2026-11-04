@@ -7,6 +7,22 @@ const gradient=QUESTION_BANKS.gradient.games.pairs;
 const loopRoute='/#/gradient/games/loop-cards';
 const memoryRoute='/#/gradient/games/concentration';
 const hexRoute='/#/gradient/games/hex-crossing';
+async function enterHexMath(page,latex){
+  const visual=page.locator('.math-input--ready math-field');
+  const ready=await visual.waitFor({state:'visible',timeout:2500})
+    .then(()=>true).catch(()=>false);
+  if(ready){
+    await visual.evaluate((field,value)=>{
+      field.setValue(value);
+      field.dispatchEvent(new Event('input',{bubbles:true}));
+    },latex);
+  }else{
+    await page.locator('[data-math-source]').evaluate((field,value)=>{
+      field.value=value;field.dispatchEvent(new Event('input',{bubbles:true}));
+    },latex);
+  }
+  await expect(page.locator('[data-math-source]')).toHaveValue(latex);
+}
 
 test('Loop Cards is a visible clockwise circuit with cards and controls on screen',async({page})=>{
   const errors=[];page.on('pageerror',err=>errors.push(err.message));
@@ -70,6 +86,7 @@ test('Loop Cards supports native drag-and-drop plus Enter to pick and place',asy
 test('Concentration auto-hides mismatched cards after five seconds and switches turns',async({page})=>{
   await page.clock.install();
   await page.goto(memoryRoute);
+  await page.clock.pauseAt(new Date('2026-11-04T00:00:00.000Z'));
   await expect(page.locator('.game-play-title')).toHaveText('Concentration');
   await expect(page.locator('.game-memory-tile')).toHaveCount(16);
   await page.locator('[data-action="game-players"][data-players="2"]').click();
@@ -149,28 +166,14 @@ test('Hex Crossing accepts a mathematical fraction then rejects an incorrect ans
   await page.locator('[data-cell="0"]').click();
   await expect(page.locator('[data-math-input][data-active="true"]')).toBeVisible();
   const latex='\\frac{'+(pair.answer.values[0]*2)+'}{2}';
-  await page.locator('[data-math-source]').evaluate((field,value)=>{
-    field.value=value;field.dispatchEvent(new Event('input',{bubbles:true}));
-  },latex);
+  await enterHexMath(page,latex);
   await page.locator('#game-hex-form button[type="submit"]').click();
   await expect(page.locator('[data-cell="0"]')).toHaveClass(/game-hex-cell--forest/);
   await page.locator('[data-action="game-continue"]').click();
   await expect(page.locator('.game-slim-status')).toContainText('Player 2');
   await page.locator('[data-cell="1"]').click();
   await expect(page.locator('[data-math-input][data-active="true"]')).toBeVisible();
-  // Enter the wrong answer through the actual MathLive field when loaded,
-  // rather than changing the hidden backing input behind the visual editor.
-  const visualField=page.locator('.math-input--ready math-field');
-  if(await visualField.count()){
-    await visualField.evaluate(field=>{
-      field.value='90000';field.dispatchEvent(new Event('input',{bubbles:true}));
-    });
-  }else{
-    await page.locator('[data-math-source]').evaluate(field=>{
-      field.value='90000';field.dispatchEvent(new Event('input',{bubbles:true}));
-    });
-  }
-  await expect(page.locator('[data-math-source]')).toHaveValue('90000');
+  await enterHexMath(page,'90000');
   await page.locator('#game-hex-form button[type="submit"]').click();
   await expect(page.locator('[data-cell="1"]')).toHaveClass(/game-hex-cell--available/);
   await expect(page.locator('.game-feedback')).toContainText('stays available');

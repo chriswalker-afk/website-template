@@ -1735,8 +1735,11 @@ app.addEventListener('submit',ev=>{
     const pair=pairs.find(p=>p.id===session.cells[session.pending?.index]?.pairId);
     if(!pair)return;
     const mathematical=pair.answer.kind!=='text';
-    const latex=String(document.querySelector('[data-math-source]')?.value||
-      session.pending.mathLatex||'');
+    // The visible editor is authoritative once MathLive has mounted;
+    // the backing input is used when MathLive is unavailable.
+    const latex=String(document.querySelector('#game-hex-form math-field')
+      ?.getValue?.('latex')??document.querySelector('#game-hex-form [data-math-source]')
+      ?.value??session.pending.mathLatex??'');
     const raw=String(document.querySelector('#game-hex-answer')?.value||
       session.pending.simpleDraft||'');
     const value=mathematical?
