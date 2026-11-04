@@ -94,7 +94,7 @@ test('Concentration history captures only seen questions per player and allows n
   const q1=cards.find(t=>t.kind==='question');
   const wrongAnswer=cards.find(t=>t.kind==='answer'&&t.pairId!==q1.pairId);
   await page.locator('[data-card="'+q1.id+'"]').click();
-  await expect(page.locator('.game-memory-working__question')).toHaveText(q1.text);
+  await expect(page.locator('.game-memory-working')).toHaveAttribute('data-review-question',q1.pairId);
   await expect(page.locator('.game-memory-history__item')).toHaveCount(1);
   await page.locator('[data-card="'+wrongAnswer.id+'"]').click();
   await page.locator('[data-game-note]').fill('rise / run = 12 / 4');
@@ -114,7 +114,7 @@ test('Concentration history captures only seen questions per player and allows n
   // Player 1's review stays visible while Player 2 plays.
   await expect(page.locator('[data-game-note]')).toHaveValue('rise / run = 12 / 4');
   await page.locator('[data-action="game-review-player"][data-player="1"]').click();
-  await expect(page.locator('.game-memory-working__question')).toHaveText(q2.text);
+  await expect(page.locator('.game-memory-working')).toHaveAttribute('data-review-question',q2.pairId);
   await expect(page.locator('[data-game-note]')).toHaveValue('');
   await page.locator('[data-game-note]').fill('Player 2 working');
   await page.locator('[data-action="game-review-player"][data-player="0"]').click();
@@ -154,6 +154,14 @@ test('Hex Crossing accepts mathematical notation and equivalent numerical fracti
     field.value=value;field.dispatchEvent(new Event('input',{bubbles:true}));
   },latex);
   await page.locator('#game-hex-form button[type="submit"]').click();
+  const claimClass=await page.locator('[data-cell="0"]').getAttribute('class');
+  if(!claimClass.includes('game-hex-cell--forest'))
+    console.log('Maths input diagnostic:',JSON.stringify({
+      expected:val,latex,
+      fieldValue:await page.locator('[data-math-source]').inputValue().catch(()=>null),
+      feedback:await page.locator('.game-feedback').textContent(),
+      verdict:await page.locator('.game-hex-result').textContent().catch(()=>null)
+    }));
   await expect(page.locator('[data-cell="0"]')).toHaveClass(/game-hex-cell--forest/);
   await page.locator('[data-action="game-continue"]').click();
   await expect(page.locator('.game-slim-status')).toContainText('Player 2');

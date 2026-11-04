@@ -486,8 +486,19 @@ const CONCENTRATION_FLIP_BACK_MS=5000;
 // Review tabs and working are allowed to change while cards count down.
 // Keep the same timer when the actual open pair has not changed.
 function mismatchToken(session){
-  return session.type==='concentration'&&session.pendingMismatch?
+  return session?.type==='concentration'&&session.pendingMismatch?
     [session.seed,session.moves,session.turn,...session.shown].join(':'):null;
+}
+function syncGameMismatchCountdown(route=state.route){
+  if(route?.chapterId!=='games'||route.sectionId!=='concentration')return;
+  const timer=concentrationTimers.get(route.topicId+':'+route.sectionId);
+  const progress=app.querySelector('.game-memory-countdown__track span');
+  if(!timer||!progress)return;
+  const elapsed=Math.max(0,Math.min(CONCENTRATION_FLIP_BACK_MS-1,
+    Date.now()-timer.startedAt));
+  // Reopening a review tab re-renders the game, but must not reset the
+  // five-second visual countdown. Resume the existing animation in place.
+  progress.style.animationDelay='-'+elapsed+'ms';
 }
 function capturedGameNote(){
   const field=document.activeElement;
@@ -522,7 +533,8 @@ function setGameSession(next){
         setGameSession(updated);
       else state.gameSessions[key]=updated;
     },CONCENTRATION_FLIP_BACK_MS);
-    concentrationTimers.set(key,{token,timeout});
+    concentrationTimers.set(key,{token,timeout,startedAt:Date.now()});
+    syncGameMismatchCountdown(route);
   }
 }
 function renderGamePage(page,topic,route){
@@ -653,6 +665,7 @@ function renderBook(route,{animate=true}={}){
   // Apply native, accessible mathematical typography to every reading mode,
   // without touching inputs, working notebooks or live editing controls.
   typesetSiteMath(app);
+  syncGameMismatchCountdown(route);
   enhanceMathInputs(app,{
     onToggle(target,active){
       if(target==='game-hex-answer'&&state.route?.chapterId==='games'){
@@ -854,7 +867,8 @@ app.addEventListener('click',ev=>{
   if(!button)return;
   const action=button.dataset.action,topic=TOPICS[state.route.topicId];
   if(action.startsWith('game-')){
-    if(Date.now()<suppressLoopClickUntil&&['game-pick','game-slot'].includes(action))return;
+    if(ev.detail>0&&Date.now()<suppressLoopClickUntil&&
+      ['game-pick','game-slot'].includes(action))return;
     if(action==='game-focus-toggle'){
       state.gameFocus=!state.gameFocus;
       rerender();
