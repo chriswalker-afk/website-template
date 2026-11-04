@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/chriswalker-afk/website-template/blob/main/src/skills-registry/schema.json",
+  "title": "JIS mathematics curriculum skill",
+  "description": "Shape of one skill record. Referential and cycle validation are in index.js.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "kind", "statement", "domain", "topic", "familyId", "familyMapping", "scope", "evidence", "assumedKnowledgeText", "generator", "review"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^(jis-y[789]-[0-9]{3}|igcse-g[0-9]{3}|alevel-a[0-9]{3})$"},
+    "kind": {"enum": ["jis-checklist", "exam-specification"]},
+    "statement": {"type": "string", "minLength": 2},
+    "domain": {"type": "string", "minLength": 1},
+    "topic": {"type": "string", "minLength": 1},
+    "familyId": {"type": "string", "minLength": 3},
+    "familyMapping": {"enum": ["source-topic", "keyword-source-domain", "keyword-rule", "coarse-topic-review", "coarse-domain-review", "coarse-unknown-review"]},
+    "scope": {
+      "type": "object", "additionalProperties": false,
+      "required": ["targetStages", "qualificationCodes", "tier", "plannedStages", "setEligibility", "completion"],
+      "properties": {
+        "targetStages": {"$ref": "#/$defs/stagesNonempty"},
+        "plannedStages": {"$ref": "#/$defs/stages"},
+        "qualificationCodes": {"type": "array", "items": {"enum": ["4MA1", "8MA0", "9MA0"]}, "uniqueItems": true},
+        "tier": {"enum": ["not-applicable", "Foundation-and-Higher", "Higher-only", "AS-core", "A-level-additional"]},
+        "setEligibility": {"type": "string"},
+        "completion": {"const": "not-recorded"}
+      }
+    },
+    "evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sourceId", "locator", "status"],
+      "properties": {
+        "sourceId": {"type": "string"},
+        "locator": {"type": "string"},
+        "status": {"enum": ["documented-checklist-target", "documented-qualification-requirement"]},
+        "localPlanSourceId": {"type": ["string", "null"]},
+        "localPlanStatus": {"enum": ["scheduled-topic-in-plan", "unverified"]}
+      }
+    },
+    "assumedKnowledgeText": {"type": "array", "items": {"type": "string"}},
+    "generator": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "questionFamilies"],
+      "properties": {
+        "status": {"enum": ["not-mapped", "candidate", "tested", "approved"]},
+        "questionFamilies": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      }
+    },
+    "review": {
+      "type": "object", "additionalProperties": false,
+      "required": ["required", "reason"],
+      "properties": {"required": {"type": "boolean"}, "reason": {"type": "string"}}
+    }
+  },
+  "$defs": {
+    "stage": {"enum": ["y7", "y8", "y9", "igcse-foundation", "igcse-higher", "a-level-y1", "a-level-y2"]},
+    "stages": {"type": "array", "items": {"$ref": "#/$defs/stage"}, "uniqueItems": true},
+    "stagesNonempty": {"$ref": "#/$defs/stages", "minItems": 1}
+  }
+}

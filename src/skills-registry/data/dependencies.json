@@ -1,0 +1,467 @@
+{
+  "schemaVersion": 1,
+  "edges": [
+    {
+      "from": "jis-y7-066",
+      "to": "jis-y8-068",
+      "relationship": "prerequisite",
+      "confidence": "proposed-teacher-review",
+      "reason": "coordinate plotting before straight-line plotting"
+    },
+    {
+      "from": "jis-y7-067",
+      "to": "jis-y8-072",
+      "relationship": "prerequisite",
+      "confidence": "proposed-teacher-review",
+      "reason": "table plotting before drawing from slope/intercept"
+    },
+    {
+      "from": "jis-y8-069",
+      "to": "igcse-g082",
+      "relationship": "prerequisite",
+      "confidence": "proposed-teacher-review",
+      "reason": "rise/run before specification gradient"
+    },
+    {
+      "from": "jis-y8-070",
+      "to": "igcse-g083",
+      "relationship": "prerequisite",
+      "confidence": "proposed-teacher-review",
+      "reason": "intercept recognition before y=mx+c reading"
+    },
+    {
+      "from": "igcse-g082",
+      "to": "alevel-a025",
+      "relationship": "prerequisite",
+      "confidence": "proposed-teacher-review",
+      "reason": "gradient before coordinate-geometry extension"
+    },
+    {
+      "from": "alevel-a025",
+      "to": "alevel-a027",
+      "relationship": "prerequisite",
+      "confidence": "proposed-teacher-review",
+      "reason": "two-point gradient before parallel/perpendicular slopes"
+    },
+    {
+      "from": "jis-y7-019",
+      "to": "jis-y8-017",
+      "relationship": "prerequisite",
+      "confidence": "proposed-teacher-review",
+      "reason": "collecting terms before common factorisation"
+    },
+    {
+      "from": "jis-y8-015",
+      "to": "jis-y9-018",
+      "relationship": "prerequisite",
+      "confidence": "proposed-teacher-review",
+      "reason": "one bracket before two brackets"
+    },
+    {
+      "from": "jis-y9-018",
+      "to": "jis-y9-019",
+      "relationship": "prerequisite",
+      "confidence": "proposed-teacher-review",
+      "reason": "double brackets before monic factorisation"
+    },
+    {
+      "from": "jis-y9-019",
+      "to": "jis-y9-020",
+      "relationship": "prerequisite",
+      "confidence": "proposed-teacher-review",
+      "reason": "factorising before solving quadratic equations"
+    },
+    {
+      "from": "jis-y9-020",
+      "to": "igcse-g069",
+      "relationship": "prerequisite",
+      "confidence": "proposed-teacher-review",
+      "reason": "Y9 roots before Foundation monic equation fluency"
+    },
+    {
+      "from": "igcse-g069",
+      "to": "igcse-g161",
+      "relationship": "prerequisite",
+      "confidence": "proposed-teacher-review",
+      "reason": "monic factorisation before general quadratic factorisation"
+    },
+    {
+      "from": "igcse-g161",
+      "to": "igcse-g162",
+      "relationship": "prerequisite",
+      "confidence": "proposed-teacher-review",
+      "reason": "factoring methods before quadratic formula application"
+    },
+    {
+      "from": "igcse-g162",
+      "to": "alevel-a010",
+      "relationship": "prerequisite",
+      "confidence": "proposed-teacher-review",
+      "reason": "quadratic roots before discriminant reasoning"
+    },
+    {
+      "from": "igcse-g162",
+      "to": "alevel-a009",
+      "relationship": "prerequisite",
+      "confidence": "proposed-teacher-review",
+      "reason": "quadratic root methods before parameter conditions"
+    },
+    {
+      "from": "jis-y7-078",
+      "to": "jis-y8-040",
+      "relationship": "prerequisite",
+      "confidence": "proposed-teacher-review",
+      "reason": "probability language before relative frequency"
+    },
+    {
+      "from": "jis-y7-081",
+      "to": "igcse-g131",
+      "relationship": "prerequisite",
+      "confidence": "proposed-teacher-review",
+      "reason": "elementary outcome models before probability scale"
+    },
+    {
+      "from": "igcse-g131",
+      "to": "igcse-g219",
+      "relationship": "prerequisite",
+      "confidence": "proposed-teacher-review",
+      "reason": "one-event probability before trees"
+    },
+    {
+      "from": "igcse-g219",
+      "to": "alevel-a090",
+      "relationship": "prerequisite",
+      "confidence": "proposed-teacher-review",
+      "reason": "tree diagrams before dependent probability"
+    },
+    {
+      "from": "alevel-a090",
+      "to": "alevel-a190",
+      "relationship": "prerequisite",
+      "confidence": "proposed-teacher-review",
+      "reason": "dependent trees before formal conditional probability"
+    },
+    {
+      "from": "jis-y7-011",
+      "to": "jis-y8-003",
+      "relationship": "prerequisite",
+      "confidence": "proposed-teacher-review",
+      "reason": "HCF/LCM listing before prime factor methods"
+    },
+    {
+      "from": "jis-y7-015",
+      "to": "jis-y8-007",
+      "relationship": "prerequisite",
+      "confidence": "proposed-teacher-review",
+      "reason": "index notation before index laws"
+    },
+    {
+      "from": "jis-y8-007",
+      "to": "jis-y9-001",
+      "relationship": "prerequisite",
+      "confidence": "proposed-teacher-review",
+      "reason": "basic laws before standard-form operations"
+    },
+    {
+      "from": "jis-y7-029",
+      "to": "jis-y8-048",
+      "relationship": "prerequisite",
+      "confidence": "proposed-teacher-review",
+      "reason": "FDP equivalence before percentage changes"
+    },
+    {
+      "from": "jis-y8-049",
+      "to": "jis-y8-052",
+      "relationship": "prerequisite",
+      "confidence": "proposed-teacher-review",
+      "reason": "multipliers before reverse percentages"
+    },
+    {
+      "from": "igcse-g031",
+      "to": "igcse-g146",
+      "relationship": "prerequisite",
+      "confidence": "proposed-teacher-review",
+      "reason": "basic percentage change before repeated percentage change"
+    },
+    {
+      "from": "igcse-g143",
+      "to": "alevel-a004",
+      "relationship": "prerequisite",
+      "confidence": "proposed-teacher-review",
+      "reason": "fractional indices before A level rational indices"
+    }
+  ],
+  "assumedKnowledgeTransitions": [
+    {
+      "id": "knowledge-transition-01",
+      "transition": "Y7 entry",
+      "domain": "Number",
+      "fromDescription": "Whole-number operations and place value",
+      "toDescription": "Using signed arithmetic, fractions and decimal operations",
+      "reason": "Diagnostic (Year 6 not supplied)",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-02",
+      "transition": "Y7 to Y8",
+      "domain": "Number",
+      "fromDescription": "Prime factors, factor pairs, HCF and LCM by listing",
+      "toDescription": "Prime factorisation and index form of HCF/LCM",
+      "reason": "JIS Y7 U2 → Y8 U1",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-03",
+      "transition": "Y7 to Y8",
+      "domain": "Algebra",
+      "fromDescription": "Collect like terms; expand a single bracket",
+      "toDescription": "Solve multi-step equations; factorise a common factor",
+      "reason": "JIS Y7 U3 → Y8 U2-3",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-04",
+      "transition": "Y7 to Y8",
+      "domain": "Fractions",
+      "fromDescription": "Fraction addition, multiplication, improper and mixed numbers",
+      "toDescription": "Fraction division; recurring decimals",
+      "reason": "JIS Y7 U4 → Y8 U6",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-05",
+      "transition": "Y7 to Y8",
+      "domain": "Graphs",
+      "fromDescription": "Plot coordinates; use table for y=mx+c",
+      "toDescription": "Gradient, intercept, graph equation and direct graph drawing",
+      "reason": "JIS Y7 U9 → Y8 U11",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-06",
+      "transition": "Y7 to Y8",
+      "domain": "Geometry",
+      "fromDescription": "Angle sum in triangles/quadrilaterals",
+      "toDescription": "Alternate/corresponding angles and polygon angle sums",
+      "reason": "JIS Y7 U5 → Y8 U9",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-07",
+      "transition": "Y7 to Y8",
+      "domain": "Data",
+      "fromDescription": "Mean median mode, frequency tables, bar charts",
+      "toDescription": "Scatter, box/pie/stem-leaf, mean from frequency table",
+      "reason": "JIS Y7 U1 → Y8 U10",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-08",
+      "transition": "Y8 to Y9",
+      "domain": "Algebra",
+      "fromDescription": "Expand one bracket; factorise common factors",
+      "toDescription": "Expand two brackets; factorise and solve monic quadratics",
+      "reason": "JIS Y8 U3 → Y9 U3",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-09",
+      "transition": "Y8 to Y9",
+      "domain": "Indices",
+      "fromDescription": "Integer index laws",
+      "toDescription": "Negative powers; standard form operations",
+      "reason": "JIS Y8 U1 → Y9 U1",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-10",
+      "transition": "Y8 to Y9",
+      "domain": "Equations",
+      "fromDescription": "Linear equations including fractions",
+      "toDescription": "Linear inequalities and simultaneous equations",
+      "reason": "JIS Y8 U2 → Y9 U5 and U10",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-11",
+      "transition": "Y8 to Y9",
+      "domain": "Graphs",
+      "fromDescription": "Gradient and intercept for straight lines",
+      "toDescription": "Parallel lines, line equations, graph intersections",
+      "reason": "JIS Y8 U11 → Y9 U10",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-12",
+      "transition": "Y8 to Y9",
+      "domain": "Geometry",
+      "fromDescription": "Area/volume cuboids and trapezia",
+      "toDescription": "Circle measures, cylinders and right-prism measures",
+      "reason": "JIS Y8 U4 → Y9 U2",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-13",
+      "transition": "Y8 to Y9",
+      "domain": "Proportionality",
+      "fromDescription": "Percentage multipliers and reverse percentages",
+      "toDescription": "Compound interest, negative/fractional enlargement and direct proportion",
+      "reason": "JIS Y8 U8 → Y9 U7",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-14",
+      "transition": "Y9 to IGCSE F",
+      "domain": "Number",
+      "fromDescription": "Standard form; estimation; signed indices",
+      "toDescription": "Systematic use of bounds, accuracy and calculator in multistep contexts",
+      "reason": "JIS Y9 U1 → 4MA1 F 1.8-1.11",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-15",
+      "transition": "Y9 to IGCSE F",
+      "domain": "Algebra",
+      "fromDescription": "Solve simple quadratics by factorisation",
+      "toDescription": "Use quadratics in contextual exam questions and multi-step algebra",
+      "reason": "JIS Y9 U3 → 4MA1 F 2.7",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-16",
+      "transition": "Y9 to IGCSE F",
+      "domain": "Trigonometry",
+      "fromDescription": "SOHCAHTOA in 2D; Pythagoras",
+      "toDescription": "Worded bearing/height problems and careful diagram selection",
+      "reason": "JIS Y9 U11 → 4MA1 F 4.8",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-17",
+      "transition": "Y9 to IGCSE F",
+      "domain": "Sequences",
+      "fromDescription": "Arithmetic nth terms; generating quadratic terms",
+      "toDescription": "Confident linear nth terms and interpretation of term-number rules",
+      "reason": "JIS Y7 U9 and Y9 U3 → 4MA1 F 3.1",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-18",
+      "transition": "IGCSE F to H",
+      "domain": "Quadratics",
+      "fromDescription": "Monic factorisation x²+bx+c",
+      "toDescription": "General factorisation ax²+bx+c; formula; inequalities",
+      "reason": "4MA1 F 2.7 → H 2.7-2.8",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-19",
+      "transition": "IGCSE F to H",
+      "domain": "Functions",
+      "fromDescription": "Tables, straight-line and quadratic graphs",
+      "toDescription": "Composite/inverse function, transformed graphs and non-linear gradients",
+      "reason": "4MA1 F 3.3 → H 3.2-3.4",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-20",
+      "transition": "IGCSE F to H",
+      "domain": "Trigonometry",
+      "fromDescription": "Right-angled 2D problems",
+      "toDescription": "Sine/cosine rule; 3D; sectors and compound geometry",
+      "reason": "4MA1 F 4.8-4.9 → H 4.8-4.9",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-21",
+      "transition": "IGCSE F to H",
+      "domain": "Statistics",
+      "fromDescription": "Mean/median/range; charts",
+      "toDescription": "Histograms, cumulative frequency, IQR and conditional probability",
+      "reason": "4MA1 F 6 → H 6",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-22",
+      "transition": "IGCSE H to AS",
+      "domain": "Algebra",
+      "fromDescription": "Indices; surds; quadratics and basic function graphs",
+      "toDescription": "Discriminant parameter reasoning; polynomial division; graph transformations",
+      "reason": "4MA1 H 1-3 → 8MA0 P 2",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-23",
+      "transition": "IGCSE H to AS",
+      "domain": "Calculus",
+      "fromDescription": "Differentiate x^n and find stationary points",
+      "toDescription": "First-principles, rational powers, normal lines, integration",
+      "reason": "4MA1 H 3.4 → 8MA0 P 7-8",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-24",
+      "transition": "IGCSE H to AS",
+      "domain": "Trigonometry",
+      "fromDescription": "Degree trig, cosine/sine rule and trig graphs",
+      "toDescription": "Trigonometric identities, equation solutions and modelling",
+      "reason": "4MA1 H 4.8 → 8MA0 P 5",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-25",
+      "transition": "IGCSE H to AS",
+      "domain": "Probability",
+      "fromDescription": "Trees, independent and conditional events",
+      "toDescription": "Binomial distributions and formal inference",
+      "reason": "4MA1 H 6.3 → 8MA0 S 3-5",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-26",
+      "transition": "AS to full 9MA0",
+      "domain": "Differentiation",
+      "fromDescription": "Power rule; tangents/normals; stationary points",
+      "toDescription": "Chain/product/quotient; implicit and parametric; connected rates",
+      "reason": "8MA0 P 7 → 9MA0 P 7",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-27",
+      "transition": "AS to full 9MA0",
+      "domain": "Integration",
+      "fromDescription": "Power rule; definite areas to axes",
+      "toDescription": "By parts/substitution/partial fractions; differential equations",
+      "reason": "8MA0 P 8 → 9MA0 P 8",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-28",
+      "transition": "AS to full 9MA0",
+      "domain": "Trigonometry",
+      "fromDescription": "Exact values, identities and degrees",
+      "toDescription": "Radians, reciprocal/inverse trig, compound angles and R-form",
+      "reason": "8MA0 P 5 → 9MA0 P 5",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-29",
+      "transition": "AS to full 9MA0",
+      "domain": "Statistics",
+      "fromDescription": "Binomial and its hypothesis tests",
+      "toDescription": "Normal distribution and testing; correlation hypotheses",
+      "reason": "8MA0 S 4-5 → 9MA0 S 4-5",
+      "status": "proposed-unverified"
+    },
+    {
+      "id": "knowledge-transition-30",
+      "transition": "AS to full 9MA0",
+      "domain": "Mechanics",
+      "fromDescription": "SUVAT; F=ma; connected particles",
+      "toDescription": "Projectiles; variable acceleration; moments; friction; inclined planes",
+      "reason": "8MA0 M 7-8 → 9MA0 M 7-8",
+      "status": "proposed-unverified"
+    }
+  ],
+  "policy": "Only proposed edges are present. Missing edges do not imply independence; validate before enabling automatic remediation."
+}
