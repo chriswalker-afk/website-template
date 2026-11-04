@@ -12,7 +12,8 @@ is fixed to avoid ambiguous rotations. Students select seven shuffled
 cards and check that the question on each card matches the answer on the
 next, including the last linking back to the first. Incorrect loops report
 how many connections are wrong without displaying the solution. Cards can
-be returned to the tray by touch, mouse or keyboard.
+be returned to the tray or moved earlier/later in the loop by touch,
+mouse or keyboard.
 
 **Concentration.** Eight questions and their eight answers are placed face
 down in a shuffled grid. Students flip two cards. Only one question and its

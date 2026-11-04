@@ -211,3 +211,25 @@ button.game-domino:hover:not(:disabled){
   .game-loop-slot{break-inside:avoid;border:1px solid #bbb}
   .game-domino{break-inside:avoid;box-shadow:none!important}
 }
+
+/* Quick accessible reordering in the domino sequence. */
+.game-loop-slot__moves{display:flex;gap:6px;justify-content:flex-end;margin-top:7px}
+.game-loop-slot__moves .game-action--small{min-height:28px;padding:5px 10px;font-size:11px!important}
+/* Full-size reading panel complements compact, tappable memory cards. */
+.game-memory-tile__text{
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;
+  line-clamp:4;overflow:hidden;max-width:100%
+}
+.game-memory-detail{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+  gap:12px;padding:14px 16px;margin-top:12px;background:#f3f5ec;
+  border:1px solid #d3dfd0;border-radius:9px
+}
+.game-memory-detail strong{
+  display:block;color:#406d51;font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;margin-bottom:4px
+}
+.game-memory-detail p{font-size:14px;line-height:1.6;margin:0;overflow-wrap:anywhere}
+@media(max-width:450px){
+  .game-memory-detail{grid-template-columns:minmax(0,1fr)}
+}

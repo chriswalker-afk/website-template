@@ -35,6 +35,10 @@ test('Loop Cards supports returning cards and mixed challenge question sets',asy
   await expect(page.locator('button[data-action="game-place"]')).toHaveCount(6);
   await page.locator('button[data-action="game-remove"][data-position="1"]').click();
   await expect(page.locator('button[data-action="game-place"]')).toHaveCount(7);
+  await page.locator('button[data-action="game-place"]').first().click();
+  await page.locator('button[data-action="game-place"]').first().click();
+  await page.locator('button[data-action="game-swap"][data-from="1"][data-to="2"]').click();
+  await expect(page.locator('.game-feedback')).toContainText('Cards swapped');
   await page.locator('button[data-action="game-difficulty"][data-level="mixed"]').click();
   await expect(page.locator('button[data-action="game-difficulty"][data-level="mixed"]')).toHaveAttribute('aria-pressed','true');
   await expect(page.locator('.game-loop-slot')).toHaveCount(8);
@@ -48,6 +52,7 @@ test('Concentration matches a question with its specific answer and scores',asyn
   const a=deck.find(t=>t.pairId===q.pairId&&t.kind==='answer');
   await page.locator('button[data-action="game-flip"][data-card="'+q.id+'"]').click();
   await expect(page.locator('button[data-action="game-flip"][data-card="'+q.id+'"]')).toContainText('question');
+  await expect(page.locator('.game-memory-detail')).toContainText(q.text);
   await page.locator('button[data-action="game-flip"][data-card="'+a.id+'"]').click();
   await expect(page.locator('.game-stats')).toContainText('1/8 pairs');
   await expect(page.locator('button[data-action="game-flip"][data-card="'+q.id+'"]')).toBeDisabled();

@@ -5,7 +5,7 @@ import {validateQuestionBank} from '../src/question-bank.js';
 import {validateGamePairs,numericalGamePair,vocabularyGamePairs} from '../src/games/contracts.js';
 import {STANDARD_GAME_DETAILS,standardGameSections} from '../src/games/sections.js';
 import {selectGamePairs,createGameSession,createLoopGame,loopPlace,loopRemove,checkLoop,
-  createConcentrationGame,flipConcentration,continueConcentration,
+  createConcentrationGame,flipConcentration,continueConcentration,swapLoop,
   createHexGame,hexNeighbours,hexHasPath,selectHex,submitHex,continueHex,cancelHex,
   checkGameAnswer} from '../src/games/engine.js';
 const gradient=QUESTION_BANKS.gradient.games.pairs;
@@ -67,6 +67,9 @@ test('loop cards contain the previous answer, enforce a closed cycle and can be 
   game=loopPlace(game,game.tray[0].id);
   for(let i=1;i<8;i++)game=loopRemove(game,i);
   for(const card of game.deck.slice(1))game=loopPlace(game,card.id);
+  game=swapLoop(game,1,2);
+  assert.equal(game.solved,false);
+  game=swapLoop(game,1,2);
   game=checkLoop(game);
   assert.equal(game.solved,true);
   assert.equal(game.attempts,2);

@@ -41,6 +41,15 @@ function renderLoop(state){
           button('game-remove',cardFaces(card),'data-position="'+index+
             '" aria-label="Return card '+(index+1)+' to the tray"','game-domino game-domino--placed')
         ):'<div class="game-loop-empty"><span>+</span><span>Choose a card</span></div>')+
+      (card&&index>0&&!state.solved?
+        '<div class="game-loop-slot__moves">'+
+          (index>1&&state.placements[index-1]?
+            button('game-swap','↑ Earlier','data-from="'+index+'" data-to="'+(index-1)+
+              '" aria-label="Move card '+(index+1)+' earlier in the loop"','game-action--small'):'')+
+          (index<state.count-1&&state.placements[index+1]?
+            button('game-swap','↓ Later','data-from="'+index+'" data-to="'+(index+1)+
+              '" aria-label="Move card '+(index+1)+' later in the loop"','game-action--small'):'')+
+        '</div>':'')+
     '</div>';
   }).join('');
   const tray=state.tray.map(id=>{
@@ -82,6 +91,10 @@ function renderConcentration(state){
         (complete||state.pendingMismatch||state.complete?' disabled':''),
       tileClass(state,tile));
   }).join('');
+  const revealed=state.tiles.filter(tile=>state.shown.includes(tile.id));
+  const details=revealed.length?'<div class="game-memory-detail" role="status" aria-live="polite">'+
+    revealed.map(tile=>'<div><strong>'+e(tile.kind==='question'?'Question':'Answer')+
+      '</strong><p>'+e(tile.text)+'</p></div>').join('')+'</div>':'';
   return '<section class="game-shell game-shell--memory">'+
     '<div class="game-toolbar__levels game-player-choice" role="group" aria-label="Number of players">'+
       button('game-players','Solo','data-players="1" aria-pressed="'+(state.players===1)+'"',
@@ -99,6 +112,7 @@ function renderConcentration(state){
       '</strong> to play. A correct match keeps the turn; an incorrect pair passes it.</p>':
       '<p class="game-intro">Turn over a question and the answer that belongs to it. Find all matching pairs.</p>')+
     '<div class="game-memory-board" aria-label="Concentration matching cards">'+cards+'</div>'+
+    details+
     (state.pendingMismatch?'<div class="game-bottom">'+button('game-continue','Hide cards and continue',
       '', 'game-action--primary')+'</div>':'')+
     (state.complete?'<p class="game-complete">All pairs found! '+

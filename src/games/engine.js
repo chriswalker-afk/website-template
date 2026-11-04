@@ -80,6 +80,16 @@ export function loopRemove(state,index){
   return {...state,placements,tray:[...state.tray,id],checked:false,
     feedback:'Card returned to your collection.'};
 }
+export function swapLoop(state,from,to){
+  if(state.type!=='loop-cards'||state.solved||
+    !Number.isInteger(from)||!Number.isInteger(to)||
+    from<=0||to<=0||from>=state.count||to>=state.count||
+    Math.abs(from-to)!==1||!state.placements[from]||!state.placements[to])return state;
+  const placements=[...state.placements];
+  [placements[from],placements[to]]=[placements[to],placements[from]];
+  return {...state,placements,checked:false,
+    feedback:'Cards swapped. Check how their neighbouring questions and answers connect.'};
+}
 export function checkLoop(state){
   if(state.type!=='loop-cards'||state.solved)return state;
   if(state.placements.some(p=>p===null))

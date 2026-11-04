@@ -1,6 +1,6 @@
 import {CHAPTER_LIBRARY,TOPICS,DEFAULT_TOPIC} from './topics.js';
 import {questionBankFor} from './question-bank.js';
-import {STANDARD_GAMES,createGameSession,loopPlace,loopRemove,checkLoop,
+import {STANDARD_GAMES,createGameSession,loopPlace,loopRemove,swapLoop,checkLoop,
   flipConcentration,continueConcentration,selectHex,submitHex,continueHex,cancelHex}
   from './games/engine.js';
 import {renderStandardGame} from './games/ui.js';
@@ -688,6 +688,7 @@ app.addEventListener('click',ev=>{
     try{
       if(action==='game-place')next=loopPlace(session,button.dataset.card);
       else if(action==='game-remove')next=loopRemove(session,Number(button.dataset.position));
+      else if(action==='game-swap')next=swapLoop(session,Number(button.dataset.from),Number(button.dataset.to));
       else if(action==='game-check')next=checkLoop(session);
       else if(action==='game-flip')next=flipConcentration(session,button.dataset.card);
       else if(action==='game-hex-select')next=selectHex(session,Number(button.dataset.cell));
