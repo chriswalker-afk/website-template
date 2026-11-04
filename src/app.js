@@ -1,7 +1,8 @@
 import {CHAPTER_LIBRARY,TOPICS,DEFAULT_TOPIC} from './topics.js';
 import {questionBankFor} from './question-bank.js';
 import {STANDARD_GAMES,createGameSession,loopPick,loopMove,loopPlace,loopRemove,swapLoop,checkLoop,
-  flipConcentration,continueConcentration,selectHex,submitHex,continueHex,cancelHex}
+  flipConcentration,continueConcentration,selectConcentrationHistory,
+  noteConcentrationWorking,selectHex,submitHex,continueHex,cancelHex}
   from './games/engine.js';
 import {renderStandardGame} from './games/ui.js';
 import {SITE_CONFIG} from './site-config.js';
@@ -482,29 +483,46 @@ function gameSession(route=state.route){
 }
 const concentrationTimers=new Map();
 const CONCENTRATION_FLIP_BACK_MS=5000;
+// Review tabs and working are allowed to change while cards count down.
+// Keep the same timer when the actual open pair has not changed.
+function mismatchToken(session){
+  return session.type==='concentration'&&session.pendingMismatch?
+    [session.seed,session.moves,session.turn,...session.shown].join(':'):null;
+}
+function capturedGameNote(){
+  const field=document.activeElement;
+  if(!field?.matches?.('[data-game-note]'))return null;
+  return {player:field.dataset.player,pair:field.dataset.pair,
+    start:field.selectionStart,end:field.selectionEnd};
+}
+function restoreGameNote(note){
+  if(!note)return;
+  const field=app.querySelector('[data-game-note][data-player="'+note.player+
+    '"][data-pair="'+note.pair+'"]');
+  if(!field)return;
+  field.focus({preventScroll:true});
+  field.setSelectionRange(note.start,note.end);
+}
 function setGameSession(next){
   const route=state.route,key=route.topicId+':'+route.sectionId;
-  const priorTimer=concentrationTimers.get(key);
-  if(priorTimer!==undefined){clearTimeout(priorTimer);concentrationTimers.delete(key);}
+  const token=mismatchToken(next),priorTimer=concentrationTimers.get(key);
+  if(priorTimer&&priorTimer.token!==token){
+    clearTimeout(priorTimer.timeout);concentrationTimers.delete(key);
+  }
+  const activeNote=capturedGameNote();
   state.gameSessions[key]=next;
-  rerender();announce(next.feedback);
-  if(next.type==='concentration'&&next.pendingMismatch){
-    // A stale timer must never change a restarted, reshuffled or
-    // newly selected game; each pending mismatch owns exactly one timer.
-    const expected=next;
+  rerender();restoreGameNote(activeNote);announce(next.feedback);
+  if(token&&!concentrationTimers.has(key)){
     const timeout=setTimeout(()=>{
+      const current=state.gameSessions[key];
+      if(!current||mismatchToken(current)!==token)return;
       concentrationTimers.delete(key);
-      if(state.gameSessions[key]!==expected||!expected.pendingMismatch)return;
-      const updated=continueConcentration(expected);
-      state.gameSessions[key]=updated;
-      if(state.route?.topicId+':'+state.route?.sectionId===key){
-        rerender();
-        announce(updated.feedback);
-        document.querySelector('button[data-action="game-flip"]:not(:disabled)')
-          ?.focus({preventScroll:true});
-      }
+      const updated=continueConcentration(current);
+      if(state.route?.topicId+':'+state.route?.sectionId===key)
+        setGameSession(updated);
+      else state.gameSessions[key]=updated;
     },CONCENTRATION_FLIP_BACK_MS);
-    concentrationTimers.set(key,timeout);
+    concentrationTimers.set(key,{token,timeout});
   }
 }
 function renderGamePage(page,topic,route){
@@ -861,6 +879,10 @@ app.addEventListener('click',ev=>{
       else if(action==='game-swap')next=swapLoop(session,Number(button.dataset.from),Number(button.dataset.to));
       else if(action==='game-check')next=checkLoop(session);
       else if(action==='game-flip')next=flipConcentration(session,button.dataset.card);
+      else if(action==='game-review-player')
+        next=selectConcentrationHistory(session,Number(button.dataset.player));
+      else if(action==='game-review-question')
+        next=selectConcentrationHistory(session,Number(button.dataset.player),button.dataset.pair);
       else if(action==='game-hex-select')next=selectHex(session,Number(button.dataset.cell));
       else if(action==='game-continue')next=session.type==='concentration'?
         continueConcentration(session):continueHex(session);
@@ -1680,6 +1702,15 @@ app.addEventListener('input',ev=>{
       session.answers[current.question.id]={...current.response,draft:target.value};
   }
   if(target.id==='cloze-answer'){state.cloze.value=target.value;state.cloze.checked=false;}
+  if(target.matches('[data-game-note]')&&state.route?.chapterId==='games'){
+    const session=gameSession();
+    if(session?.type==='concentration'){
+      const updated=noteConcentrationWorking(session,
+        Number(target.dataset.player),target.dataset.pair,target.value);
+      if(updated!==session)
+        state.gameSessions[state.route.topicId+':'+state.route.sectionId]=updated;
+    }
+  }
   if(target.id==='game-hex-answer'&&state.route?.chapterId==='games'){
     const session=gameSession();
     if(session?.type==='hex-crossing'&&session.pending&&!session.pending.result)
