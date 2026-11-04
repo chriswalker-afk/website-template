@@ -51,6 +51,7 @@ try{
   if(!created.dryRun)console.log([
     'Draft hidden from the public hub until authoring.status becomes ready.',
     'Audit: npm run audit:topic -- --topic '+created.topicId,
-    'Preview: npm run preview:topic -- --topic '+created.topicId
+    'Preview: npm run preview:topic -- --topic '+created.topicId,
+    'Question Workshop: npm run author:questions -- --topic '+created.topicId
   ].join('\n'));
 }catch(error){console.error('Topic Creator: '+error.message);process.exitCode=1;}

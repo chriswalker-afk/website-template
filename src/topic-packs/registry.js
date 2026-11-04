@@ -18,6 +18,10 @@ const REGISTRATIONS=Object.freeze([
   {topic:topic_gradient,questionBank:question_gradient,visuals:visual_gradient},
   // @topic-creator:entries
 ]);
+// The separate teacher Question Workshop needs to inspect draft packs too.
+// Student-facing TOPICS/QUESTION_BANKS continue to use the filtered list below.
+export const AUTHORING_PACKS=REGISTRATIONS;
+
 const enabled=SITE_CONFIG.mode==='standalone'?
   REGISTRATIONS.filter(entry=>entry.topic.id===SITE_CONFIG.topicId):
   REGISTRATIONS.filter(entry=>entry.topic.authoring?.status!=='draft');

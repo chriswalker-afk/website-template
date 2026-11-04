@@ -113,9 +113,9 @@ rejected syntax, seeded tests and regressions across existing families.
 Run npm run check, npm run test:latex and npm run test:browser. The site
 still has no runtime build or CAS dependency.
 
-## Next: Pass 3 — teacher authoring workflow
+## Pass 3 — Teacher Question Workshop
 
-A visual family catalogue, worked generator previews, selected-seed
-reproduction, adjustable difficulty, answer-format examples, warnings and
-a teacher-facing QA dashboard. Expand the checker only for carefully
-specified, independently tested mathematical types.
+Pass 3 now provides a separate read-only teacher page with a family catalogue,
+seeded previews, worksheet difficulty controls, verified accepted-answer
+examples and a QA dashboard. See [the Pass 3 guide](QUESTION_FOUNDATION_PASS3.md)
+for usage, tests and review limitations.

@@ -70,6 +70,19 @@ For new topics, ambiguous ASCII notation such as x^2 and sqrt(x) in student-faci
 
 The existing npm run check command now also audits every pack structurally. Draft content remains allowed during work, but broken schemas do not silently pass CI.
 
+## Preview and audit generated mathematics in the Question Workshop
+
+After adding Fluency or worksheet question families, open the read-only
+teacher Question Workshop:
+
+    npm run author:questions -- --topic percentage-change
+
+It lists registered drafts without exposing them in the student hub. Choose
+a family, reproduce a question seed, inspect its worked solution and accepted
+answers, vary worksheet difficulty, and run seeded QA checks. See the
+[Pass 3 workshop guide](QUESTION_FOUNDATION_PASS3.md). The workshop never
+publishes a draft or substitutes for the strict publishing audit.
+
 ## Preview a topic as a standalone website
 
     npm run preview:topic -- --topic percentage-change
