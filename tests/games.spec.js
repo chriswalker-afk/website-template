@@ -141,6 +141,8 @@ test('Concentration restart cancels flip-back timer, clears review notes, and co
   await expect(page.locator('[data-card="'+q.id+'"]')).toBeDisabled();
 });
 test('Hex Crossing accepts mathematical notation and equivalent numerical fractions',async({page})=>{
+  page.on('console',msg=>{if(msg.text().startsWith('HEX_MODE_'))console.log('HEX JS:',msg.text());});
+  page.on('pageerror',error=>console.log('HEX PAGE ERROR:',error.message));
   await page.goto(hexRoute);
   await expect(page.locator('.game-play-title')).toHaveText('Hex Crossing');
   await expect(page.locator('.game-hex-cell')).toHaveCount(25);

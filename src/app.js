@@ -881,6 +881,9 @@ app.addEventListener('click',ev=>{
       else if(action==='game-hex-select')next=selectHex(session,Number(button.dataset.cell));
       else if(action==='game-hex-mode'&&session.type==='hex-crossing'&&session.pending&&
         !session.pending.result){
+        console.info('HEX_MODE_ACTION',JSON.stringify({
+          type:session.type,index:session.pending.index,mathMode:session.pending.mathMode,
+          result:session.pending.result}));
         const pair=pairs.find(p=>p.id===session.cells[session.pending.index].pairId);
         if(pair&&pair.answer.kind!=='text'){
           const mathMode=session.pending.mathMode===false;
@@ -891,6 +894,8 @@ app.addEventListener('click',ev=>{
           next={...session,pending:{...session.pending,mathMode,
             mathLatex:latex,simpleDraft:mathMode?plain:
               (latexToFluencyText(latex,pair.answer)||plain)}};
+          console.info('HEX_MODE_NEXT',JSON.stringify({
+            mathMode:next.pending.mathMode,kind:pair.answer.kind}));
         }
       }
       else if(action==='game-continue')next=session.type==='concentration'?
