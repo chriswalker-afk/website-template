@@ -149,13 +149,46 @@ export function createConcentrationGame(pairs,{seed=2026,difficulty='core',playe
   ]));
   return {type:'concentration',seed,difficulty,players,tiles,
     shown:[],matched:[],moves:0,scores:[0,0],turn:0,pendingMismatch:false,
+    seenByPlayer:[[],[]],reviewPlayer:0,reviewPairId:null,reviewNotes:{},
     complete:false,feedback:'Flip a question card and the answer that matches it.'};
+}
+// Capture only the *question* sides actually exposed by a player.
+ // Review is independent of turn so one player can calculate while the other
+ // flips cards. The history stores question IDs, never hidden answer text.
+function withSeenQuestion(state,tile){
+  if(tile.kind!=='question')return state;
+  const seenByPlayer=state.seenByPlayer.map(ids=>[...ids]);
+  if(!seenByPlayer[state.turn].includes(tile.pairId))
+    seenByPlayer[state.turn].push(tile.pairId);
+  return {...state,seenByPlayer,
+    reviewPairId:state.reviewPlayer===state.turn?
+      tile.pairId:state.reviewPairId};
+}
+export function selectConcentrationHistory(state,player,pairId=null){
+  if(state.type!=='concentration'||!Number.isInteger(player)||
+    player<0||player>=state.players)return state;
+  const list=state.seenByPlayer[player];
+  if(pairId!==null&&!list.includes(pairId))return state;
+  const selected=pairId===null?
+    (player===state.reviewPlayer&&list.includes(state.reviewPairId)?
+      state.reviewPairId:list.at(-1)||null):pairId;
+  if(player===state.reviewPlayer&&selected===state.reviewPairId)return state;
+  return {...state,reviewPlayer:player,reviewPairId:selected};
+}
+export function noteConcentrationWorking(state,player,pairId,working){
+  if(state.type!=='concentration'||!Number.isInteger(player)||
+    player<0||player>=state.players||
+    !state.seenByPlayer[player].includes(pairId)||
+    typeof working!=='string'||working.length>1200)return state;
+  const key=player+':'+pairId;
+  return {...state,reviewNotes:{...state.reviewNotes,[key]:working}};
 }
 export function flipConcentration(state,id){
   if(state.type!=='concentration'||state.complete||state.pendingMismatch||
     state.shown.includes(id)||state.tiles.every(t=>t.id!==id))return state;
   const tile=state.tiles.find(t=>t.id===id);
   if(state.matched.includes(tile.pairId))return state;
+  state=withSeenQuestion(state,tile);
   if(state.shown.length===0)return {...state,shown:[id],feedback:'Find the matching question or answer.'};
   const other=state.tiles.find(t=>t.id===state.shown[0]),correct=
     tile.pairId===other.pairId&&tile.kind!==other.kind;
