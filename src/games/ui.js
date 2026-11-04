@@ -194,7 +194,7 @@ function renderHex(state,pairs){
   const pair=chosen?byId.get(chosen.pairId):null;
   const maths=pair&&pair.answer?.kind!=='text',mathMode=maths&&pending.mathMode!==false;
   const plainInput=pair&&!pending.result?
-    '<input id="game-hex-answer" type="text" aria-label="Answer in simple typing"'+
+    '<input id="game-hex-answer" type="text" aria-label="Answer in simple typing" '+
     'autocapitalize="off" autocomplete="off" maxlength="250" spellcheck="false"'+
     (mathMode?' disabled hidden':' required')+' value="'+e(pending.simpleDraft||'')+'">':'';
   const editor=maths&&!pending.result?
