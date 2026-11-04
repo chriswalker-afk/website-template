@@ -165,7 +165,7 @@ function renderConcentration(state){
         button('game-players','Two players','data-players="2" aria-pressed="'+(state.players===2)+'"',
           state.players===2?'is-active':'')+'</div>'+
       '<div class="game-slim-status"><strong>'+state.matched.length+' of '+(state.tiles.length/2)+
-      ' pairs</strong><span>'+state.moves+' attempts</span>'+
+      ' pairs</strong><span>'+state.moves+' attempt'+(state.moves===1?'':'s')+'</span>'+
       (state.players===2?'<span>Player 1: '+state.scores[0]+' · Player 2: '+state.scores[1]+'</span>':
         '<span>Score: '+state.scores[0]+'</span>')+'</div></div>'+
     '<p class="game-turn">'+(state.players===2?'Player '+(state.turn+1)+' to play · ':
@@ -196,7 +196,7 @@ function renderHex(state,pairs){
   const plainInput=pair&&!pending.result?
     '<input id="game-hex-answer" type="text" aria-label="Answer in simple typing" '+
     'autocapitalize="off" autocomplete="off" maxlength="250" spellcheck="false"'+
-    (mathMode?' disabled hidden':' required')+' value="'+e(pending.simpleDraft||'')+'">':'';
+    (mathMode?' disabled hidden':'')+' value="'+e(pending.simpleDraft||'')+'">':'';
   const editor=maths&&!pending.result?
     mathInputMarkup({targetId:'game-hex-answer',active:mathMode,latex:pending.mathLatex||''}):'';
   const challenge=pair?
@@ -207,7 +207,7 @@ function renderHex(state,pairs){
       '<p class="game-hex-result"><strong>'+(pending.result.correct?'Correct!':'Answer:')+
         '</strong> '+e(pending.result.answer)+'</p>'+
       (state.winner===null?button('game-continue','Next player →','','game-action--primary'):''):
-      '<form id="game-hex-form" class="game-hex-form">'+
+      '<form id="game-hex-form" class="game-hex-form" novalidate>'+
         '<div class="game-hex-form__head"><label id="game-hex-answer-label" for="game-hex-answer">'+
           (maths?'Your mathematical answer':'Your answer')+'</label>'+
           (maths?button('game-hex-mode',mathMode?'Simple typing':'Maths notation',

@@ -882,7 +882,7 @@ app.addEventListener('click',ev=>{
       else if(action==='game-hex-mode'&&session.type==='hex-crossing'&&session.pending&&
         !session.pending.result){
         const pair=pairs.find(p=>p.id===session.cells[session.pending.index].pairId);
-        if(pair?.answer.kind!=='text'){
+        if(pair&&pair.answer.kind!=='text'){
           const mathMode=session.pending.mathMode===false;
           const latex=String(document.querySelector('[data-math-source]')?.value||
             session.pending.mathLatex||'');
