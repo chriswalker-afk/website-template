@@ -1,7 +1,7 @@
 // Teacher-reviewed numerical question-answer cards for reusable games.
 // Every displayed answer is unique, so the domino loop has only one correct
 // successor per card. Challenge questions may be included in Mixed mode.
-import {numericalGamePair as numberCard} from '../../games/engine.js';
+import {numericalGamePair as numberCard} from '../../games/contracts.js';
 export const gamePairs=Object.freeze([
   numberCard('rise-three','A line moves 4 squares right and 12 squares up. Find its gradient.',3),
   numberCard('down-two','A line moves 5 squares right and 10 squares down. Find its signed gradient.',-2),

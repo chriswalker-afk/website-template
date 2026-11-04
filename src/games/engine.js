@@ -1,13 +1,12 @@
 // Reusable, deterministic mathematics game logic. No DOM, storage or timers.
 // Topic-owned game packs supply the questions, answers and explicitly accepted forms.
 import {rngFromSeed,checkFluencyAnswer,answerText} from '../fluency-engine.js';
-import {checkExactAnswer,isExactAnswerKind,validateExactAnswer,exactAnswerSample} from '../question-foundation/verification.js';
+import {checkExactAnswer,isExactAnswerKind} from '../question-foundation/verification.js';
+import {gameTextKey as textKey,validateGamePairs} from './contracts.js';
 
 export const STANDARD_GAMES=Object.freeze(['loop-cards','concentration','hex-crossing']);
 export const GAME_DIFFICULTIES=Object.freeze(['core','mixed']);
 export const GAME_PAIR_COUNT=8;
-const SLUG=/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
-const textKey=value=>String(value??'').trim().toLocaleLowerCase('en-GB').replace(/[−–—]/g,'-').replace(/\s+/g,' ');
 const asAnswer=pair=>pair.answer;
 const isNumeric=kind=>['number','ordered','unordered'].includes(kind);
 function shuffle(rng,items){
@@ -18,29 +17,7 @@ function shuffle(rng,items){
   }
   return values;
 }
-export function numericalGamePair(id,question,value,{level='core',cue}={}){
-  if(!Number.isFinite(value))throw new TypeError('A finite mathematical answer is required');
-  const display=Object.is(value,-0)?'0':String(value);
-  return {id,question,answerDisplay:display,
-    answer:{kind:'number',values:[value],label:'Enter the numerical answer.'},
-    level,...(cue?{cue}:{})};
-}
-export function vocabularyGamePairs(cards){
-  if(!Array.isArray(cards))throw new TypeError('Expected an authored vocabulary deck');
-  return cards.map(card=>({
-    id:card.id,
-    question:'Which mathematical term matches this definition? '+card.definition,
-    answerDisplay:card.term,
-    answer:{kind:'text',value:card.term,accepted:[card.term,...(card.aliases||[])]},
-    level:'core'
-  }));
-}
-function displayedAnswer(pair){
-  if(pair.answer?.kind==='text')return pair.answerDisplay;
-  if(isNumeric(pair.answer?.kind))return answerText(pair.answer);
-  if(isExactAnswerKind(pair.answer?.kind))return exactAnswerSample(pair.answer);
-  return null;
-}
+export {numericalGamePair,vocabularyGamePairs,validateGamePairs} from './contracts.js';
 export function checkGameAnswer(raw,pair){
   const answer=asAnswer(pair);
   if(!answer)return {correct:false,kind:'unsupported',message:'No checkable answer was authored.'};
@@ -57,51 +34,6 @@ export function checkGameAnswer(raw,pair){
   });
   if(isExactAnswerKind(answer.kind))return checkExactAnswer(raw,answer);
   return {correct:false,kind:'unsupported',message:'This question needs teacher review.'};
-}
-export function validateGamePairs(pairs){
-  const errors=[];
-  if(!Array.isArray(pairs)||pairs.length<GAME_PAIR_COUNT)
-    return ['Provide at least eight reviewed game question–answer pairs.'];
-  const ids=new Set(),answers=new Set();
-  for(const [index,pair] of pairs.entries()){
-    const place='Pair '+(index+1)+': ';
-    if(!pair||typeof pair!=='object'){
-      errors.push(place+'missing pair');continue;
-    }
-    if(!SLUG.test(pair.id||'')||ids.has(pair.id))errors.push(place+'invalid or duplicate ID');
-    ids.add(pair.id);
-    if(typeof pair.question!=='string'||!pair.question.trim()||pair.question.length>500)
-      errors.push(place+'question must be 1–500 characters');
-    if(typeof pair.answerDisplay!=='string'||!pair.answerDisplay.trim()||pair.answerDisplay.length>200)
-      errors.push(place+'answerDisplay must be 1–200 characters');
-    if(pair.level!==undefined&&!GAME_DIFFICULTIES.includes(pair.level)&&pair.level!=='challenge')
-      errors.push(place+'level must be core or challenge');
-    const kind=pair.answer?.kind;
-    if(kind==='text'){
-      const accepted=pair.answer?.accepted||[pair.answer?.value];
-      if(typeof pair.answer.value!=='string'||!pair.answer.value.trim()||
-         !Array.isArray(accepted)||!accepted.length||accepted.some(v=>typeof v!=='string'||!v.trim())||
-         !accepted.some(v=>textKey(v)===textKey(pair.answerDisplay)))
-        errors.push(place+'text answer must include its displayed answer in accepted forms');
-    }else if(isNumeric(kind)){
-      if(!Array.isArray(pair.answer.values)||!pair.answer.values.length||
-         pair.answer.values.some(v=>!Number.isFinite(v))||
-         (kind==='number'&&pair.answer.values.length!==1)||
-         !checkGameAnswer(displayedAnswer(pair),pair).correct)
-        errors.push(place+'numerical reference answer is invalid');
-    }else if(isExactAnswerKind(kind)){
-      if(validateExactAnswer(pair.answer)||!checkGameAnswer(displayedAnswer(pair),pair).correct)
-        errors.push(place+'exact mathematical reference answer is invalid');
-    }else errors.push(place+'unsupported answer type');
-    const key=textKey(pair.answerDisplay);
-    if(answers.has(key))errors.push(place+'duplicate visible answer (loop cards need unique matches)');
-    answers.add(key);
-    if(pair.cue!==undefined&&(typeof pair.cue!=='string'||pair.cue.length>5))
-      errors.push(place+'cue must have at most five characters');
-  }
-  if(pairs.filter(p=>p?.level!=='challenge').length<GAME_PAIR_COUNT)
-    errors.push('At least eight core-level pairs are needed to play without challenge items.');
-  return errors;
 }
 export function selectGamePairs(pairs,seed,{difficulty='core',count=GAME_PAIR_COUNT}={}){
   const errors=validateGamePairs(pairs);
