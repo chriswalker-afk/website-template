@@ -1,6 +1,6 @@
 import {CHAPTER_LIBRARY,TOPICS,DEFAULT_TOPIC} from './topics.js';
 import {questionBankFor} from './question-bank.js';
-import {STANDARD_GAMES,createGameSession,loopPlace,loopRemove,swapLoop,checkLoop,
+import {STANDARD_GAMES,createGameSession,loopPick,loopMove,loopPlace,loopRemove,swapLoop,checkLoop,
   flipConcentration,continueConcentration,selectHex,submitHex,continueHex,cancelHex}
   from './games/engine.js';
 import {renderStandardGame} from './games/ui.js';
@@ -85,7 +85,7 @@ const state={
   reasoningSessions:{},reasoningProgress:{},
   problemSessions:{},problemProgress:{},
   modellingSessions:{},modellingProgress:{},
-  gameSessions:{}
+  gameSessions:{},gameFocus:true
 };
 let lastTopic=null;
 function taskHasNotebook(mode,id){
@@ -480,16 +480,38 @@ function gameSession(route=state.route){
     console.error('Game setup error',error);return null;
   }
 }
+const concentrationTimers=new Map();
+const CONCENTRATION_FLIP_BACK_MS=5000;
 function setGameSession(next){
   const route=state.route,key=route.topicId+':'+route.sectionId;
+  const priorTimer=concentrationTimers.get(key);
+  if(priorTimer!==undefined){clearTimeout(priorTimer);concentrationTimers.delete(key);}
   state.gameSessions[key]=next;
   rerender();announce(next.feedback);
+  if(next.type==='concentration'&&next.pendingMismatch){
+    // A stale timer must never change a restarted, reshuffled or
+    // newly selected game; each pending mismatch owns exactly one timer.
+    const expected=next;
+    const timeout=setTimeout(()=>{
+      concentrationTimers.delete(key);
+      if(state.gameSessions[key]!==expected||!expected.pendingMismatch)return;
+      const updated=continueConcentration(expected);
+      state.gameSessions[key]=updated;
+      if(state.route?.topicId+':'+state.route?.sectionId===key){
+        rerender();
+        announce(updated.feedback);
+        document.querySelector('button[data-action="game-flip"]:not(:disabled)')
+          ?.focus({preventScroll:true});
+      }
+    },CONCENTRATION_FLIP_BACK_MS);
+    concentrationTimers.set(key,timeout);
+  }
 }
 function renderGamePage(page,topic,route){
   if(STANDARD_GAMES.includes(page.gameId)){
     const pairs=questionBankFor(topic.id).games?.pairs;
     const session=gameSession(route);
-    return session?renderStandardGame(page,session,pairs):
+    return session?renderStandardGame(page,session,pairs,{focused:state.gameFocus}):
       '<p class="game-feature__notice">This game needs at least eight reviewed question–answer cards in the topic game bank.</p>';
   }
   const symbol=page.gameId==='sprint'?'clock':page.gameId==='puzzle-quest'?'puzzle':'grid';
@@ -608,11 +630,32 @@ function renderBook(route,{animate=true}={}){
   brandLink.setAttribute('aria-label',topic.title+': contents');
   document.title=topic.title+' — The Maths Notebook';
   state.route=route;
+  document.body.classList.toggle('game-focus-mode',
+    Boolean(state.gameFocus&&route.chapterId==='games'&&STANDARD_GAMES.includes(route.sectionId)));
   // Apply native, accessible mathematical typography to every reading mode,
   // without touching inputs, working notebooks or live editing controls.
   typesetSiteMath(app);
   enhanceMathInputs(app,{
     onToggle(target,active){
+      if(target==='game-hex-answer'&&state.route?.chapterId==='games'){
+        const session=gameSession();
+        if(session?.type!=='hex-crossing'||!session.pending||session.pending.result)return;
+        const topic=TOPICS[state.route.topicId],pair=questionBankFor(topic.id).games?.pairs
+          ?.find(p=>p.id===session.cells[session.pending.index].pairId);
+        if(!pair||pair.answer.kind==='text')return;
+        const mathLatex=document.querySelector('[data-math-source]')?.value||
+          session.pending.mathLatex||'';
+        const simpleDraft=document.querySelector('#game-hex-answer')?.value||
+          session.pending.simpleDraft||'';
+        state.gameSessions[state.route.topicId+':'+state.route.sectionId]={
+          ...session,pending:{...session.pending,mathMode:active,mathLatex,
+            simpleDraft:active?simpleDraft:
+              (latexToFluencyText(mathLatex,pair.answer)||simpleDraft)}};
+        rerender();
+        document.querySelector(active?'[data-math-source]':'#game-hex-answer')
+          ?.focus({preventScroll:true});
+        return;
+      }
       if(target!=='fluency-answer'||state.route?.chapterId!=='fluency')return;
       const current=fluencyAnswer(fluencySession());
       if(!current||current.response.correct||current.response.revealed)return;
@@ -623,6 +666,13 @@ function renderBook(route,{animate=true}={}){
       document.querySelector(active?'[data-math-source]':'#fluency-answer')?.focus({preventScroll:true});
     },
     onChange(target,latex){
+      if(target==='game-hex-answer'&&state.route?.chapterId==='games'){
+        const session=gameSession();
+        if(session?.type==='hex-crossing'&&session.pending&&!session.pending.result)
+          state.gameSessions[state.route.topicId+':'+state.route.sectionId]={
+            ...session,pending:{...session.pending,mathLatex:latex.slice(0,1000)}};
+        return;
+      }
       if(target!=='fluency-answer'||state.route?.chapterId!=='fluency')return;
       const current=fluencyAnswer(fluencySession());
       if(current&&!current.response.correct&&!current.response.revealed)
@@ -682,11 +732,30 @@ app.addEventListener('click',ev=>{
   if(!button)return;
   const action=button.dataset.action,topic=TOPICS[state.route.topicId];
   if(action.startsWith('game-')){
+    if(suppressLoopClick){
+      suppressLoopClick=false;
+      return;
+    }
+    if(action==='game-focus-toggle'){
+      state.gameFocus=!state.gameFocus;
+      rerender();
+      document.querySelector('button[data-action="game-focus-toggle"]')?.focus({preventScroll:true});
+      return;
+    }
     const session=gameSession(),pairs=questionBankFor(topic.id).games?.pairs;
     if(!session||!pairs)return;
     let next=session;
     try{
-      if(action==='game-place')next=loopPlace(session,button.dataset.card);
+      if(action==='game-pick'){
+        const id=button.dataset.card;
+        const index=Number(button.closest('[data-loop-slot]')?.dataset.loopSlot);
+        if(session.selectedId&&button.closest('[data-loop-slot]')&&index>0&&
+          session.selectedId!==id)next=loopMove(session,session.selectedId,index);
+        else next=loopPick(session,id);
+      }
+      else if(action==='game-slot')next=loopMove(session,session.selectedId,Number(button.dataset.position));
+      else if(action==='game-unpick')next=loopPick(session,session.selectedId);
+      else if(action==='game-place')next=loopPlace(session,button.dataset.card);
       else if(action==='game-remove')next=loopRemove(session,Number(button.dataset.position));
       else if(action==='game-swap')next=swapLoop(session,Number(button.dataset.from),Number(button.dataset.to));
       else if(action==='game-check')next=checkLoop(session);
@@ -709,7 +778,10 @@ app.addEventListener('click',ev=>{
     }catch(error){announce('Game could not update: '+error.message);return;}
     if(next!==session){
       setGameSession(next);
-      if(action==='game-hex-select')document.querySelector('#game-hex-answer')?.focus({preventScroll:true});
+      if(action==='game-hex-select')document.querySelector(
+        '[data-math-source], #game-hex-answer:not([hidden])')?.focus({preventScroll:true});
+      else if(action==='game-pick'&&next.selectedId)
+        document.querySelector('[data-game-draggable="'+next.selectedId+'"]')?.focus({preventScroll:true});
       else if(action==='game-continue')document.querySelector('button[data-action="game-hex-select"]:not(:disabled), button[data-action="game-flip"]:not(:disabled)')?.focus({preventScroll:true});
     }
     return;
@@ -1507,6 +1579,12 @@ app.addEventListener('input',ev=>{
       session.answers[current.question.id]={...current.response,draft:target.value};
   }
   if(target.id==='cloze-answer'){state.cloze.value=target.value;state.cloze.checked=false;}
+  if(target.id==='game-hex-answer'&&state.route?.chapterId==='games'){
+    const session=gameSession();
+    if(session?.type==='hex-crossing'&&session.pending&&!session.pending.result)
+      state.gameSessions[state.route.topicId+':'+state.route.sectionId]={
+        ...session,pending:{...session.pending,simpleDraft:target.value}};
+  }
   if(target.id==='recall-answer'){state.recall.value=target.value;state.recall.checked=false;}
   if(target.id==='review-search'){
     state.review.query=target.value;
@@ -1527,12 +1605,21 @@ app.addEventListener('submit',ev=>{
     const session=gameSession(),topic=TOPICS[state.route?.topicId];
     if(!session||session.type!=='hex-crossing'||!topic)return;
     const pairs=questionBankFor(topic.id).games?.pairs||[];
-    const value=String(document.querySelector('#game-hex-answer')?.value||'');
+    const pair=pairs.find(p=>p.id===session.cells[session.pending?.index]?.pairId);
+    if(!pair)return;
+    const mathematical=pair.answer.kind!=='text'&&session.pending.mathMode!==false;
+    const latex=String(document.querySelector('[data-math-source]')?.value||
+      session.pending.mathLatex||'');
+    const raw=String(document.querySelector('#game-hex-answer')?.value||
+      session.pending.simpleDraft||'');
+    const value=mathematical?
+      (['number','ordered','unordered'].includes(pair.answer.kind)?
+        (latexToFluencyText(latex,pair.answer)??latex):latex):raw;
     const next=submitHex(session,pairs,value);
     if(next!==session){
       setGameSession(next);
       document.querySelector(next.pending?.result?'button[data-action="game-continue"]':
-        '#game-hex-answer')?.focus({preventScroll:true});
+        '[data-math-source], #game-hex-answer:not([hidden])')?.focus({preventScroll:true});
     }
     return;
   }
