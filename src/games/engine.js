@@ -42,7 +42,13 @@ export function selectGamePairs(pairs,seed,{difficulty='core',count=GAME_PAIR_CO
   if(!Number.isInteger(count)||count<1||count>pairs.length)throw new RangeError('Invalid pair count');
   const eligible=pairs.filter(p=>difficulty==='mixed'||p.level!=='challenge');
   if(eligible.length<count)throw new RangeError('Not enough question–answer pairs for this difficulty');
-  return shuffle(rngFromSeed(seed),eligible).slice(0,count);
+  const rng=rngFromSeed(seed),selected=shuffle(rng,eligible).slice(0,count);
+  // Mixed mode must actually feature challenge material when it exists.
+  if(difficulty==='mixed'&&count>=2&&!selected.some(p=>p.level==='challenge')){
+    const challenges=eligible.filter(p=>p.level==='challenge');
+    if(challenges.length)selected[count-1]=shuffle(rng,challenges)[0];
+  }
+  return selected;
 }
 function config(seed,difficulty){
   rngFromSeed(seed);

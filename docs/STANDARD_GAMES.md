@@ -90,8 +90,10 @@ timers, networking or remote scores.
 ## Question and answer contracts
 
 - **Eight unique answers** are necessary to produce an unambiguous loop.
-  Duplicate displayed answer text is rejected at publication. There must
-  also be at least eight non-challenge cards so Core mode is playable.
+  Duplicate displayed answer text, mathematically equivalent answers of
+  the same checkable kind, and overlapping accepted text aliases are
+  rejected at publication. There must also be at least eight
+  non-challenge cards so Core mode is playable.
 - Each question needs a unique slug ID and concise, reviewed wording.
 - Numerical, ordered and unordered values use the site's existing
   numerical checker. Exact fractions, polynomial expressions, equations,

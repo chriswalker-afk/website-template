@@ -70,6 +70,26 @@ export function validateGamePairs(pairs){
     if(pair.cue!==undefined&&(typeof pair.cue!=='string'||pair.cue.length>5))
       errors.push(place+'cue must have at most five characters');
   }
+  // Different printed forms or synonyms can be the same mathematical answer.
+  // Detect those collisions as well as the literal duplicate displays above.
+  for(let i=0;i<pairs.length;i++)for(let j=i+1;j<pairs.length;j++){
+    const a=pairs[i]?.answer,b=pairs[j]?.answer;
+    if(!a||!b||a.kind!==b.kind)continue;
+    let collision=false;
+    if(a.kind==='text'){
+      const termsA=(a.accepted||[a.value]).map(gameTextKey);
+      const termsB=new Set((b.accepted||[b.value]).map(gameTextKey));
+      collision=termsA.some(v=>termsB.has(v));
+    }else if(isNumeric(a.kind)){
+      const one=a.kind==='unordered'?[...a.values].sort((x,y)=>x-y):a.values;
+      const two=b.kind==='unordered'?[...b.values].sort((x,y)=>x-y):b.values;
+      collision=one.length===two.length&&one.every((v,k)=>v===two[k]);
+    }else if(isExactAnswerKind(a.kind)&&!validateExactAnswer(a)&&!validateExactAnswer(b)){
+      collision=checkExactAnswer(exactAnswerSample(a),b).correct;
+    }
+    if(collision)errors.push('Pairs '+(i+1)+' and '+(j+1)+
+      ' have equivalent answers or overlapping aliases; the loop would be ambiguous.');
+  }
   if(pairs.filter(p=>p?.level!=='challenge').length<8)
     errors.push('At least eight core-level pairs are needed to play without challenge items.');
   return errors;

@@ -36,6 +36,16 @@ test('the topic bank rejects duplicate displayed answers, bad formats and missin
   const challenge=numeric.map((c,i)=>i===0?c:{...c,level:'challenge'});
   assert.match(validateGamePairs(challenge).join(' '),/eight core-level/);
   assert.throws(()=>standardGameSections(['unknown']),/Unknown standard/);
+  const equivalent=numeric.map((card,i)=>i===7?{
+    ...card,answerDisplay:'07',answer:{...card.answer,values:[7]}
+  }:card);
+  assert.ok(validateGamePairs(equivalent).length>0,'invalid printed numerical answer is rejected');
+  const aliasDeck=Array.from({length:8},(_,i)=>({
+    id:'term-'+i,question:'Describe term '+i,
+    answerDisplay:'Term '+i,answer:{kind:'text',value:'Term '+i,accepted:['Term '+i]}
+  }));
+  aliasDeck[7].answer.accepted.push('Term 6');
+  assert.match(validateGamePairs(aliasDeck).join(' '),/overlapping aliases/);
 });
 test('question/answer text checking recognises only explicit author-approved aliases',()=>{
   const pair=sampling.find(x=>x.id==='simple-random');
@@ -154,5 +164,8 @@ test('all three games can be created from a different topic with no game-specifi
   }
   const mixed=selectGamePairs(gradient,12,{difficulty:'mixed',count:16});
   assert.ok(mixed.some(p=>p.level==='challenge'));
+  for(let seed=1;seed<=60;seed++)
+    assert.ok(selectGamePairs(gradient,seed,{difficulty:'mixed'}).some(p=>p.level==='challenge'),
+      'Mixed mode should feature a challenge card on seed '+seed);
   assert.throws(()=>createGameSession('new',gradient),/Unknown standard game/);
 });
