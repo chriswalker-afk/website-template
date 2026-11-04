@@ -17,14 +17,14 @@ import {validateModellingChapters} from '../src/modelling-engine.js';
 import {buildSite,PROJECT_ROOT} from '../scripts/build-site.mjs';
 
 const id='gradient',topic=TOPICS[id],bank=QUESTION_BANKS[id],visuals=VISUAL_LIBRARIES[id];
-test('the new topic is strictly Gradient, ready for Foundation and has no shared app edits',async()=>{
+test('Gradient remains a complete Foundation topic and now includes reusable games',async()=>{
   assert.equal(topic?.id,'gradient');
   assert.equal(topic.title,'Gradient');
   assert.match(topic.qualification,/4MA1/);
   assert.equal(topic.level,'Foundation');
   assert.equal(topic.authoring.status,'ready');
   assert.deepEqual(topic.authoring.plannedModes,
-    ['understand','memorise','fluency','reasoning','problemSolving','modelling']);
+    ['understand','memorise','fluency','reasoning','problemSolving','modelling','games']);
   assert.deepEqual(chaptersFor(topic).map(x=>x.id),topic.authoring.plannedModes);
   assert.ok(TOPIC_PACKS.some(x=>x.id===id));
   assert.deepEqual(validateTopics(),[]);
@@ -52,7 +52,8 @@ test('publication readiness is independently verified for the complete gradient 
   assert.equal(report.counts.modes.reasoning.pages,4);
   assert.equal(report.counts.modes.problemSolving.pages,8);
   assert.equal(report.counts.modes.modelling.pages,8);
-  assert.equal(report.counts.modes.games.enabled,false);
+  assert.equal(report.counts.modes.games.enabled,true);
+  assert.equal(report.counts.gamePairs,16);
   assert.equal(report.counts.modes.examPractice.enabled,false);
   assert.deepEqual(validateQuestionBank(topic),[]);
   assert.deepEqual(validateVisualLibrary(topic,visuals),[]);

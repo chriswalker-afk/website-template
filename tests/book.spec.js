@@ -155,9 +155,12 @@ test('a level can contain multiple pages without changing its right tab',async({
   await expect(page).toHaveURL(/#\/quadratics\/problemSolving\/level-1$/);
 });
 
-test('each game option is its own right-side tab and is clearly a preview',async({page})=>{
+test('existing game previews remain labelled while new standard games have their own tabs',async({page})=>{
   await page.goto('/#/quadratics/games/sprint');
-  await expect(page.locator('.side-tab')).toHaveCount(3);
+  await expect(page.locator('.side-tab')).toHaveCount(6);
+  await expect(page.locator('.side-tabs')).toContainText('Loop Cards');
+  await expect(page.locator('.side-tabs')).toContainText('Concentration');
+  await expect(page.locator('.side-tabs')).toContainText('Hex Crossing');
   await expect(page.getByRole('heading',{name:'Sprint'})).toBeVisible();
   await expect(page.locator('.game-feature')).toContainText('Planned game');
   await expect(page.locator('.games-shelf')).toHaveCount(0);

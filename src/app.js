@@ -1,4 +1,9 @@
 import {CHAPTER_LIBRARY,TOPICS,DEFAULT_TOPIC} from './topics.js';
+import {questionBankFor} from './question-bank.js';
+import {STANDARD_GAMES,createGameSession,loopPlace,loopRemove,swapLoop,checkLoop,
+  flipConcentration,continueConcentration,selectHex,submitHex,continueHex,cancelHex}
+  from './games/engine.js';
+import {renderStandardGame} from './games/ui.js';
 import {SITE_CONFIG} from './site-config.js';
 import {buildFluencySet,checkFluencyAnswer,PRACTICE_LENGTHS} from './fluency-engine.js';
 import {emptyFluencyProgress,hydrateFluencyProgress,saveFluencyRound} from './fluency-progress.js';
@@ -79,7 +84,8 @@ const state={
   fluencySessions:{},fluencyProgress:{},
   reasoningSessions:{},reasoningProgress:{},
   problemSessions:{},problemProgress:{},
-  modellingSessions:{},modellingProgress:{}
+  modellingSessions:{},modellingProgress:{},
+  gameSessions:{}
 };
 let lastTopic=null;
 function taskHasNotebook(mode,id){
@@ -460,7 +466,32 @@ function renderQuestionPage(page,route){
     '</article>';
   }).join('')+'</div>';
 }
-function renderGamePage(page){
+function gameSession(route=state.route){
+  if(route?.chapterId!=='games'||!STANDARD_GAMES.includes(route.sectionId))return null;
+  const key=route.topicId+':'+route.sectionId;
+  const existing=state.gameSessions[key];
+  if(existing)return existing;
+  const pairs=questionBankFor(route.topicId).games?.pairs;
+  if(!pairs?.length)return null;
+  try{
+    state.gameSessions[key]=createGameSession(route.sectionId,pairs,{seed:2026});
+    return state.gameSessions[key];
+  }catch(error){
+    console.error('Game setup error',error);return null;
+  }
+}
+function setGameSession(next){
+  const route=state.route,key=route.topicId+':'+route.sectionId;
+  state.gameSessions[key]=next;
+  rerender();announce(next.feedback);
+}
+function renderGamePage(page,topic,route){
+  if(STANDARD_GAMES.includes(page.gameId)){
+    const pairs=questionBankFor(topic.id).games?.pairs;
+    const session=gameSession(route);
+    return session?renderStandardGame(page,session,pairs):
+      '<p class="game-feature__notice">This game needs at least eight reviewed question–answer cards in the topic game bank.</p>';
+  }
   const symbol=page.gameId==='sprint'?'clock':page.gameId==='puzzle-quest'?'puzzle':'grid';
   return '<section class="game-feature">'+
     '<div class="game-feature__icon">'+icon(symbol)+'</div>'+
@@ -498,7 +529,7 @@ function renderPageContent(route,topic){
     'missing-words':()=>renderCloze(topic),
     'speed-recall':()=>renderSpeedRecall(topic),
     'review-all':()=>renderReviewAll(topic),
-    game:()=>renderGamePage(page)
+    game:()=>renderGamePage(page,topic,route)
   };
   return intro+(renderers[page.type]?.()||'');
 }
@@ -650,6 +681,39 @@ app.addEventListener('click',ev=>{
   const button=ev.target.closest('button[data-action]');
   if(!button)return;
   const action=button.dataset.action,topic=TOPICS[state.route.topicId];
+  if(action.startsWith('game-')){
+    const session=gameSession(),pairs=questionBankFor(topic.id).games?.pairs;
+    if(!session||!pairs)return;
+    let next=session;
+    try{
+      if(action==='game-place')next=loopPlace(session,button.dataset.card);
+      else if(action==='game-remove')next=loopRemove(session,Number(button.dataset.position));
+      else if(action==='game-swap')next=swapLoop(session,Number(button.dataset.from),Number(button.dataset.to));
+      else if(action==='game-check')next=checkLoop(session);
+      else if(action==='game-flip')next=flipConcentration(session,button.dataset.card);
+      else if(action==='game-hex-select')next=selectHex(session,Number(button.dataset.cell));
+      else if(action==='game-continue')next=session.type==='concentration'?
+        continueConcentration(session):continueHex(session);
+      else if(action==='game-cancel')next=cancelHex(session);
+      else if(action==='game-difficulty'&&['core','mixed'].includes(button.dataset.level))
+        next=createGameSession(session.type,pairs,{seed:session.seed,
+          difficulty:button.dataset.level,players:session.players||1});
+      else if(action==='game-players'&&session.type==='concentration'&&
+        [1,2].includes(Number(button.dataset.players)))
+        next=createGameSession(session.type,pairs,{seed:session.seed,
+          difficulty:session.difficulty,players:Number(button.dataset.players)});
+      else if(action==='game-restart'||action==='game-new')
+        next=createGameSession(session.type,pairs,{
+          seed:action==='game-new'?(session.seed===999999999?1:session.seed+1):session.seed,
+          difficulty:session.difficulty,players:session.players||1});
+    }catch(error){announce('Game could not update: '+error.message);return;}
+    if(next!==session){
+      setGameSession(next);
+      if(action==='game-hex-select')document.querySelector('#game-hex-answer')?.focus({preventScroll:true});
+      else if(action==='game-continue')document.querySelector('button[data-action="game-hex-select"]:not(:disabled), button[data-action="game-flip"]:not(:disabled)')?.focus({preventScroll:true});
+    }
+    return;
+  }
   if(action==='mdl-hint'){
     const session=modellingSession(),current=currentModelling(session);
     if(!current||session.complete||session.stage>=4||current.entry.rating)return;
@@ -1458,6 +1522,20 @@ app.addEventListener('input',ev=>{
   }
 });
 app.addEventListener('submit',ev=>{
+  if(ev.target.id==='game-hex-form'){
+    ev.preventDefault();
+    const session=gameSession(),topic=TOPICS[state.route?.topicId];
+    if(!session||session.type!=='hex-crossing'||!topic)return;
+    const pairs=questionBankFor(topic.id).games?.pairs||[];
+    const value=String(document.querySelector('#game-hex-answer')?.value||'');
+    const next=submitHex(session,pairs,value);
+    if(next!==session){
+      setGameSession(next);
+      document.querySelector(next.pending?.result?'button[data-action="game-continue"]':
+        '#game-hex-answer')?.focus({preventScroll:true});
+    }
+    return;
+  }
   if(ev.target.id==='fluency-answer-form'){
     ev.preventDefault();
     const session=fluencySession(),current=fluencyAnswer(session);

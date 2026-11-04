@@ -20,7 +20,7 @@ test('the registry retains both examples and registers the independent Gradient 
     assert.strictEqual(PROBLEM_SOLVING_CHAPTERS[topic.id],topic.chapters.problemSolving);
     assert.strictEqual(MODELLING_CHAPTERS[topic.id],topic.chapters.modelling);
     assert.deepEqual(worksheetSkills(topic.id),topic.worksheetSkills);
-    assert.equal(chaptersFor(topic).length,topic.id==='gradient'?6:7);
+    assert.equal(chaptersFor(topic).length,7);
   }
   assert.deepEqual(validateTopics(),[]);
 });

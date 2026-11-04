@@ -18,7 +18,7 @@ test('published Gradient is a complete standalone site with no unrelated topics'
   await expect(page.locator('.topic-switcher')).toBeHidden();
   await expect(page.locator('#topic-switcher option')).toHaveCount(1);
   await expect(page.locator('.contents-cover')).toContainText('Gradient');
-  await expect(page.locator('.contents-list li')).toHaveCount(6);
+  await expect(page.locator('.contents-list li')).toHaveCount(7);
   await expect(page.locator('.worksheet-resource')).toHaveCount(1);
   await page.goto('/dist/ci-gradient-published/index.html#/quadratics/home');
   await expect(page).toHaveURL(/#\/gradient\/home/);
