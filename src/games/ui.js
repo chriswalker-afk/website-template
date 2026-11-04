@@ -103,7 +103,8 @@ function renderConcentration(state){
         state.players===2?'is-active':'')+
     '</div>'+
     '<div class="game-stats">'+
-      '<span>'+state.matched.length+'/'+(state.tiles.length/2)+' pairs</span>'+
+      '<span aria-label="'+state.matched.length+' of '+(state.tiles.length/2)+' pairs matched">'+
+      state.matched.length+'/'+(state.tiles.length/2)+' pairs</span>'+
       '<span>'+state.moves+' attempts</span>'+
       (state.players===2?'<span>Player 1: '+state.scores[0]+' · Player 2: '+state.scores[1]+'</span>':
         '<span>Matched: '+state.scores[0]+'</span>')+

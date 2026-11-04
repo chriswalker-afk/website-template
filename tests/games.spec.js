@@ -54,7 +54,7 @@ test('Concentration matches a question with its specific answer and scores',asyn
   await expect(page.locator('button[data-action="game-flip"][data-card="'+q.id+'"]')).toContainText('question');
   await expect(page.locator('.game-memory-detail')).toContainText(q.text);
   await page.locator('button[data-action="game-flip"][data-card="'+a.id+'"]').click();
-  await expect(page.locator('.game-stats')).toContainText('1/8 pairs');
+  await expect(page.locator('.game-stats span').first()).toHaveAttribute('aria-label','1 of 8 pairs matched');
   await expect(page.locator('button[data-action="game-flip"][data-card="'+q.id+'"]')).toBeDisabled();
   await page.locator('button[data-action="game-players"][data-players="2"]').click();
   await expect(page.locator('.game-turn')).toContainText('Player 1');
