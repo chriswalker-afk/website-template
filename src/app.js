@@ -843,11 +843,27 @@ app.addEventListener('pointercancel',event=>{
   removeLoopPointerGhost();pointerLoopDrag=null;
 });
 
+function submitSelectedHex(session,pairs){
+  if(session?.type!=='hex-crossing'||!session.pending||session.pending.result)return session;
+  const pair=pairs.find(p=>p.id===session.cells[session.pending.index]?.pairId);
+  if(!pair)return session;
+  const mathematical=pair.answer.kind!=='text';
+  const latex=String(document.querySelector('#game-hex-form math-field')
+    ?.getValue?.('latex')??document.querySelector('#game-hex-form [data-math-source]')
+    ?.value??session.pending.mathLatex??'');
+  const raw=String(document.querySelector('#game-hex-answer')?.value??
+    session.pending.simpleDraft??'');
+  const value=mathematical?
+    (['number','ordered','unordered'].includes(pair.answer.kind)?
+      (latexToFluencyText(latex,pair.answer)??latex):latex):raw;
+  return submitHex(session,pairs,value);
+}
 app.addEventListener('click',ev=>{
   const button=ev.target.closest('button[data-action]');
   if(!button)return;
   const action=button.dataset.action,topic=TOPICS[state.route.topicId];
   if(action.startsWith('game-')){
+    if(action==='game-hex-submit')ev.preventDefault();
     if(ev.detail>0&&Date.now()<suppressLoopClickUntil&&
       ['game-pick','game-slot'].includes(action))return;
     if(action==='game-focus-toggle'){
@@ -879,6 +895,7 @@ app.addEventListener('click',ev=>{
       else if(action==='game-review-question')
         next=selectConcentrationHistory(session,Number(button.dataset.player),button.dataset.pair);
       else if(action==='game-hex-select')next=selectHex(session,Number(button.dataset.cell));
+      else if(action==='game-hex-submit')next=submitSelectedHex(session,pairs);
       else if(action==='game-continue')next=session.type==='concentration'?
         continueConcentration(session):continueHex(session);
       else if(action==='game-cancel')next=cancelHex(session);
@@ -1732,20 +1749,7 @@ app.addEventListener('submit',ev=>{
     const session=gameSession(),topic=TOPICS[state.route?.topicId];
     if(!session||session.type!=='hex-crossing'||!topic)return;
     const pairs=questionBankFor(topic.id).games?.pairs||[];
-    const pair=pairs.find(p=>p.id===session.cells[session.pending?.index]?.pairId);
-    if(!pair)return;
-    const mathematical=pair.answer.kind!=='text';
-    // The visible editor is authoritative once MathLive has mounted;
-    // the backing input is used when MathLive is unavailable.
-    const latex=String(document.querySelector('#game-hex-form math-field')
-      ?.getValue?.('latex')??document.querySelector('#game-hex-form [data-math-source]')
-      ?.value??session.pending.mathLatex??'');
-    const raw=String(document.querySelector('#game-hex-answer')?.value||
-      session.pending.simpleDraft||'');
-    const value=mathematical?
-      (['number','ordered','unordered'].includes(pair.answer.kind)?
-        (latexToFluencyText(latex,pair.answer)??latex):latex):raw;
-    const next=submitHex(session,pairs,value);
+    const next=submitSelectedHex(session,pairs);
     if(next!==session){
       setGameSession(next);
       document.querySelector(next.pending?.result?'button[data-action="game-continue"]':

@@ -217,7 +217,7 @@ function renderHex(state,pairs){
         '</div>'+
         '<div class="game-hex-form__row"><div class="game-hex-form__editor">'+
           plainInput+editor+'</div>'+
-          '<button type="submit" class="game-action game-action--primary">Claim hexagon</button></div>'+
+          '<button type="submit" data-action="game-hex-submit" class="game-action game-action--primary">Claim hexagon</button></div>'+
       '</form>'+button('game-cancel','Choose another tile','','game-action--quiet'))
     :'<div class="game-hex-placeholder"><span aria-hidden="true">⬡</span>'+
       '<strong>Choose an unclaimed hexagon</strong>'+

@@ -86,7 +86,7 @@ test('Loop Cards supports native drag-and-drop plus Enter to pick and place',asy
 test('Concentration auto-hides mismatched cards after five seconds and switches turns',async({page})=>{
   await page.clock.install();
   await page.goto(memoryRoute);
-  await page.clock.pauseAt(new Date('2026-11-04T00:00:00.000Z'));
+  await page.clock.pauseAt(new Date('2030-01-01T00:00:00.000Z'));
   await expect(page.locator('.game-play-title')).toHaveText('Concentration');
   await expect(page.locator('.game-memory-tile')).toHaveCount(16);
   await page.locator('[data-action="game-players"][data-players="2"]').click();
