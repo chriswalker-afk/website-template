@@ -64,9 +64,9 @@ test('practice and game modes only contain the intended activity types',()=>{
   assert.deepEqual(sectionsFor(TOPICS.sampling,'problemSolving').map(s=>s.id),
     ['level-1','level-2','level-3','level-4']);
   assert.deepEqual(sectionsFor(TOPICS.sampling,'games').map(s=>s.id),
-    ['sprint','puzzle-quest','sort-discover']);
+    ['loop-cards','concentration','hex-crossing','sprint','puzzle-quest','sort-discover']);
   assert.deepEqual(sectionsFor(TOPICS.quadratics,'games').map(s=>s.id),
-    ['sprint','puzzle-quest','curve-quest']);
+    ['loop-cards','concentration','hex-crossing','sprint','puzzle-quest','curve-quest']);
 });
 test('deep links preserve subsection and page identity with compact first-page routes',()=>{
   const first=resolveRoute('#/sampling/understand/big-idea');
