@@ -109,12 +109,48 @@ function renderConcentration(state){
       'game-memory-tile'+(visible?' is-open':'')+(complete?' is-matched':''));
   }).join('');
   const revealed=state.tiles.filter(tile=>state.shown.includes(tile.id));
-  const details='<aside class="game-memory-detail" aria-live="polite">'+
-    '<span class="game-memory-detail__eyebrow">Reading desk</span>'+
-    (revealed.length?revealed.map(tile=>
-      '<div class="game-memory-detail__face"><strong>'+e(tile.kind)+'</strong><p>'+
-        e(tile.text)+'</p></div>').join(''):
-      '<p class="game-memory-detail__empty">Turn over two cards to read their questions and answers here.</p>')+
+  const reviewPlayer=state.players===1?0:state.reviewPlayer;
+  const seen=state.seenByPlayer?.[reviewPlayer]||[];
+  const reviewId=seen.includes(state.reviewPairId)?state.reviewPairId:seen.at(-1);
+  const question=reviewId?state.tiles.find(tile=>tile.kind==='question'&&tile.pairId===reviewId):null;
+  const working=question?state.reviewNotes?.[reviewPlayer+':'+reviewId]||'':'';
+  const playerTabs=state.players===2?'<div class="game-memory-history__players" role="group" aria-label="Review question history by player">'+
+    [0,1].map(player=>button('game-review-player',
+      'P'+(player+1)+' · '+state.seenByPlayer[player].length,
+      'data-player="'+player+'" aria-pressed="'+(reviewPlayer===player)+'"',
+      'game-action--tiny'+(reviewPlayer===player?' is-active':''))).join('')+
+    '</div>':'';
+  const seenList=seen.length?
+    '<div class="game-memory-history__list" role="group" aria-label="Previously seen questions">'+
+      seen.map((id,index)=>{
+        const card=state.tiles.find(tile=>tile.kind==='question'&&tile.pairId===id);
+        return button('game-review-question',
+          '<strong>Q'+(index+1)+'</strong><span>'+e(card?.text||'Question')+'</span>'+
+          (state.reviewNotes?.[reviewPlayer+':'+id]?' <em>✎</em>':''),
+          'data-pair="'+e(id)+'" data-player="'+reviewPlayer+
+            '" aria-pressed="'+(id===reviewId)+'"',
+          'game-memory-history__item'+(id===reviewId?' is-active':''));
+      }).join('')+'</div>':
+    '<p class="game-memory-detail__empty">Question cards you turn over will appear here. You can return to them while the next player takes a turn.</p>';
+  const workingPanel=question?
+    '<div class="game-memory-working" data-review-question="'+e(reviewId)+'">'+
+      '<div class="game-memory-working__label"><strong>Question to think about</strong>'+
+      (state.matched.includes(reviewId)?'<span>Pair matched</span>':'<span>Still in play</span>')+'</div>'+
+      '<p class="game-memory-working__question">'+e(question.text)+'</p>'+
+      '<label for="game-review-note">My working · notes</label>'+
+      '<textarea id="game-review-note" data-game-note data-player="'+reviewPlayer+
+        '" data-pair="'+e(reviewId)+'" rows="3" maxlength="1200" spellcheck="false" '+
+        'placeholder="Calculate the answer here while the game continues…">'+
+        e(working)+'</textarea>'+
+      '<p class="game-memory-working__hint">Notes stay here until the game is restarted. Answers are not revealed in this panel.</p>'+
+    '</div>':'';
+  const live=revealed.length?'<div class="game-memory-live"><span>Currently face up</span>'+
+    revealed.map(tile=>'<div><strong>'+e(tile.kind)+'</strong><p>'+e(tile.text)+'</p></div>').join('')+
+    '</div>':'';
+  const details='<aside class="game-memory-detail" aria-label="Questions I have seen">'+
+    '<div class="game-memory-detail__header"><strong>Questions I’ve seen</strong>'+
+      '<span>Review whilst the next player plays</span></div>'+
+    playerTabs+seenList+workingPanel+live+
     (state.pendingMismatch?
       '<div class="game-memory-countdown" aria-label="Cards flip back in five seconds">'+
       '<strong>Not a pair · flipping back in 5 seconds</strong>'+
@@ -129,7 +165,7 @@ function renderConcentration(state){
         button('game-players','Two players','data-players="2" aria-pressed="'+(state.players===2)+'"',
           state.players===2?'is-active':'')+'</div>'+
       '<div class="game-slim-status"><strong>'+state.matched.length+' of '+(state.tiles.length/2)+
-      ' pairs</strong><span>'+state.moves+' turns</span>'+
+      ' pairs</strong><span>'+state.moves+' attempts</span>'+
       (state.players===2?'<span>Player 1: '+state.scores[0]+' · Player 2: '+state.scores[1]+'</span>':
         '<span>Score: '+state.scores[0]+'</span>')+'</div></div>'+
     '<p class="game-turn">'+(state.players===2?'Player '+(state.turn+1)+' to play · ':
