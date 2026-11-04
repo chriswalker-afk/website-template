@@ -17,8 +17,8 @@ test('Loop Cards builds a real closed question-answer cycle',async({page})=>{
   await expect(page.locator('button[data-action="game-place"]')).toHaveCount(7);
   await expect(page.locator('.game-domino__question').first()).toBeVisible();
   const deck=createLoopGame(gradient,{seed:2026}).deck;
-  await page.locator('button[data-action="game-check"]').click();
-  await expect(page.locator('.game-feedback')).toContainText('Place every card');
+  await expect(page.locator('button[data-action="game-check"]')).toBeDisabled();
+  await expect(page.locator('.game-feedback')).toContainText('Select a card');
   for(const card of deck.slice(1)){
     await page.locator('button[data-action="game-place"][data-card="'+card.id+'"]').click();
   }

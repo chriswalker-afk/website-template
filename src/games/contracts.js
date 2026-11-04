@@ -77,10 +77,13 @@ export function validateGamePairs(pairs){
     if(!a||!b||a.kind!==b.kind)continue;
     let collision=false;
     if(a.kind==='text'){
-      const termsA=(a.accepted||[a.value]).map(gameTextKey);
-      const termsB=new Set((b.accepted||[b.value]).map(gameTextKey));
-      collision=termsA.some(v=>termsB.has(v));
-    }else if(isNumeric(a.kind)){
+      const acceptedA=a.accepted||[a.value],acceptedB=b.accepted||[b.value];
+      if(Array.isArray(acceptedA)&&Array.isArray(acceptedB)){
+        const termsA=acceptedA.filter(v=>typeof v==='string').map(gameTextKey);
+        const termsB=new Set(acceptedB.filter(v=>typeof v==='string').map(gameTextKey));
+        collision=termsA.some(v=>termsB.has(v));
+      }
+    }else if(isNumeric(a.kind)&&Array.isArray(a.values)&&Array.isArray(b.values)){
       const one=a.kind==='unordered'?[...a.values].sort((x,y)=>x-y):a.values;
       const two=b.kind==='unordered'?[...b.values].sort((x,y)=>x-y):b.values;
       collision=one.length===two.length&&one.every((v,k)=>v===two[k]);
