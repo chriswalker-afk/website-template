@@ -858,6 +858,25 @@ function submitSelectedHex(session,pairs){
       (latexToFluencyText(latex,pair.answer)??latex):latex):raw;
   return submitHex(session,pairs,value);
 }
+// MathLive's form-associated custom element can swallow a button click
+// during its internal focus/keyboard updates. Handle the Claim control in
+// capture phase so it always reaches our game engine before editor listeners.
+app.addEventListener('click',ev=>{
+  const claim=ev.target.closest?.('button[data-action="game-hex-submit"]');
+  if(!claim)return;
+  ev.preventDefault();
+  ev.stopPropagation();
+  const session=gameSession();
+  if(session?.type!=='hex-crossing')return;
+  const pairs=questionBankFor(state.route.topicId).games?.pairs||[];
+  try{
+    const next=submitSelectedHex(session,pairs);
+    if(next!==session)setGameSession(next);
+  }catch(error){
+    announce('Game could not update: '+error.message);
+  }
+},true);
+
 app.addEventListener('click',ev=>{
   const button=ev.target.closest('button[data-action]');
   if(!button)return;
@@ -895,7 +914,6 @@ app.addEventListener('click',ev=>{
       else if(action==='game-review-question')
         next=selectConcentrationHistory(session,Number(button.dataset.player),button.dataset.pair);
       else if(action==='game-hex-select')next=selectHex(session,Number(button.dataset.cell));
-      else if(action==='game-hex-submit')next=submitSelectedHex(session,pairs);
       else if(action==='game-continue')next=session.type==='concentration'?
         continueConcentration(session):continueHex(session);
       else if(action==='game-cancel')next=cancelHex(session);
