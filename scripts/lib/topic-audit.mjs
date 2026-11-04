@@ -45,6 +45,7 @@ function countsFor(topic,bank,visuals){
   }
   return {modes,cards:topic?.cards?.length||0,clozes:topic?.clozes?.length||0,
     fluencyFamilies:Object.keys(bank?.fluency||{}).length,
+    gamePairs:bank?.games?.pairs?.length||0,
     worksheetFamilies:bank?.worksheet?.length||0,
     diagrams:Object.keys(visuals?.diagrams||{}).length,
     explorers:Object.keys(visuals?.explorers||{}).length};
@@ -163,7 +164,7 @@ export function reportText(report){
     c?'Teaching modes: '+Object.entries(c.modes).map(([mode,v])=>
       mode+':'+(v.enabled?v.pages+' pages':'off')).join(', '):'No valid topic',
     c?'Vocabulary '+c.cards+' | Fluency families '+c.fluencyFamilies+
-      ' | Worksheet families '+c.worksheetFamilies+
+      ' | Worksheet families '+c.worksheetFamilies+' | Game pairs '+c.gamePairs+
       ' | Diagrams '+c.diagrams+' | Explorers '+c.explorers:'',
     'Structural errors: '+report.structuralErrors.length+
       ' | Publication blockers: '+report.blockers.length+

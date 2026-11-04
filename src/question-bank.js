@@ -1,12 +1,15 @@
 // Shared, read-only topic question registry for interactive practice and printable work.
 // All authored mathematical families belong to topic packs; no topic switch statements here.
 import {TOPICS,QUESTION_BANKS} from './topic-packs/registry.js';
+import {validateGamePairs} from './games/contracts.js';
+import {STANDARD_GAME_DETAILS} from './games/sections.js';
 
 const EMPTY=Object.freeze({fluency:Object.freeze({}),worksheet:Object.freeze([]),scaffolds:Object.freeze({})});
 const slug=value=>typeof value==='string'&&/^[a-z][a-z0-9-]*$/.test(value);
 export function questionBankFor(topicId){return QUESTION_BANKS[topicId]||EMPTY;}
 export function fluencyFamiliesFor(topicId){return questionBankFor(topicId).fluency||EMPTY.fluency;}
 export function worksheetFamiliesFor(topicId){return questionBankFor(topicId).worksheet||EMPTY.worksheet;}
+export function gamePairsFor(topicId){return questionBankFor(topicId).games?.pairs||[];}
 export function fluencyScaffoldsFor(topicId){return questionBankFor(topicId).scaffolds||EMPTY.scaffolds;}
 export function worksheetSkillOptionsFor(topicId){
   const topic=TOPICS[topicId];if(!topic)return [];
@@ -53,6 +56,15 @@ export function validateQuestionBank(topic){
   }
   for(const id of availableSkills)if(id!=='fluency'&&!defined.has(id))
     errors.push('worksheet family references undeclared skill '+id);
+  const playable=(topic?.chapters?.games||[]).some(section=>
+    (section.pages||[]).some(page=>page.type==='game'&&STANDARD_GAME_DETAILS[page.gameId]));
+  if(topic?.modes?.games!==false&&playable){
+    if(!bank.games||bank.games.schemaVersion!==1)
+      errors.push('playable Games need a versioned question–answer bank');
+    else errors.push(...validateGamePairs(bank.games.pairs).map(s=>'Games: '+s));
+  }else if(bank.games?.pairs?.length){
+    errors.push(...validateGamePairs(bank.games.pairs).map(s=>'Games: '+s));
+  }
   const scaffolds=bank.scaffolds||{};
   for(const mode of ['guided','structured'])for(const [familyId,cue] of Object.entries(scaffolds[mode]||{})){
     if(typeof fluency[familyId]!=='function')errors.push('scaffold references missing family '+familyId);

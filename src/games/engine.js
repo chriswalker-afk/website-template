@@ -165,6 +165,12 @@ export function hexHasPath(cells,owner,size=5){
   }
   return false;
 }
+export function createGameSession(type,pairs,options={}){
+  if(!STANDARD_GAMES.includes(type))throw new TypeError('Unknown standard game '+type);
+  if(type==='loop-cards')return createLoopGame(pairs,options);
+  if(type==='concentration')return createConcentrationGame(pairs,options);
+  return createHexGame(pairs,options);
+}
 export function createHexGame(pairs,{seed=2026,difficulty='core',size=5}={}){
   config(seed,difficulty);
   if(!Number.isInteger(size)||size<3||size>7)throw new RangeError('Choose a 3–7 hex grid');
