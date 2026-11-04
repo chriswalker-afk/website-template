@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "registryVersion": "1.0.0",
+  "reviewDate": "2026-11-04",
+  "sourceAudit": "JIS_Maths_Curriculum_Audit_REVIEWED_2026-11-04.xlsx",
+  "policy": {
+    "stageMeaning": "Target stages are specification scope / checklist stage, not mastery.",
+    "asScope": "AS 8MA0 is a qualification scope, not an exclusive JIS Year 12 teaching boundary.",
+    "higherInheritance": "4MA1 Higher includes all 4MA1 Foundation requirements.",
+    "teachingStatus": "JIS local schedule is planned only; completion is not asserted.",
+    "privacy": "Private Google Drive source URLs and internal school files are excluded from public website assets.",
+    "generation": "No skill is treated as auto-generator-ready until teacher quality validation."
+  },
+  "sources": {
+    "JIS7": {
+      "label": "JIS Year 7 student checklist",
+      "kind": "school-checklist",
+      "visibility": "internal",
+      "detail": "Source link held in the source workbook"
+    },
+    "JIS8": {
+      "label": "JIS Year 8 student checklist",
+      "kind": "school-checklist",
+      "visibility": "internal",
+      "detail": "Source link held in the source workbook"
+    },
+    "JIS9": {
+      "label": "JIS Year 9 student checklist",
+      "kind": "school-checklist",
+      "visibility": "internal",
+      "detail": "Source link held in the source workbook"
+    },
+    "PEARSON-4MA1": {
+      "label": "Pearson Edexcel International GCSE Mathematics A 4MA1",
+      "kind": "qualification-specification",
+      "visibility": "public",
+      "reference": "Pearson 4MA1 Specification A"
+    },
+    "PEARSON-8MA0": {
+      "label": "Pearson Edexcel AS Mathematics 8MA0, Issue 3 (2025)",
+      "kind": "qualification-specification",
+      "visibility": "public",
+      "reference": "AS 8MA0 specification"
+    },
+    "PEARSON-9MA0": {
+      "label": "Pearson Edexcel A level Mathematics 9MA0, Issue 4",
+      "kind": "qualification-specification",
+      "visibility": "public",
+      "reference": "A level 9MA0 specification"
+    },
+    "JIS-2026-27-Y12": {
+      "label": "JIS 2026/27 ACTIVE Year 12 plan",
+      "kind": "planned-teaching",
+      "visibility": "internal",
+      "detail": "Scheduled chapters, not individual student attainment"
+    },
+    "JIS-2026-27-Y13": {
+      "label": "JIS 2026/27 ACTIVE Year 13 plan",
+      "kind": "planned-teaching",
+      "visibility": "internal",
+      "detail": "Scheduled chapters, not individual student attainment"
+    }
+  },
+  "stages": [
+    {
+      "id": "y7",
+      "label": "Year 7"
+    },
+    {
+      "id": "y8",
+      "label": "Year 8"
+    },
+    {
+      "id": "y9",
+      "label": "Year 9"
+    },
+    {
+      "id": "igcse-foundation",
+      "label": "IGCSE Foundation"
+    },
+    {
+      "id": "igcse-higher",
+      "label": "IGCSE Higher"
+    },
+    {
+      "id": "a-level-y1",
+      "label": "A level Year 1"
+    },
+    {
+      "id": "a-level-y2",
+      "label": "A level Year 2"
+    }
+  ],
+  "dataFiles": [
+    "ks3.json",
+    "igcse.json",
+    "alevel.json",
+    "families.json",
+    "dependencies.json"
+  ]
+}

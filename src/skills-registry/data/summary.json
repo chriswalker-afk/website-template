@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "skillCount": 652,
+  "familyCount": 60,
+  "countsByKind": {
+    "jis-checklist": 214,
+    "exam-specification": 438
+  },
+  "countsByStage": {
+    "y7": 83,
+    "y8": 72,
+    "y9": 59,
+    "igcse-foundation": 138,
+    "igcse-higher": 222,
+    "a-level-y1": 117,
+    "a-level-y2": 216
+  },
+  "countsPlannedY12": 141,
+  "countsByExamTier": {
+    "not-applicable": 214,
+    "Foundation-and-Higher": 138,
+    "Higher-only": 84,
+    "AS-core": 117,
+    "A-level-additional": 99
+  },
+  "familyMappings": {
+    "keyword-rule": 454,
+    "coarse-topic-review": 54,
+    "coarse-domain-review": 15,
+    "source-topic": 127,
+    "keyword-source-domain": 2
+  },
+  "prerequisiteEdgesProposed": 27,
+  "assumedKnowledgeTransitions": 30
+}
